@@ -1,5 +1,7 @@
 # Prisma Studio
 
+**[Abrir o aplicativo online](https://despediram.github.io/prisma-studio/)**
+
 Editor de imagens, criador de convites e montador de pôsteres. JavaScript puro, sem build e sem serviços de processamento externos. Abra `index.html` para usar offline, inclusive em `file://`.
 
 ## Três áreas de trabalho
@@ -21,13 +23,13 @@ Os PDFs A5/A4/cartão têm dimensões físicas definidas. Imprima em **100% / ta
 
 ## GitHub e publicação
 
-Repositório do projeto: [despediram/prisma-studio](https://github.com/despediram/prisma-studio), privado. A configuração de hospedagem ainda precisa ser concluída; este README não indica que exista um site no ar.
+**Site publicado:** https://despediram.github.io/prisma-studio/
 
-1. Os arquivos do aplicativo ficam na raiz do repositório, incluindo `vendor/` e `licencas/`.
-2. Em **Settings → Pages → Source**, selecione **GitHub Actions**.
-3. O workflow `.github/workflows/pages.yml` publica os arquivos estáticos após cada envio para `main`. O endereço real aparece na execução e em Settings → Pages.
+**Repositório público:** [despediram/prisma-studio](https://github.com/despediram/prisma-studio). O proprietário escolheu tornar o código público para usar o GitHub Pages gratuitamente. Qualquer pessoa pode consultar e copiar o código; isso não concede permissão de escrita no repositório.
 
-O GitHub Free permite Pages em repositórios públicos; Pages com fonte privada exige plano compatível. O site publicado é normalmente público mesmo quando a fonte é privada. Acesso público de leitura não concede permissão de editar o repositório. Mantenha apenas o proprietário e integrações autorizadas com escrita. A integração do assistente age com a autorização da sua conta; não é um segundo usuário colaborador.
+Em **Settings → Pages**, a origem está configurada como **GitHub Actions**. O workflow `.github/workflows/pages.yml` publica automaticamente o aplicativo após alterações na branch `main`. Somente `index.html`, `css/`, `js/`, `assets/`, `vendor/` e `licencas/` entram na hospedagem.
+
+A publicação inicial foi concluída em 21/10/2026. A URL respondeu HTTP 200 com o HTML do aplicativo. A integração do assistente age com a autorização da conta proprietária; não é um segundo usuário colaborador.
 
 Referência: [documentação oficial do GitHub Pages](https://docs.github.com/en/pages/getting-started-with-github-pages/using-custom-workflows-with-github-pages).
 

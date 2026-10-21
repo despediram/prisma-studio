@@ -40,4 +40,6 @@ Ainda não há colaboração simultânea, catálogo online, remoção de fundo p
 
 ## GitHub
 
-A conexão da conta foi validada. O proprietário criou o repositório privado `despediram/prisma-studio`, inicialmente com README. Esta entrega envia o projeto para esse repositório, preservando o commit inicial. A publicação do site ainda não está concluída. O conector disponível permite trabalhar nos arquivos de um repositório existente, mas não criar um repositório novo ou configurar Pages. O projeto e seu workflow estão preparados para a configuração do Pages pelo proprietário.
+O projeto está no repositório público `despediram/prisma-studio`, conforme escolha do proprietário para hospedagem gratuita. O site foi publicado em 21/10/2026, com execução bem-sucedida do workflow e resposta HTTP 200 em https://despediram.github.io/prisma-studio/ .
+
+O workflow de Pages é acionado por alterações em `main`. Leitura pública do código não concede permissão de escrita. As etapas de configuração de visibilidade e Pages foram feitas pelo proprietário; o envio e a verificação da publicação foram concluídos pela integração.
