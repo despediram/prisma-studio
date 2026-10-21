@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="pt-BR" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <title>Prisma Studio — imagens, design e pôsteres</title>
+  <meta name="description" content="Editor de imagens completo no navegador e montador de pôsteres em várias folhas, com cálculos de impressão em milímetros.">
+  <meta name="theme-color" content="#1f2226">
+  <link rel="icon" href="assets/icone.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
+  <link rel="stylesheet" href="css/app.css">
+</head>
+<body>
+  <a class="skip" href="#stage">Pular para a área de edição</a>
+
+  <!-- ============ BARRA SUPERIOR ============ -->
+  <header class="topbar">
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" aria-hidden="true">
+        <circle cx="12.5" cy="13" r="8" class="mk-c"/><circle cx="19.5" cy="13" r="8" class="mk-m"/><circle cx="16" cy="19" r="8" class="mk-y"/>
+        <path d="M16 1v30M1 16h30" class="mk-reg"/>
+      </svg>
+      <div class="brand-text"><strong>Prisma Studio</strong></div>
+    </div>
+
+    <nav class="menubar" id="menubar" aria-label="Menu principal"></nav>
+
+    <nav class="modes" role="tablist" aria-label="Área de trabalho">
+      <button role="tab" class="mode active" data-mode="editor" aria-selected="true"><i class="fa-solid fa-wand-magic-sparkles"></i><span>Editor</span></button>
+      <button role="tab" class="mode" data-mode="design" aria-selected="false"><i class="fa-solid fa-pen-ruler"></i><span>Design</span></button>
+      <button role="tab" class="mode" data-mode="poster" aria-selected="false"><i class="fa-solid fa-table-cells"></i><span>Pôster</span></button>
+    </nav>
+
+    <div class="top-actions">
+      <button class="btn icon ghost" id="btnOpen" title="Abrir imagem, PSD ou projeto (Ctrl+O)" aria-label="Abrir"><i class="fa-regular fa-folder-open"></i></button>
+      <button class="btn icon ghost" id="btnUndo" title="Desfazer (Ctrl+Z)" aria-label="Desfazer" disabled><i class="fa-solid fa-rotate-left"></i></button>
+      <button class="btn icon ghost" id="btnRedo" title="Refazer (Ctrl+Shift+Z)" aria-label="Refazer" disabled><i class="fa-solid fa-rotate-right"></i></button>
+      <button class="btn icon ghost" id="btnCompare" title="Comparar com o original (\)" aria-label="Comparar com o original" aria-pressed="false" disabled><i class="fa-solid fa-table-columns"></i></button>
+      <button class="btn icon ghost" id="btnTheme" title="Alternar tema claro/escuro" aria-label="Alternar tema"><i class="fa-solid fa-circle-half-stroke"></i></button>
+      <button class="btn icon ghost" id="btnHelp" title="Atalhos e ajuda (?)" aria-label="Atalhos e ajuda"><i class="fa-regular fa-keyboard"></i></button>
+      <button class="btn primary" id="btnExport" title="Exportar imagem (Ctrl+S)" disabled><i class="fa-solid fa-download"></i><span class="lbl">Exportar</span></button>
+    </div>
+  </header>
+
+  <!-- ============ EDITOR ============ -->
+  <main class="workspace" id="view-editor">
+    <nav class="toolrail" aria-label="Ferramentas">
+      <div class="tgrid">
+        <button class="tool" data-tool="move" title="Mover (V)"><i class="fa-solid fa-arrow-pointer"></i></button>
+        <button class="tool active" data-tool="hand" title="Mão — mover a vista (H ou segure Espaço)"><i class="fa-regular fa-hand"></i></button>
+        <button class="tool" data-tool="marquee" title="Seleção: retangular, elíptica e laço (M)"><i class="ico-marquee"></i></button>
+        <button class="tool" data-tool="wand" title="Varinha mágica (W)"><i class="fa-solid fa-wand-magic"></i></button>
+        <button class="tool" data-tool="crop" title="Recortar (C)"><i class="fa-solid fa-crop-simple"></i></button>
+        <button class="tool" data-tool="perspective" title="Corrigir perspectiva (P)"><i class="fa-solid fa-vector-polygon"></i></button>
+        <button class="tool" data-tool="transform" title="Transformação livre (Ctrl+T)"><i class="fa-solid fa-up-down-left-right"></i></button>
+        <button class="tool" data-tool="zoom" title="Zoom (Z)"><i class="fa-solid fa-magnifying-glass"></i></button>
+        <span class="rail-sep"></span>
+        <button class="tool" data-tool="brush" title="Pincel (B)"><i class="fa-solid fa-paintbrush"></i></button>
+        <button class="tool" data-tool="eraser" title="Borracha e borracha mágica (E)"><i class="fa-solid fa-eraser"></i></button>
+        <button class="tool" data-tool="bucket" title="Balde de tinta (G)"><i class="fa-solid fa-fill-drip"></i></button>
+        <button class="tool" data-tool="gradient" title="Degradê (Shift+G)"><i class="fa-solid fa-swatchbook"></i></button>
+        <span class="rail-sep"></span>
+        <button class="tool" data-tool="clone" title="Carimbo clonar (S)"><i class="fa-solid fa-stamp"></i></button>
+        <button class="tool" data-tool="heal" title="Corretor de manchas e olhos vermelhos (J)"><i class="fa-solid fa-bandage"></i></button>
+        <button class="tool" data-tool="retouch" title="Desfocar, nitidez e borrar (R)"><i class="fa-solid fa-droplet"></i></button>
+        <button class="tool" data-tool="tone" title="Clarear, escurecer e esponja (O)"><i class="fa-solid fa-sun"></i></button>
+        <button class="tool" data-tool="liquify" title="Liquefazer (Shift+X)"><i class="fa-solid fa-water"></i></button>
+        <span class="rail-sep"></span>
+        <button class="tool" data-tool="text" title="Texto (T)"><i class="fa-solid fa-font"></i></button>
+        <button class="tool" data-tool="shape" title="Formas (U)"><i class="fa-solid fa-shapes"></i></button>
+        <button class="tool" data-tool="picker" title="Conta-gotas (I)"><i class="fa-solid fa-eye-dropper"></i></button>
+      </div>
+      <div class="colors">
+        <button class="cswatch fg" id="fgColor" aria-label="Cor principal"></button>
+        <button class="cswatch bg" id="bgColor" aria-label="Cor secundária"></button>
+        <button class="cmini swap" id="swapColors" title="Trocar cores (X)" aria-label="Trocar cores"><i class="fa-solid fa-arrow-right-arrow-left"></i></button>
+        <button class="cmini reset" id="resetColors" title="Preto e branco (D)" aria-label="Cores padrão"><i class="fa-solid fa-circle-half-stroke"></i></button>
+        <input type="color" id="colorPickerInput" class="hidden-input" tabindex="-1" aria-hidden="true">
+      </div>
+    </nav>
+
+    <section class="stage" id="stage" tabindex="-1" aria-label="Área da imagem">
+      <canvas id="view"></canvas>
+      <div class="empty" id="emptyState">
+        <div class="drop" id="dropZone">
+          <svg viewBox="0 0 120 90" class="empty-art" aria-hidden="true">
+            <rect x="10" y="8" width="44" height="62" rx="2" class="sheet"/>
+            <rect x="46" y="8" width="44" height="62" rx="2" class="sheet b"/>
+            <rect x="46" y="8" width="8" height="62" class="glue"/>
+            <path d="M8 76h104" class="ruler"/><path d="M8 72v8M112 72v8" class="ruler"/>
+          </svg>
+          <h1>Abra uma imagem para começar</h1>
+          <p>Arraste uma foto, um PSD ou um projeto para cá, cole com Ctrl+V ou escolha um arquivo. Tudo é processado no seu navegador — nada é enviado para a internet.</p>
+          <div class="empty-actions">
+            <button class="btn primary lg" id="btnOpenEmpty"><i class="fa-regular fa-folder-open"></i>Escolher arquivo</button>
+            <button class="btn soft lg" id="btnNewEmpty"><i class="fa-regular fa-file"></i>Novo documento</button>
+            <button class="btn ghost lg" id="btnSample"><i class="fa-regular fa-image"></i>Imagem de exemplo</button>
+          </div>
+          <p class="fine">PNG, JPG, WEBP, GIF, BMP, AVIF, SVG, PSD e projetos .prisma</p>
+        </div>
+      </div>
+      <div class="stage-hint" id="stageHint" hidden></div>
+
+      <div class="fx-panel" id="fxPanel" hidden role="dialog" aria-labelledby="fxTitle">
+        <header id="fxHead"><h2 id="fxTitle">Ajuste</h2><button class="btn icon ghost sm" id="fxClose" aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></header>
+        <div class="fx-body" id="fxBody"></div>
+        <footer><button class="btn ghost sm" id="fxReset">Redefinir</button><span class="grow"></span><button class="btn ghost sm" id="fxCancel">Cancelar</button><button class="btn primary sm" id="fxApply">Aplicar</button></footer>
+      </div>
+
+      <div class="zoombar" id="zoomBar" hidden>
+        <button class="btn icon ghost sm" id="zOut" aria-label="Diminuir zoom"><i class="fa-solid fa-minus"></i></button>
+        <button class="zlabel" id="zLabel" title="Ajustar à tela">100%</button>
+        <button class="btn icon ghost sm" id="zIn" aria-label="Aumentar zoom"><i class="fa-solid fa-plus"></i></button>
+        <span class="sep"></span>
+        <button class="btn ghost sm" id="zFit">Ajustar</button>
+        <button class="btn ghost sm" id="z100">1:1</button>
+        <span class="sep"></span>
+        <span class="zinfo" id="zInfo">—</span>
+        <span class="zinfo cursor" id="zCursor"></span>
+      </div>
+    </section>
+
+    <aside class="inspector" id="inspector" aria-label="Painéis">
+      <div class="histo-wrap"><canvas id="histogram" width="300" height="64" aria-label="Histograma"></canvas>
+        <div class="histo-meta"><span id="docName">Sem imagem</span><span id="docDims">—</span></div>
+      </div>
+
+      <div class="tool-options" id="toolOptions" hidden></div>
+
+      <div class="itabs" role="tablist">
+        <button class="itab active" data-tab="light">Luz</button>
+        <button class="itab" data-tab="color">Cor</button>
+        <button class="itab" data-tab="detail">Efeitos</button>
+        <button class="itab" data-tab="enhance">Melhorar</button>
+        <button class="itab" data-tab="image">Imagem</button>
+      </div>
+
+      <div class="ipanels">
+        <!-- LUZ -->
+        <section class="ipanel active" data-panel="light">
+          <div class="row-actions">
+            <button class="btn soft sm" id="btnAuto"><i class="fa-solid fa-wand-magic-sparkles"></i>Auto melhorar</button>
+            <button class="btn ghost sm" data-reset="light">Redefinir</button>
+          </div>
+          <div class="sliders" data-group="light">
+            <label class="sl"><span>Exposição</span><input type="range" data-p="exposure" min="-3" max="3" step="0.05" value="0"><output></output></label>
+            <label class="sl"><span>Contraste</span><input type="range" data-p="contrast" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Realces</span><input type="range" data-p="highlights" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Sombras</span><input type="range" data-p="shadows" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Brancos</span><input type="range" data-p="whites" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Pretos</span><input type="range" data-p="blacks" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Claridade</span><input type="range" data-p="clarity" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Remover névoa</span><input type="range" data-p="dehaze" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Desbotar</span><input type="range" data-p="fade" min="0" max="100" value="0"><output></output></label>
+          </div>
+          <h3 class="ph">Curva de tons</h3>
+          <div class="curve-box">
+            <div class="seg sm" id="curveChannels">
+              <button class="active" data-ch="rgb">RGB</button><button data-ch="r">R</button><button data-ch="g">G</button><button data-ch="b">B</button>
+            </div>
+            <canvas id="curveCanvas" width="280" height="280" aria-label="Editor de curva: arraste os pontos, clique para adicionar, duplo clique para remover"></canvas>
+            <p class="hint">Clique para criar um ponto, arraste para ajustar e dê duplo clique para remover.</p>
+          </div>
+          <h3 class="ph">Mais ajustes</h3>
+          <div class="chips" id="adjustChips"></div>
+        </section>
+
+        <!-- COR -->
+        <section class="ipanel" data-panel="color">
+          <div class="row-actions"><button class="btn ghost sm" data-reset="color">Redefinir</button></div>
+          <div class="sliders" data-group="color">
+            <label class="sl temp"><span>Temperatura</span><input type="range" data-p="temperature" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl tint"><span>Tonalidade</span><input type="range" data-p="tint" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Vibração</span><input type="range" data-p="vibrance" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Saturação</span><input type="range" data-p="saturation" min="-100" max="100" value="0"><output></output></label>
+          </div>
+          <h3 class="ph">Mistura por cor</h3>
+          <div class="seg sm" id="hslMode"><button class="active" data-m="hslHue">Matiz</button><button data-m="hslSat">Saturação</button><button data-m="hslLum">Luminância</button></div>
+          <div class="sliders hsl" id="hslSliders"></div>
+        </section>
+
+        <!-- EFEITOS -->
+        <section class="ipanel" data-panel="detail">
+          <h3 class="ph first">Estilos prontos</h3>
+          <div class="presets" id="presets"></div>
+          <div class="row-actions"><button class="btn ghost sm" data-reset="detail">Redefinir detalhes</button></div>
+          <div class="sliders" data-group="detail">
+            <label class="sl"><span>Nitidez</span><input type="range" data-p="sharpen" min="0" max="150" value="0"><output></output></label>
+            <label class="sl"><span>Raio da nitidez</span><input type="range" data-p="sharpenRadius" min="0.5" max="3" step="0.1" value="1" data-default="1"><output></output></label>
+            <label class="sl"><span>Redução de ruído</span><input type="range" data-p="denoise" min="0" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Ruído de cor</span><input type="range" data-p="colorDenoise" min="0" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Vinheta</span><input type="range" data-p="vignette" min="-100" max="100" value="0"><output></output></label>
+            <label class="sl"><span>Granulação</span><input type="range" data-p="grain" min="0" max="100" value="0"><output></output></label>
+          </div>
+          <h3 class="ph">Filtros</h3>
+          <div id="filterChips" class="filter-cats"></div>
+        </section>
+
+        <!-- MELHORAR -->
+        <section class="ipanel" data-panel="enhance">
+          <div class="card-lite">
+            <h3 class="ph first">Ampliar resolução</h3>
+            <div class="seg block" id="upMethod"><button class="active" data-m="sr">Super-resolução</button><button data-m="lanczos">Lanczos (fiel)</button></div>
+            <p class="hint">A super-resolução amplia em etapas de 2×, com filtro de choque nas bordas e realce de detalhes: o resultado fica bem mais nítido que um redimensionamento comum.</p>
+            <div class="seg" id="upFactor"><button data-f="1.5">1,5×</button><button class="active" data-f="2">2×</button><button data-f="3">3×</button><button data-f="4">4×</button></div>
+            <label class="sl"><span>Intensidade da nitidez</span><input type="range" id="upDetail" min="0" max="100" value="60"><output></output></label>
+            <label class="sl" hidden><span>Limpar ruído antes</span><input type="range" id="upDenoise" min="0" max="100" value="20"><output></output></label>
+            <p class="hint" id="upResult">—</p>
+            <button class="btn primary sm block" id="btnUpscale"><i class="fa-solid fa-up-right-and-down-left-from-center"></i>Ampliar imagem</button>
+          </div>
+          <div class="card-lite">
+            <h3 class="ph first">Reduzir ruído</h3>
+            <label class="sl"><span>Intensidade</span><input type="range" id="dnStrength" min="0" max="100" value="45"><output></output></label>
+            <label class="sl"><span>Ruído de cor</span><input type="range" id="dnChroma" min="0" max="100" value="60"><output></output></label>
+            <label class="sl"><span>Preservar textura</span><input type="range" id="dnPreserve" min="0" max="100" value="40"><output></output></label>
+            <button class="btn soft sm block" id="btnDenoise"><i class="fa-solid fa-feather"></i>Aplicar redução de ruído</button>
+          </div>
+          <div class="card-lite">
+            <h3 class="ph first">Nitidez inteligente</h3>
+            <label class="sl"><span>Quantidade</span><input type="range" id="shAmount" min="0" max="200" value="70"><output></output></label>
+            <label class="sl"><span>Raio</span><input type="range" id="shRadius" min="0.4" max="4" step="0.1" value="1.2"><output></output></label>
+            <label class="sl"><span>Limiar</span><input type="range" id="shThreshold" min="0" max="20" value="3"><output></output></label>
+            <button class="btn soft sm block" id="btnSharpen"><i class="fa-solid fa-diamond"></i>Aplicar nitidez</button>
+          </div>
+          <div class="card-lite">
+            <h3 class="ph first">Restaurar fotos comprimidas</h3>
+            <p class="hint">Suaviza os blocos de 8 px e as manchas de cor típicos de JPG muito comprimido ou imagens baixadas de redes sociais.</p>
+            <label class="sl"><span>Intensidade</span><input type="range" id="dbStrength" min="10" max="100" value="60"><output></output></label>
+            <button class="btn soft sm block" id="btnDeblock"><i class="fa-solid fa-broom"></i>Remover artefatos de JPG</button>
+          </div>
+        </section>
+
+        <!-- IMAGEM -->
+        <section class="ipanel" data-panel="image">
+          <dl class="facts" id="imgFacts"></dl>
+          <h3 class="ph">Girar e espelhar</h3>
+          <div class="grid4">
+            <button class="btn soft sm" id="rotL" title="Girar 90° à esquerda"><i class="fa-solid fa-rotate-left"></i></button>
+            <button class="btn soft sm" id="rotR" title="Girar 90° à direita"><i class="fa-solid fa-rotate-right"></i></button>
+            <button class="btn soft sm" id="flipH" title="Espelhar na horizontal"><i class="fa-solid fa-left-right"></i></button>
+            <button class="btn soft sm" id="flipV" title="Espelhar na vertical"><i class="fa-solid fa-up-down"></i></button>
+          </div>
+          <h3 class="ph">Endireitar</h3>
+          <label class="sl"><span>Ângulo</span><input type="range" id="straighten" min="-45" max="45" step="0.1" value="0"><output></output></label>
+          <label class="check"><input type="checkbox" id="straightenCrop" checked> Recortar as bordas vazias</label>
+          <div class="row-actions"><button class="btn ghost sm" id="straightenReset">Zerar</button><button class="btn primary sm" id="straightenApply" disabled>Aplicar</button></div>
+          <h3 class="ph">Redimensionar</h3>
+          <div class="grid2">
+            <label class="fld"><span>Largura (px)</span><input class="input" type="number" id="rsW" min="1"></label>
+            <label class="fld"><span>Altura (px)</span><input class="input" type="number" id="rsH" min="1"></label>
+          </div>
+          <label class="check"><input type="checkbox" id="rsLock" checked> Manter proporção</label>
+          <p class="hint" id="rsInfo"></p>
+          <button class="btn soft sm block" id="rsApply"><i class="fa-solid fa-expand"></i>Redimensionar (Lanczos)</button>
+          <h3 class="ph">Bordas</h3>
+          <div class="grid2">
+            <button class="btn soft sm" id="btnTrim"><i class="fa-solid fa-scissors"></i>Aparar bordas</button>
+            <button class="btn soft sm" id="btnFlatten"><i class="fa-solid fa-layer-group"></i>Achatar</button>
+          </div>
+          <p class="hint">“Aparar bordas” remove faixas de cor uniforme ou transparentes ao redor. “Achatar” junta as camadas sobre fundo branco.</p>
+          <h3 class="ph">Histórico</h3>
+          <ol class="history" id="historyList"></ol>
+        </section>
+      </div>
+
+      <div class="apply-bar" id="applyBar" hidden>
+        <span><i class="fa-solid fa-sliders"></i> Ajustes em prévia</span>
+        <button class="btn ghost sm" id="btnDiscardDev">Descartar</button>
+        <button class="btn primary sm" id="btnApplyDev">Aplicar</button>
+      </div>
+
+      <section class="layers-dock" id="layersDock" aria-label="Camadas">
+        <header>
+          <button class="ly-title" id="lyCollapse" aria-expanded="true"><i class="fa-solid fa-chevron-down"></i>Camadas <span id="layerCount"></span></button>
+        </header>
+        <div class="ly-body">
+          <div class="ly-props">
+            <select class="input" id="layerBlend" aria-label="Modo de mesclagem"></select>
+            <label class="ly-op"><span>Opacidade</span><input type="range" id="layerOpacity" min="0" max="100" value="100" aria-label="Opacidade da camada"><output id="layerOpacityOut">100%</output></label>
+          </div>
+          <div class="layer-list" id="layerList"></div>
+          <div class="ly-actions">
+            <button class="btn icon ghost sm" id="lyNewBtn" title="Nova camada (Ctrl+Shift+N)" aria-label="Nova camada"><i class="fa-solid fa-plus"></i></button>
+            <button class="btn icon ghost sm" id="lyDupBtn" title="Duplicar camada" aria-label="Duplicar camada"><i class="fa-regular fa-clone"></i></button>
+            <button class="btn icon ghost sm" id="lyMaskBtn" title="Adicionar máscara" aria-label="Máscara"><i class="fa-solid fa-mask"></i></button>
+            <button class="btn icon ghost sm" id="lyMergeBtn" title="Mesclar abaixo (Ctrl+E)" aria-label="Mesclar abaixo"><i class="fa-solid fa-object-group"></i></button>
+            <button class="btn icon ghost sm" id="lyUpBtn" title="Subir camada" aria-label="Subir camada"><i class="fa-solid fa-arrow-up"></i></button>
+            <button class="btn icon ghost sm" id="lyDownBtn" title="Descer camada" aria-label="Descer camada"><i class="fa-solid fa-arrow-down"></i></button>
+            <span class="grow"></span>
+            <button class="btn icon ghost sm" id="lyDelBtn" title="Excluir camada" aria-label="Excluir camada"><i class="fa-regular fa-trash-can"></i></button>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+
+  <!-- DESIGN: objetos vetoriais independentes do editor de pixels. -->
+  <main id="view-design" class="design-workspace" hidden>
+    <aside class="design-library" aria-label="Modelos e elementos">
+      <div class="design-heading"><h2>Criar com modelos</h2><p class="hint">Convites, cartões e posts editáveis.</p></div>
+      <label class="fld"><span>Formato da página</span><select class="input" id="dsFormat"></select></label>
+      <div class="design-add"><button class="btn soft sm" id="dsAddText">+ Texto</button><button class="btn soft sm" id="dsAddImage">+ Foto</button><button class="btn soft sm" data-ds-shape="rect">Retângulo</button><button class="btn soft sm" data-ds-shape="circle">Círculo</button><button class="btn soft sm" data-ds-shape="star">Estrela</button><button class="btn soft sm" data-ds-shape="heart">Coração</button><button class="btn soft sm" data-ds-shape="line">Linha</button><button class="btn soft sm" data-ds-shape="triangle">Triângulo</button></div>
+      <label class="fld"><span>Buscar modelos</span><input class="input" id="dsSearch" type="search" placeholder="Casamento, festa, bebê…"></label>
+      <div id="dsTemplates" class="design-templates"></div>
+      <p class="hint">Modelos autorais do Prisma. Clique em um texto para selecionar; dê dois cliques para escrever.</p>
+      <input id="dsImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+      <input id="dsProjectInput" type="file" accept=".prismadesign,application/json" hidden>
+    </aside>
+    <section class="design-center" aria-label="Área de criação">
+      <div class="design-bar"><input id="dsName" class="input" value="Meu convite" aria-label="Nome do design"><button class="btn ghost sm" id="dsUndo" aria-label="Desfazer design">Desfazer</button><button class="btn ghost sm" id="dsRedo">Refazer</button><button class="btn ghost sm" id="dsFit">Ajustar</button><span id="dsStatus" class="hint" role="status"></span></div>
+      <div id="dsStage" class="design-stage"><canvas id="dsCanvas" aria-label="Objetos do design"></canvas></div>
+      <div class="design-pages"><button class="btn soft sm" id="dsAddPage">+ Página</button><button class="btn ghost sm" id="dsDuplicatePage">Duplicar página</button><button class="btn ghost sm" id="dsDeletePage">Excluir página</button><div id="dsPages" class="design-page-list"></div></div>
+    </section>
+    <aside class="design-inspector" aria-label="Propriedades do design">
+      <h3>Personalizar</h3>
+      <label class="color-row"><span>Fundo da página</span><input id="dsBackground" type="color" value="#fff5e8"></label>
+      <div id="dsObjectFields">
+        <label class="fld"><span>Texto selecionado</span><textarea class="input" id="dsText" rows="3" placeholder="Selecione um texto"></textarea></label>
+        <div class="grid2"><label class="fld"><span>Fonte</span><select class="input" id="dsFont"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Impact">Impact</option><option value="Courier New">Courier New</option></select></label><label class="fld"><span>Tamanho</span><input class="input" type="number" id="dsFontSize" min="6" max="1000" value="64"></label></div>
+        <div class="design-add"><button class="btn soft sm" id="dsBold">Negrito</button><button class="btn soft sm" id="dsItalic">Itálico</button><button class="btn soft sm" data-ds-align="left">Esquerda</button><button class="btn soft sm" data-ds-align="center">Centro</button><button class="btn soft sm" data-ds-align="right">Direita</button></div>
+        <div class="grid2"><label class="color-row"><span>Cor</span><input id="dsFill" type="color" value="#312b45"></label><label class="color-row"><span>Contorno</span><input id="dsStroke" type="color" value="#000000"></label></div>
+        <div class="grid2"><label class="fld"><span>Espessura</span><input class="input" id="dsStrokeWidth" type="number" min="0" max="100" value="0"></label><label class="fld"><span>Giro °</span><input class="input" id="dsAngle" type="number" value="0" step="1"></label></div>
+        <label class="sl"><span>Opacidade</span><input id="dsOpacity" type="range" min="0" max="100" value="100"><output id="dsOpacityOut">100%</output></label>
+        <div class="design-add"><button class="btn soft sm" id="dsCenterX">Centralizar ↔</button><button class="btn soft sm" id="dsCenterY">Centralizar ↕</button><button class="btn soft sm" id="dsForward">Trazer à frente</button><button class="btn soft sm" id="dsBackward">Enviar atrás</button><button class="btn soft sm" id="dsDuplicate">Duplicar</button><button class="btn soft sm" id="dsDelete">Excluir</button><button class="btn soft sm" id="dsGroup">Agrupar</button><button class="btn soft sm" id="dsUngroup">Desagrupar</button><button class="btn soft sm" id="dsLock">Bloquear/desbloquear</button></div>
+      </div>
+      <h3>Objetos</h3><div id="dsObjects" class="design-object-list"></div>
+      <h3>Salvar e usar</h3>
+      <div class="design-export"><button class="btn primary sm" id="dsSave">Salvar design editável</button><button class="btn soft sm" id="dsOpen">Abrir design</button><button class="btn soft sm" id="dsExportPng">Baixar PNG</button><button class="btn soft sm" id="dsExportPdf">PDF de todas as páginas</button><button class="btn soft sm" id="dsToEditor">Usar no editor / pôster</button></div>
+      <p class="hint">Salve em .prismadesign para conservar textos, objetos e páginas editáveis. Ao enviar ao editor de pixels, a página vira uma imagem.</p>
+    </aside>
+  </main>
+
+  <!-- ============ PÔSTER ============ -->
+  <main class="workspace poster" id="view-poster" hidden>
+    <aside class="pside left" aria-label="Configurações do pôster">
+      <section class="pblock">
+        <h2>Papel e impressora</h2>
+        <label class="fld"><span>Papel</span>
+          <select class="input" id="pPaper">
+            <option value="A4" selected>A4 — 210 × 297 mm</option>
+            <option value="A3">A3 — 297 × 420 mm</option>
+            <option value="A5">A5 — 148 × 210 mm</option>
+            <option value="Letter">Carta — 215,9 × 279,4 mm</option>
+            <option value="Oficio">Ofício — 216 × 330 mm</option>
+            <option value="Legal">Legal — 215,9 × 355,6 mm</option>
+            <option value="Tabloid">Tabloide — 279,4 × 431,8 mm</option>
+            <optgroup label="Plotter / gráfica">
+              <option value="A2">A2 — 420 × 594 mm</option><option value="A1">A1 — 594 × 841 mm</option><option value="A0">A0 — 841 × 1189 mm</option>
+            </optgroup>
+            <optgroup label="Papel fotográfico">
+              <option value="P10x15">10 × 15 cm</option><option value="P13x18">13 × 18 cm</option><option value="P15x21">15 × 21 cm</option><option value="P20x25">20 × 25 cm</option><option value="P20x30">20 × 30 cm</option>
+            </optgroup>
+            <option value="custom">Personalizado…</option>
+          </select>
+        </label>
+        <div class="grid2" id="pCustomPaper" hidden>
+          <label class="fld"><span>Largura (mm)</span><input class="input" type="number" id="pPaperW" value="210" min="50" max="2000" step="0.1"></label>
+          <label class="fld"><span>Altura (mm)</span><input class="input" type="number" id="pPaperH" value="297" min="50" max="2000" step="0.1"></label>
+        </div>
+        <div class="seg block" id="pOrient">
+          <button class="active" data-o="portrait"><i class="fa-regular fa-file"></i>Retrato</button>
+          <button data-o="landscape"><i class="fa-regular fa-file fa-rotate-90"></i>Paisagem</button>
+        </div>
+        <button class="tipchip" id="pOrientTip" hidden></button>
+        <label class="sl"><span>Margem branca reservada</span><input type="range" id="pMargin" min="0" max="20" step="0.5" value="5"><output></output></label>
+        <p class="hint">Reserve uma margem maior que a área não imprimível da impressora para os códigos e registros também saírem no papel. No diálogo de impressão, selecione 100% / Tamanho real e desative Ajustar à página; o site não controla o driver da impressora.</p>
+        <label class="sl"><span>Sobreposição para colar</span><input type="range" id="pOverlap" min="0" max="30" step="0.5" value="10"><output></output></label>
+      </section>
+
+      <section class="pblock">
+        <h2>Tamanho do pôster</h2>
+        <div class="seg block three" id="pMode">
+          <button class="active" data-m="grid">Por folhas</button>
+          <button data-m="size">Por medida</button>
+          <button data-m="scale">Por DPI</button>
+        </div>
+        <div data-mode-panel="grid">
+          <div class="grid2">
+            <label class="fld"><span>Colunas</span><input class="input" type="number" id="pCols" value="2" min="1" max="20"></label>
+            <label class="fld"><span>Linhas</span><input class="input" type="number" id="pRows" value="2" min="1" max="20"></label>
+          </div>
+          <div class="chips" id="pGridPresets"></div>
+        </div>
+        <div data-mode-panel="size" hidden>
+          <div class="grid2">
+            <label class="fld"><span>Largura (cm)</span><input class="input" type="number" id="pTargetW" value="60" min="5" max="1000" step="0.01"></label>
+            <label class="fld"><span>Altura (cm)</span><input class="input" type="number" id="pTargetH" value="" min="5" max="1000" step="0.01"></label>
+          </div>
+          <label class="check"><input type="checkbox" id="pTargetLock" checked> Manter a proporção da imagem</label>
+          <div class="chips" id="pSizePresets"></div>
+        </div>
+        <div data-mode-panel="scale" hidden>
+          <label class="sl"><span>Imprimir a</span><input type="range" id="pScaleDpi" min="30" max="300" step="1" value="100"><output></output></label>
+          <p class="hint">Cada pixel da imagem vira 1/DPI polegada. Menos DPI = pôster maior.</p>
+        </div>
+        <div class="seg block" id="pFit">
+          <button class="active" data-f="cover" title="Preenche todas as folhas; pode cortar bordas da imagem">Preencher</button>
+          <button data-f="contain" title="Mostra a imagem inteira; pode sobrar papel">Inteira</button>
+        </div>
+        <label class="sl" id="pZoomRow"><span>Zoom da arte</span><input type="range" id="pZoom" min="100" max="300" value="100"><output></output></label>
+        <label class="sl"><span>Borda branca (moldura)</span><input type="range" id="pBorder" min="0" max="80" step="1" value="0"><output></output></label>
+        <p class="hint">Arraste a arte na prévia para escolher o enquadramento.</p>
+      </section>
+
+      <section class="pblock">
+        <h2>Marcas e montagem</h2>
+        <label class="check"><input type="checkbox" id="pMarkGlue" checked> Registros de alinhamento nas margens</label>
+        <label class="check"><input type="checkbox" id="pMarkCut" checked> Marcas de corte nos cantos</label>
+        <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) somente na margem</label>
+        <label class="check"><input type="checkbox" id="pGuidePage" checked> Página de instruções com mapa de montagem</label>
+        <label class="check"><input type="checkbox" id="pSkipBlank" checked> Pular folhas totalmente em branco</label>
+      </section>
+
+      <section class="pblock">
+        <h2>Qualidade de impressão</h2>
+        <label class="fld"><span>Resolução das folhas</span>
+          <select class="input" id="pDpi">
+            <option value="150">150 DPI — rascunho, arquivo leve</option>
+            <option value="200">200 DPI — bom para pôster visto de longe</option>
+            <option value="300" selected>300 DPI — qualidade de impressão</option>
+            <option value="400">400 DPI — máximo (arquivo pesado)</option>
+          </select>
+        </label>
+        <span class="fld"><span>Nitidez extra com emendas consistentes</span></span>
+        <div class="seg block three" id="pEnhance">
+          <button data-e="0">Desligada</button><button data-e="45">Suave</button><button data-e="85">Forte</button>
+        </div>
+        <p class="hint">A arte é ampliada em uma grade única, com nitidez calculada em blocos compartilhados. As faixas repetidas ficam idênticas, sem recalcular uma imagem diferente para cada folha. A nitidez não recupera detalhes ausentes na foto original.</p>
+        <label class="sl"><span>Clarear para impressão</span><input type="range" id="pLift" min="0" max="40" value="0"><output></output></label>
+        <p class="hint">Impressoras jato de tinta costumam imprimir mais escuro que a tela. 10–20% compensa sem estourar as luzes.</p>
+      </section>
+
+      <section class="pblock">
+        <h2>Arquivo de impressão</h2>
+        <label class="fld"><span>Compressão das imagens no PDF</span>
+          <select class="input" id="pFormat">
+            <option value="jpeg95">JPG qualidade 95% (menor)</option>
+            <option value="jpeg85">JPG qualidade 85% (menor)</option>
+            <option value="png" selected>PNG sem perdas — encaixe preciso (recomendado)</option>
+          </select>
+        </label>
+        <p class="hint">PNG preserva os pixels repetidos sem perdas. JPG reduz o arquivo, mas pode criar diferenças de compressão nas emendas.</p>
+        <label class="fld"><span>Orientação das páginas no PDF</span>
+          <select class="input" id="pPdfOrient">
+            <option value="auto" selected>Igual à das folhas</option>
+            <option value="portrait">Sempre retrato (gira a arte das folhas deitadas)</option>
+          </select>
+        </label>
+      </section>
+
+      <details class="pblock disclosure" id="pCalBox">
+        <summary><h2>Calibrar a escala da impressora</h2></summary>
+        <p class="hint">Imprima uma vez, meça com uma régua a régua de 10 cm da primeira página e digite quanto ela mediu. O PDF passa a compensar a diferença da sua impressora.</p>
+        <div class="grid2">
+          <label class="fld"><span>Mediu na horizontal (mm)</span><input class="input" type="number" id="pCalX" min="80" max="120" step="0.1" value="100"></label>
+          <label class="fld"><span>Mediu na vertical (mm)</span><input class="input" type="number" id="pCalY" min="80" max="120" step="0.1" value="100"></label>
+        </div>
+        <p class="hint" id="pCalInfo"></p>
+        <button class="btn soft sm" id="pCalibrationPdf">Baixar folha de teste de 100 × 100 mm</button>
+      </details>
+    </aside>
+
+    <section class="pstage" aria-label="Prévia do pôster">
+      <div class="pstage-bar">
+        <div class="seg sm" id="pViewMode">
+          <button class="active" data-v="plan">Plano de corte</button>
+          <button data-v="assembly">Folhas sobrepostas</button>
+          <button data-v="assembled">Na parede</button>
+          <button data-v="exploded">Folhas separadas</button>
+        </div>
+        <span class="grow"></span>
+        <span class="pnote" id="pNote"></span>
+      </div>
+      <div class="poster-assembly-controls" id="pAssemblyControls" hidden>
+        <div class="assembly-row"><button class="btn soft sm" id="pAssemblyPrev" aria-label="Retirar uma folha">− folha</button><label class="grow" for="pAssemblyStep">Montagem passo a passo <input id="pAssemblyStep" type="range" min="0" max="1" value="1"></label><button class="btn soft sm" id="pAssemblyNext" aria-label="Colocar a próxima folha">+ folha</button><output id="pAssemblyCount"></output></div>
+        <div class="assembly-row"><label for="pAssemblyZoom">Zoom de conferência <input id="pAssemblyZoom" type="range" min="100" max="500" value="100"></label><label class="check"><input id="pAssemblyGuides" type="checkbox" checked> Mostrar emendas e códigos (só na tela)</label><button class="btn ghost sm" id="pAssemblyReset">Ajustar vista</button></div>
+        <p class="hint" id="pAssemblyStatus" role="status" aria-live="polite">Preparando montagem…</p>
+      </div>
+      <div class="pcanvas-wrap" id="pCanvasWrap">
+        <canvas id="pCanvas"></canvas>
+        <div class="empty" id="pEmpty">
+          <div class="drop">
+            <h1>Escolha a arte do pôster</h1>
+            <p>O pôster usa a imagem aberta no editor, já com todos os ajustes. Você também pode abrir uma imagem direto aqui.</p>
+            <div class="empty-actions"><button class="btn primary lg" id="pOpen"><i class="fa-regular fa-folder-open"></i>Escolher imagem</button></div>
+          </div>
+        </div>
+      </div>
+      <div class="pstats" id="pStats">
+        <div class="stat big"><span class="k">Pôster montado</span><span class="v" id="sSize">—</span></div>
+        <div class="stat"><span class="k">Folhas</span><span class="v" id="sSheets">—</span></div>
+        <div class="stat"><span class="k">Área útil por folha</span><span class="v" id="sCell">—</span></div>
+        <div class="stat quality"><span class="k">Nitidez na impressão</span><span class="v" id="sDpi">—</span><span class="meter"><i id="sDpiBar"></i></span></div>
+      </div>
+    </section>
+
+    <aside class="pside right" aria-label="Folhas e exportação">
+      <section class="pblock">
+        <h2>Exportar</h2>
+        <button class="btn primary block lg" id="pExportPdf" disabled><i class="fa-solid fa-file-pdf"></i>Baixar PDF para imprimir</button>
+        <button class="btn soft block" id="pPrintNow" disabled><i class="fa-solid fa-print"></i>Abrir PDF para imprimir</button>
+        <button class="btn soft block" id="pExportZip" disabled><i class="fa-solid fa-file-zipper"></i>Baixar folhas em PNG (ZIP)</button>
+        <p class="hint" id="pExportHint">Imprima em <strong>tamanho real (100%)</strong>. Desative “ajustar à página”.</p>
+        <button class="btn ghost sm block" id="pUpscaleHint" hidden><i class="fa-solid fa-up-right-and-down-left-from-center"></i><span>Ampliar a imagem para imprimir melhor</span></button>
+      </section>
+      <section class="pblock">
+        <h2>Lupa de impressão</h2>
+        <div class="loupe"><canvas id="pLoupe" width="280" height="210" aria-label="Comparação antes e depois em tamanho de impressão"></canvas><span class="lp-tag a">Sem nitidez extra</span><span class="lp-tag b">Com nitidez extra</span></div>
+        <p class="hint" id="pLoupeInfo">Clique na prévia do pôster para escolher onde olhar. Arraste sobre a lupa para comparar.</p>
+      </section>
+      <section class="pblock">
+        <h2>Como montar</h2>
+        <ol class="steps" id="pSteps"></ol>
+      </section>
+      <section class="pblock">
+        <h2>Folhas</h2>
+        <div class="sheets" id="pSheets"></div>
+      </section>
+      <details class="pblock disclosure">
+        <summary><h2>Gerar arte com IA</h2></summary>
+        <p class="hint">Medidas e um texto pronto para pedir a uma IA de imagens uma arte já na proporção certa deste pôster.</p>
+        <label class="fld"><span>Tamanho ideal (300 DPI)</span>
+          <div class="input-group"><input class="input" id="pIdealPx" readonly><button class="btn soft sm" id="pCopyPx">Copiar</button></div>
+        </label>
+        <label class="fld"><span>Tema da arte (opcional)</span><input class="input" id="pPromptTheme" placeholder="ex.: mapa antigo do Brasil em aquarela"></label>
+        <textarea class="input" id="pPrompt" rows="9" readonly></textarea>
+        <button class="btn soft sm block" id="pCopyPrompt"><i class="fa-regular fa-copy"></i>Copiar texto para a IA</button>
+      </details>
+    </aside>
+  </main>
+
+  <!-- ============ CAMADAS GLOBAIS ============ -->
+  <input type="file" id="fileInput" accept="image/*,.psd,.prisma" hidden>
+  <input type="file" id="layerFileInput" accept="image/*" multiple hidden>
+  <input type="file" id="fontInput" accept=".ttf,.otf,.woff,.woff2" hidden>
+
+  <dialog id="dialog" class="dialog">
+    <form method="dialog">
+      <header><h2 id="dialogTitle">—</h2><button class="btn icon ghost sm" value="cancel" formnovalidate aria-label="Fechar"><i class="fa-solid fa-xmark"></i></button></header>
+      <div class="dialog-body" id="dialogBody"></div>
+      <footer><button class="btn ghost" id="dialogCancel" type="button">Cancelar</button><button class="btn primary" id="dialogOk" type="submit">Aplicar</button></footer>
+    </form>
+  </dialog>
+
+  <div class="busy" id="busy" hidden role="status" aria-live="polite">
+    <div class="busy-card">
+      <div class="busy-head"><span class="spinner" aria-hidden="true"></span><div><strong id="busyTitle">Processando…</strong><p id="busyDetail"></p></div></div>
+      <div class="bar"><i id="busyBar"></i></div>
+      <span class="busy-pct" id="busyPct"></span>
+    </div>
+  </div>
+
+  <div class="drag-veil" id="dragVeil" hidden><div><i class="fa-regular fa-image"></i><p>Solte a imagem para abrir</p></div></div>
+  <div class="toasts" id="toasts" aria-live="polite"></div>
+
+  <script src="vendor/pdf-lib.min.js"></script>
+  <script src="vendor/jszip.min.js"></script>
+  <script src="js/core/imgproc.js"></script>
+  <script src="js/core/imgproc-extra.js"></script>
+  <script src="js/core/utils.js"></script>
+  <script src="js/editor/document.js"></script>
+  <script src="js/editor/viewport.js"></script>
+  <script src="js/editor/preview-gl.js"></script>
+  <script src="js/ui/tool-options.js"></script>
+  <script src="js/editor/tools/context.js"></script>
+  <script src="js/editor/tools/paint.js"></script>
+  <script src="js/editor/tools/paint-tiles.js"></script>
+  <script src="js/editor/tools/hand.js"></script>
+  <script src="js/editor/tools/zoom.js"></script>
+  <script src="js/editor/tools/move.js"></script>
+  <script src="js/editor/tools/marquee.js"></script>
+  <script src="js/editor/tools/wand.js"></script>
+  <script src="js/editor/tools/crop.js"></script>
+  <script src="js/editor/tools/perspective.js"></script>
+  <script src="js/editor/tools/transform.js"></script>
+  <script src="js/editor/tools/brush.js"></script>
+  <script src="js/editor/tools/eraser.js"></script>
+  <script src="js/editor/tools/bucket.js"></script>
+  <script src="js/editor/tools/gradient.js"></script>
+  <script src="js/editor/tools/clone.js"></script>
+  <script src="js/editor/tools/heal.js"></script>
+  <script src="js/editor/tools/retouch.js"></script>
+  <script src="js/editor/tools/tone.js"></script>
+  <script src="js/editor/tools/liquify.js"></script>
+  <script src="js/editor/tools/text.js"></script>
+  <script src="js/editor/tools/shape.js"></script>
+  <script src="js/editor/tools/picker.js"></script>
+  <script src="js/ui/tool-fields.js"></script>
+  <script src="js/editor/tools.js"></script>
+  <script src="js/ui/floating-toolbar.js"></script>
+  <script src="js/editor/fx.js"></script>
+  <script src="js/editor/layers.js"></script>
+  <script src="js/editor/psd.js"></script>
+  <script src="js/editor/commands.js"></script>
+  <script src="js/editor/panels.js"></script>
+  <script src="js/poster/poster-geometry.js"></script>
+  <script src="js/poster/poster-raster.js"></script>
+  <script src="js/poster/poster.js"></script>
+  <script src="js/poster/poster-assembly.js"></script>
+  <script src="js/poster/poster-calibration.js"></script>
+  <script src="vendor/fabric-6.9.0.min.js"></script>
+  <script src="js/design/templates.js"></script>
+  <script src="js/design/design.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
