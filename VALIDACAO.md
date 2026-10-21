@@ -174,3 +174,8 @@ Inventário de arquivos, mudanças de comportamento, fontes e limitações em [A
 As regressões `poster-safe.cjs`, `poster-marks.cjs` e `poster.cjs` passaram após a alteração. O teste novo `poster-bleed.cjs` validou três configurações (5 mm, 0 mm e 3,5 mm), exportação de quatro A4 e montagem com abas fora do núcleo. PDFs reais foram renderizados e montados, com diagonais contínuas nas emendas; diferença média de cor menor que 2/255 em relação ao Canvas, por antialiasing/reamostragem entre renderizadores. A inspeção visual confirmou sangria nas bordas e abas brancas fora da arte visível. Não houve impressão física nesta etapa.
 
 Arquivos, comportamento e instruções atuais: [POSTER-SANGRIA.md](POSTER-SANGRIA.md).
+
+
+## 11. Pontilhado afastado da arte
+
+As cinco regressões de pôster passaram após a introdução de até 1 mm de imagem repetida escondida na aba. PDFs reais com/sem guias foram renderizados e montados: 6.318.000 pixels iguais, diferença máxima 0 e nenhum pixel branco indevido no campo de cor contínua. As medidas e a escala física permanecem iguais. Não houve impressão física. Ver [POSTER-EMENDA.md](POSTER-EMENDA.md) para arquivos e mudança na orientação de colagem.

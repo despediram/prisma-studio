@@ -1,0 +1,10 @@
+/* Prisma Studio — proteção da emenda contra suavização das guias no PDF.
+ * Exporta páginas reais marcadas/limpas para renderização e comparação externa.
+ */
+const{chromium}=require('playwright'),path=require('path'),fs=require('fs');
+(async()=>{const b=await chromium.launch({headless:true,executablePath:process.env.PRISMA_CHROMIUM||undefined,args:['--no-sandbox']});const p=await b.newPage({viewport:{width:1400,height:900}}),errors=[];p.on('pageerror',e=>errors.push(e.message));await p.goto('file://'+path.resolve(__dirname,'../index.html'));
+ const data=await p.evaluate(async()=>{const P=PS.poster,c=PS.canvas(410,584);PS.ctx(c).fillStyle='#256295';PS.ctx(c).fillRect(0,0,410,584);PS.doc.load(c,'Cor contínua');Object.assign(P.cfg,{mode:'grid',paper:'A4',paperW:210,paperH:297,cols:2,rows:2,orient:'portrait',safePrint:false,margin:0,bleed:true,overlap:10,glueStyle:'tabs',fit:'contain',zoom:1,panX:0,panY:0,border:0,dpi:150,enhance:0,lift:0,format:'png',skipBlank:false,guidePage:false,markGlue:true,markCut:false,markLabels:false,pdfOrient:'auto',calX:100,calY:100});await PS.setMode('poster');P.update();const g=P.geometry,ok=(v,m)=>{if(!v)throw Error(m)};
+ for(const t of g.tiles){const core=PS.posterCoreRect(g,t),print=PS.posterPageArtRect(g,t,P.cfg);for(const q of PS.posterGlueGuides(g,t)){const ink=PS.posterInkGuide(g,q,'tabs');ok(q.axis==='vertical'?print.w>=core.w+1&&ink.x>=core.w+1:print.h>=core.h+1&&ink.y>=core.h+1,'Tinta junto do núcleo visível');}}
+ const marked=Array.from(new Uint8Array(await(await P.buildPdf(()=>{})).arrayBuffer()));P.cfg.markGlue=false;const clean=Array.from(new Uint8Array(await(await P.buildPdf(()=>{})).arrayBuffer()));return{marked,clean,dimensions:[g.finalW,g.finalH],seamBleed:PS.posterSeamBleed(g)};});
+ const dir=process.env.PRISMA_SEAM_OUTPUT||require('node:os').tmpdir();fs.mkdirSync(dir,{recursive:true});for(const k of['marked','clean']){fs.writeFileSync(path.join(dir,'prisma-emenda-'+k+'.pdf'),Buffer.from(data[k]));delete data[k];}console.log(JSON.stringify({...data,errors}));await b.close();if(errors.length)process.exit(1);
+})().catch(e=>{console.error(e);process.exit(1)});

@@ -38,3 +38,5 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 - `studio-upgrade.cjs`: miniaturas únicas, 60 cenas/formato, filtros de catálogo, tipografia, bloqueio, distribuição, foto com recorte/efeito e reabertura, SVG, recorte de fundo por máscara e igualdade worker/fallback. Confere quatro viewports e seleção/arraste por toque.
 
 - `poster-bleed.cjs`: sangria sem moldura, abas fora do núcleo, zero mm sem imposição de 5 mm, três margens/orientações e PDFs A4 reais para inspeção. Use `PRISMA_BLEED_OUTPUT` para salvar os PDFs/referências em um diretório de QA. A montagem em coordenadas inteiras compara todos os bytes; a variante fracionária verifica exportação e escala física sem arredondar as emendas.
+
+- `poster-seam.cjs`: exporta PDFs reais com/sem marcas sobre uma imagem uniforme, com faixa de segurança de 1 mm. `PRISMA_SEAM_OUTPUT` controla o diretório para renderização externa e comparação das emendas.

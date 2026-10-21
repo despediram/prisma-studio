@@ -5,10 +5,12 @@
 (function(){
  'use strict';const PS=window.PS;
  PS.posterPageArtRect=(g,t,cfg,tiles=g.printed)=>{
+  const guides=cfg.glueStyle==='tabs'?PS.posterGlueGuides(g,t,tiles):[],extra=cfg.glueStyle==='tabs'?PS.posterSeamBleed(g):0;
   const core=cfg.glueStyle==='tabs'?PS.posterCoreRect(g,t,tiles):{x:g.margin,y:g.margin,w:g.cw,h:g.ch};
+  const right=guides.some(v=>v.axis==='vertical'),bottom=guides.some(v=>v.axis==='horizontal');
+  core.w+=right?extra:0;core.h+=bottom?extra:0;
   if(!cfg.bleed)return core;
-  const guides=cfg.glueStyle==='tabs'?PS.posterGlueGuides(g,t,tiles):[];
-  return{x:0,y:0,w:guides.some(v=>v.axis==='vertical')?core.x+core.w:g.pageW,h:guides.some(v=>v.axis==='horizontal')?core.y+core.h:g.pageH};
+  return{x:0,y:0,w:right?core.x+core.w:g.pageW,h:bottom?core.y+core.h:g.pageH};
  };
  PS.posterDrawSource=(ctx,source,g,rect,ox,oy,s,bleed=false)=>{
   const v=g.visible,extra=bleed&&!g.border?g.margin:0;

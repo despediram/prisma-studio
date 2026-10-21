@@ -217,13 +217,14 @@
     ];
     if (g.ov > 0) {
       items.push(`Nas folhas com vizinha <strong>à esquerda ou acima</strong>, meça e corte <strong>${PS.fmt(g.margin,1)} mm a partir da borda do papel</strong> nesses lados${cfg.markCut ? ', seguindo as marcas de corte' : ''}. <strong>${cfg.glueStyle==='tabs'?'Não corte as abas brancas à direita/embaixo da folha que fica por baixo.':'Não corte a faixa de imagem repetida.'}</strong>`);
-      items.push(`Monte da esquerda para a direita e de cima para baixo: deite cada folha por cima da anterior, alinhando a borda cortada ao <strong>início da faixa marcada para cola</strong>, fazendo o fim da arte de uma folha coincidir com o início da arte da próxima. ${cfg.glueStyle==='tabs'?'A aba branca':'A faixa de imagem repetida'} de ${PS.fmt(g.ov, 1)} mm fica escondida — passe cola em bastão ou fita dupla face nela.`);
+      items.push(`Monte da esquerda para a direita e de cima para baixo: deite cada folha por cima da anterior, <strong>fazendo a imagem repetida coincidir nas duas pontas da emenda</strong> e cobrindo completamente o pontilhado. ${cfg.glueStyle==='tabs'?'A aba branca':'A faixa de imagem repetida'} de ${PS.fmt(g.ov, 1)} mm fica escondida — passe cola em bastão ou fita dupla face nela.`);
     } else {
       items.push('Corte a margem branca de todos os lados que encostam em outra folha.');
       items.push('Encoste as bordas sem sobrepor e una por trás com fita adesiva.');
     }
+    if(cfg.glueStyle==='tabs'&&g.ov>0)items.push(`A aba inclui ${PS.fmt(PS.posterSeamBleed(g),1)} mm de imagem repetida para proteger a emenda. A parte branca e o pontilhado ficam por baixo da folha seguinte; não use o pontilhado como limite da imagem.`);
     if(cfg.safePrint)items.push(`O cálculo já desconta ${PS.fmt(g.margin,1)} mm por lado que a impressora não imprime. ${cfg.bleed?'O arquivo leva sangria nessa região, sem moldura extra.':''} Recorte a área esquerda/superior das folhas internas exatamente pelas marcas, mesmo que a borda branca do papel tenha outra largura.`);
-    items.push('Alinhe primeiro o topo e a base da emenda na linha pontilhada; confira dois detalhes distantes antes de colar. Se apenas uma ponta encaixar, confira o corte e a escala horizontal/vertical na folha de calibração. Use 100% em todas as folhas, sem Ajustar à página, Preencher ou expansão automática do modo sem bordas.');
+    items.push('Faça a imagem repetida coincidir nas duas pontas da emenda, cobrindo completamente o pontilhado; confira dois detalhes distantes antes de colar. Se apenas uma ponta encaixar, confira o corte e a escala horizontal/vertical na folha de calibração. Use 100% em todas as folhas, sem Ajustar à página, Preencher ou expansão automática do modo sem bordas.');
     items.push('Por fim, apare a margem externa e qualquer sobra fora do contorno azul do tamanho final.');
     ol.innerHTML = items.map(i => `<li>${i}</li>`).join('');
   }
@@ -515,7 +516,7 @@
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
     const pdf = await PDFDocument.create();
     pdf.setTitle(`Pôster ${PS.fmt(g.finalW / 10, 2)} × ${PS.fmt(g.finalH / 10, 2)} cm`);
-    pdf.setSubject(`Montagem ${cfg.glueStyle||'overlap'}; margem ${g.margin} mm; sobreposição ${g.ov} mm; escala 100%; arte ${g.finalW} x ${g.finalH} mm.`);
+    pdf.setSubject(`Montagem ${cfg.glueStyle||'overlap'}; margem ${g.margin} mm; sobreposição ${g.ov} mm; seguranca da emenda ${PS.posterSeamBleed(g)} mm; escala 100%; arte ${g.finalW} x ${g.finalH} mm.`);
     pdf.setCreator('Prisma Studio'); pdf.setProducer('Prisma Studio (pdf-lib)');
     const font = await pdf.embedFont(StandardFonts.Helvetica), bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     const tiles = g.tiles.filter(t => !(t.blank && cfg.skipBlank));
@@ -621,8 +622,8 @@
       'Confira a escala nas duas direcoes usando a folha de teste 100 x 100 mm antes de imprimir todas as folhas.',
       'A letra do código é a linha (A = topo) e o número é a coluna (1 = esquerda).',
       g.ov > 0 ? `Nas folhas com vizinha a esquerda/acima, corte ${PS.fmt(g.margin,1)} mm medidos da borda do papel. Nao use a largura da borda branca como medida.` : 'Corte a margem branca de todos os lados que encostam em outra folha.',
-      g.ov > 0 ? `Monte da esquerda para a direita e de cima para baixo. Deite cada folha por cima da anterior, alinhando a borda cortada ao inicio da faixa marcada para cola; a faixa de ${PS.fmt(g.ov, 1)} mm fica escondida. Cole com cola em bastão ou fita dupla face.` : 'Encoste as bordas sem sobrepor e una as folhas por trás com fita.',
-      'Nao corte as abas da folha de baixo. Corte os lados esquerdo/superior da proxima folha pelas marcas, nao pela borda branca da impressora. Alinhe o topo E a base na linha pontilhada antes de colar; apare as sobras externas.'
+      g.ov > 0 ? `Monte da esquerda para a direita e de cima para baixo. Deite cada folha por cima da anterior, fazendo a imagem repetida coincidir nas duas pontas e cobrindo o pontilhado; a faixa de ${PS.fmt(g.ov, 1)} mm fica escondida. Cole com cola em bastão ou fita dupla face.` : 'Encoste as bordas sem sobrepor e una as folhas por trás com fita.',
+      'Nao corte as abas da folha de baixo. Corte os lados esquerdo/superior da proxima folha pelas marcas, nao pela borda branca da impressora. Faca a imagem coincidir nas duas pontas, cobrindo o pontilhado, antes de colar; apare as sobras externas.'
     ];
     const maxW = (W - 2 * m - 8) * K;
     steps.forEach((st, i) => {

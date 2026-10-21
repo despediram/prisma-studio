@@ -41,3 +41,8 @@ Antes de imprimir um pôster inteiro, use a folha de calibração 100 × 100 mm 
 - Inspeção visual da página A4 e da montagem renderizada. Não houve impressão física ou medição da impressora do usuário.
 
 A mudança afeta novas exportações. PDFs já baixados permanecem iguais. O PDF é o formato indicado para imprimir com abas, guias e posicionamento físico; os PNGs do ZIP permanecem rasters limpos para processamento externo.
+
+
+## Revisão: proteção da emenda
+
+[POSTER-EMENDA.md](POSTER-EMENDA.md) documenta a faixa de imagem repetida e o recuo da tinta branca/pontilhado. Esta revisão substitui a instrução anterior de alinhar a borda à linha pontilhada: faça a imagem coincidir e cubra a linha completamente.

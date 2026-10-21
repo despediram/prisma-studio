@@ -43,7 +43,7 @@
       ctx.restore();
       if(!sheets.length){ctx.font='14px system-ui';ctx.textAlign='center';ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--text-2');ctx.fillText(working?'Preparando as folhas na resolução de impressão…':'Abra a montagem para conferir as emendas.',width/2,height/2);ctx.textAlign='left';}
       const current=sheets[shown-1];
-      if(ready){status.textContent=current?`${shown}/${count}: ${current.tile.code} · ${g.ov>0?'aba de '+PS.fmt(g.ov,2)+' mm por baixo':'encoste sem sobrepor'} · corte a margem ${current.tile.left?'esquerda':''}${current.tile.left&&current.tile.top?' e ':''}${current.tile.top?'superior':''}${!current.tile.left&&!current.tile.top?'externa somente no acabamento':''}${current.tile.left||current.tile.top?' em '+PS.fmt(g.margin,1)+' mm medidos da borda do papel':''}. Alinhe as duas pontas da linha. Arraste para olhar; use o zoom para conferir o encaixe.`:'Nenhuma folha colocada. Avance o controle para montar.';}
+      if(ready){status.textContent=current?`${shown}/${count}: ${current.tile.code} · ${g.ov>0?'aba de '+PS.fmt(g.ov,2)+' mm por baixo':'encoste sem sobrepor'} · corte a margem ${current.tile.left?'esquerda':''}${current.tile.left&&current.tile.top?' e ':''}${current.tile.top?'superior':''}${!current.tile.left&&!current.tile.top?'externa somente no acabamento':''}${current.tile.left||current.tile.top?' em '+PS.fmt(g.margin,1)+' mm medidos da borda do papel':''}. Faça a arte coincidir nas duas pontas e cubra o pontilhado. Arraste para olhar; use o zoom para conferir o encaixe.`:'Nenhuma folha colocada. Avance o controle para montar.';}
       $('#pAssemblyCount').textContent=`${shown} / ${count} folhas`;
     },
     async prepare(){return prepare();},
