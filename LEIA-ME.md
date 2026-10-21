@@ -43,7 +43,7 @@ Editor de imagens completo e montador de pôsteres em várias folhas, que roda i
 
 ## Design e convites
 
-A aba **Design** oferece oito modelos autorais, texto e formas editáveis, fotos, múltiplas páginas e exportação PNG/PDF. Veja o [README](README.md) e [as mudanças desta etapa](DESIGN-E-GITHUB.md).
+A aba **Design** oferece 12 modelos autorais, texto e formas editáveis, fotos, múltiplas páginas e exportação PNG/PDF. Veja o [README](README.md) e [as mudanças desta etapa](DESIGN-E-GITHUB.md).
 
 ## Atalhos
 Pressione `?` (ícone de teclado no topo) dentro do app para ver todos.

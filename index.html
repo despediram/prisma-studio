@@ -2,13 +2,15 @@
 <html lang="pt-BR" data-theme="dark">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content, viewport-fit=cover">
   <title>Prisma Studio — imagens, design e pôsteres</title>
   <meta name="description" content="Editor de imagens completo no navegador e montador de pôsteres em várias folhas, com cálculos de impressão em milímetros.">
   <meta name="theme-color" content="#1f2226">
   <link rel="icon" href="assets/icone.svg" type="image/svg+xml">
   <link rel="stylesheet" href="vendor/fontawesome/css/all.min.css">
   <link rel="stylesheet" href="css/app.css">
+  <link rel="stylesheet" href="css/studio-upgrade.css">
+  <link rel="stylesheet" href="css/design-fonts.css">
 </head>
 <body>
   <a class="skip" href="#stage">Pular para a área de edição</a>
@@ -297,44 +299,48 @@
   <!-- DESIGN: objetos vetoriais independentes do editor de pixels. -->
   <main id="view-design" class="design-workspace" hidden>
     <aside class="design-library" aria-label="Modelos e elementos">
-      <div class="design-heading"><h2>Criar com modelos</h2><p class="hint">Convites, cartões e posts editáveis.</p></div>
+      <div class="design-heading"><span class="design-kicker">SEU ESTÚDIO CRIATIVO</span><h2>Uma ideia, muitas formas.</h2><p class="hint">Comece com uma composição. Deixe com a sua cara.</p></div>
       <label class="fld"><span>Formato da página</span><select class="input" id="dsFormat"></select></label>
-      <div class="design-add"><button class="btn soft sm" id="dsAddText">+ Texto</button><button class="btn soft sm" id="dsAddImage">+ Foto</button><button class="btn soft sm" data-ds-shape="rect">Retângulo</button><button class="btn soft sm" data-ds-shape="circle">Círculo</button><button class="btn soft sm" data-ds-shape="star">Estrela</button><button class="btn soft sm" data-ds-shape="heart">Coração</button><button class="btn soft sm" data-ds-shape="line">Linha</button><button class="btn soft sm" data-ds-shape="triangle">Triângulo</button></div>
-      <label class="fld"><span>Buscar modelos</span><input class="input" id="dsSearch" type="search" placeholder="Casamento, festa, bebê…"></label>
-      <div id="dsTemplates" class="design-templates"></div>
-      <p class="hint">Modelos autorais do Prisma. Clique em um texto para selecionar; dê dois cliques para escrever.</p>
+      <div class="design-library-tabs" role="tablist" aria-label="Biblioteca"><button data-ds-library="models" class="active" role="tab" aria-selected="true">Modelos</button><button data-ds-library="elements" role="tab" aria-selected="false">Elementos</button><button data-ds-library="text" role="tab" aria-selected="false">Texto</button></div>
+      <div class="design-add" data-ds-section="elements" hidden><button class="btn soft sm" id="dsAddText">+ Texto</button><button class="btn soft sm" id="dsAddImage">+ Foto</button><button class="btn soft sm" data-ds-shape="rect">Retângulo</button><button class="btn soft sm" data-ds-shape="circle">Círculo</button><button class="btn soft sm" data-ds-shape="star">Estrela</button><button class="btn soft sm" data-ds-shape="heart">Coração</button><button class="btn soft sm" data-ds-shape="line">Linha</button><button class="btn soft sm" data-ds-shape="triangle">Triângulo</button></div>
+      <section data-ds-section="text" hidden class="design-type-presets"><button data-ds-text="heading">Adicionar título</button><button data-ds-text="subheading">Adicionar subtítulo</button><button data-ds-text="body">Um pouco de texto</button><p class="hint">Textos são editáveis por toque e no painel Editar.</p></section>
+      <section data-ds-section="models"><label class="fld"><span>Buscar modelos</span><input class="input" id="dsSearch" type="search" placeholder="Casamento, festa, bebê…"></label>
+      <select id="dsCategory" class="input" aria-label="Categoria de modelos"><option value="">Todos os estilos</option></select><p id="dsCatalogStatus" class="hint" role="status"></p><div id="dsTemplates" class="design-templates"></div></section>
+      <p class="hint design-library-foot">Modelos autorais do Prisma. Clique em um texto para selecionar; dê dois cliques para escrever.</p>
       <input id="dsImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
       <input id="dsProjectInput" type="file" accept=".prismadesign,application/json" hidden>
     </aside>
     <section class="design-center" aria-label="Área de criação">
-      <div class="design-bar"><input id="dsName" class="input" value="Meu convite" aria-label="Nome do design"><button class="btn ghost sm" id="dsUndo" aria-label="Desfazer design">Desfazer</button><button class="btn ghost sm" id="dsRedo">Refazer</button><button class="btn ghost sm" id="dsFit">Ajustar</button><span id="dsStatus" class="hint" role="status"></span></div>
-      <div id="dsStage" class="design-stage"><canvas id="dsCanvas" aria-label="Objetos do design"></canvas></div>
+      <div class="design-bar"><input id="dsName" class="input" value="Meu convite" aria-label="Nome do design"><button class="btn ghost sm" id="dsUndo" aria-label="Desfazer design">Desfazer</button><button class="btn ghost sm" id="dsRedo">Refazer</button><button class="btn ghost sm" id="dsZoomOut" aria-label="Afastar design">−</button><button class="btn ghost sm" id="dsFit">Ajustar</button><button class="btn ghost sm" id="dsZoomIn" aria-label="Aproximar design">+</button><label class="design-snap"><input type="checkbox" id="dsSnap" checked> Guias</label><span id="dsStatus" class="hint" role="status"></span></div>
+      <div class="design-contextbar" id="dsContextBar"><span id="dsSelectionName">Selecione um objeto na página</span><button class="btn soft sm" id="dsEditSelection">Editar seleção</button><button class="btn ghost sm" id="dsMultiSelect" aria-pressed="false">Selecionar vários</button></div><div id="dsStage" class="design-stage"><canvas id="dsCanvas" aria-label="Objetos do design"></canvas></div>
       <div class="design-pages"><button class="btn soft sm" id="dsAddPage">+ Página</button><button class="btn ghost sm" id="dsDuplicatePage">Duplicar página</button><button class="btn ghost sm" id="dsDeletePage">Excluir página</button><div id="dsPages" class="design-page-list"></div></div>
     </section>
     <aside class="design-inspector" aria-label="Propriedades do design">
-      <h3>Personalizar</h3>
+      <header class="design-panel-title"><h3>Seu design, em detalhe</h3><button class="btn ghost sm" id="dsClosePanel" aria-label="Fechar painel do design">Fechar</button></header><div id="dsPropertiesPanel">
       <label class="color-row"><span>Fundo da página</span><input id="dsBackground" type="color" value="#fff5e8"></label>
-      <div id="dsObjectFields">
-        <label class="fld"><span>Texto selecionado</span><textarea class="input" id="dsText" rows="3" placeholder="Selecione um texto"></textarea></label>
-        <div class="grid2"><label class="fld"><span>Fonte</span><select class="input" id="dsFont"><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Impact">Impact</option><option value="Courier New">Courier New</option></select></label><label class="fld"><span>Tamanho</span><input class="input" type="number" id="dsFontSize" min="6" max="1000" value="64"></label></div>
+      <p id="dsSelectionHint" class="hint">Selecione um texto, uma forma ou uma foto para ver os controles específicos.</p><div id="dsObjectFields">
+        <section data-ds-context="text"><h4>Tipografia</h4><label class="fld"><span>Texto selecionado</span><textarea class="input" id="dsText" rows="3" placeholder="Selecione um texto"></textarea></label>
+        <div class="grid2"><label class="fld"><span>Fonte</span><select class="input" id="dsFont"><option value="DM Sans">DM Sans</option><option value="Cormorant Garamond">Cormorant Garamond</option><option value="Bebas Neue">Bebas Neue</option><option value="Arial">Arial</option><option value="Georgia">Georgia</option><option value="Verdana">Verdana</option><option value="Impact">Impact</option><option value="Courier New">Courier New</option></select></label><label class="fld"><span>Tamanho</span><input class="input" type="number" id="dsFontSize" min="6" max="1000" value="64"></label></div>
         <div class="design-add"><button class="btn soft sm" id="dsBold">Negrito</button><button class="btn soft sm" id="dsItalic">Itálico</button><button class="btn soft sm" data-ds-align="left">Esquerda</button><button class="btn soft sm" data-ds-align="center">Centro</button><button class="btn soft sm" data-ds-align="right">Direita</button></div>
-        <div class="grid2"><label class="color-row"><span>Cor</span><input id="dsFill" type="color" value="#312b45"></label><label class="color-row"><span>Contorno</span><input id="dsStroke" type="color" value="#000000"></label></div>
-        <div class="grid2"><label class="fld"><span>Espessura</span><input class="input" id="dsStrokeWidth" type="number" min="0" max="100" value="0"></label><label class="fld"><span>Giro °</span><input class="input" id="dsAngle" type="number" value="0" step="1"></label></div>
+        <div class="grid2"><label class="fld"><span>Entrelinha</span><input class="input" id="dsLineHeight" type="number" min="0.5" max="3" step="0.1" value="1.2"></label><label class="fld"><span>Espaço entre letras</span><input class="input" id="dsCharSpacing" type="number" min="-100" max="1000" step="10" value="0"></label></div><button class="btn soft sm" id="dsUnderline">Sublinhado</button></section>
+        <section data-ds-context="image" hidden><h4>Foto selecionada</h4><div class="design-add"><button class="btn soft sm" data-ds-crop="square">Recortar 1:1</button><button class="btn soft sm" data-ds-crop="portrait">Recortar 4:5</button><button class="btn soft sm" data-ds-crop="wide">Recortar 16:9</button><button class="btn ghost sm" id="dsCropReset">Foto inteira</button></div><div class="design-add"><button class="btn soft sm" data-ds-photo-effect="original">Original</button><button class="btn soft sm" data-ds-photo-effect="mono">Preto e branco</button><button class="btn soft sm" data-ds-photo-effect="warm">Sépia</button><button class="btn soft sm" data-ds-photo-effect="bright">Iluminar</button></div></section>
+        <div class="grid2" data-ds-context="paint"><label class="color-row"><span>Cor</span><input id="dsFill" type="color" value="#312b45"></label><label class="color-row"><span>Contorno</span><input id="dsStroke" type="color" value="#000000"></label></div>
+        <h4>Posição e aparência</h4><div class="grid2"><label class="fld"><span>X (px)</span><input class="input" id="dsX" type="number"></label><label class="fld"><span>Y (px)</span><input class="input" id="dsY" type="number"></label><label class="fld"><span>Largura (px)</span><input class="input" id="dsWidth" type="number" min="1"></label><label class="fld"><span>Altura (px)</span><input class="input" id="dsHeight" type="number" min="1"></label></div><div class="grid2"><label class="fld"><span>Espessura</span><input class="input" id="dsStrokeWidth" type="number" min="0" max="100" value="0"></label><label class="fld"><span>Giro °</span><input class="input" id="dsAngle" type="number" value="0" step="1"></label></div>
         <label class="sl"><span>Opacidade</span><input id="dsOpacity" type="range" min="0" max="100" value="100"><output id="dsOpacityOut">100%</output></label>
-        <div class="design-add"><button class="btn soft sm" id="dsCenterX">Centralizar ↔</button><button class="btn soft sm" id="dsCenterY">Centralizar ↕</button><button class="btn soft sm" id="dsForward">Trazer à frente</button><button class="btn soft sm" id="dsBackward">Enviar atrás</button><button class="btn soft sm" id="dsDuplicate">Duplicar</button><button class="btn soft sm" id="dsDelete">Excluir</button><button class="btn soft sm" id="dsGroup">Agrupar</button><button class="btn soft sm" id="dsUngroup">Desagrupar</button><button class="btn soft sm" id="dsLock">Bloquear/desbloquear</button></div>
+        <div class="design-add"><button class="btn soft sm" data-ds-position="left">Alinhar ←</button><button class="btn soft sm" data-ds-position="right">Alinhar →</button><button class="btn soft sm" data-ds-position="top">Alinhar ↑</button><button class="btn soft sm" data-ds-position="bottom">Alinhar ↓</button><button class="btn soft sm" id="dsCenterX">Centralizar ↔</button><button class="btn soft sm" id="dsCenterY">Centralizar ↕</button><button class="btn soft sm" id="dsForward">Trazer à frente</button><button class="btn soft sm" id="dsBackward">Enviar atrás</button><button class="btn soft sm" id="dsDuplicate">Duplicar</button><button class="btn soft sm" id="dsDelete">Excluir</button><button class="btn soft sm" id="dsGroup">Agrupar</button><button class="btn soft sm" id="dsUngroup">Desagrupar</button><button class="btn soft sm" id="dsLock">Bloquear/desbloquear</button><button class="btn soft sm" id="dsFlipX">Espelhar ↔</button><button class="btn soft sm" id="dsFlipY">Espelhar ↕</button><button class="btn soft sm" id="dsDistributeX">Distribuir ↔</button><button class="btn soft sm" id="dsDistributeY">Distribuir ↕</button></div><h4>Sombra</h4><label class="sl"><span>Intensidade</span><input id="dsShadow" type="range" min="0" max="60" value="0"><output id="dsShadowOut">0</output></label><div class="design-add"></div>
       </div>
-      <h3>Objetos</h3><div id="dsObjects" class="design-object-list"></div>
-      <h3>Salvar e usar</h3>
-      <div class="design-export"><button class="btn primary sm" id="dsSave">Salvar design editável</button><button class="btn soft sm" id="dsOpen">Abrir design</button><button class="btn soft sm" id="dsExportPng">Baixar PNG</button><button class="btn soft sm" id="dsExportPdf">PDF de todas as páginas</button><button class="btn soft sm" id="dsToEditor">Usar no editor / pôster</button></div>
+      </div><section id="dsLayersPanel"><h3>Objetos da página</h3><p class="hint">Ative Selecionar vários para agrupar ou distribuir objetos pelo toque.</p><div id="dsObjects" class="design-object-list"></div>
+      </section><section id="dsExportPanel"><h3>Salvar e exportar</h3>
+      <div class="design-export"><button class="btn primary sm" id="dsSave">Salvar design editável</button><button class="btn soft sm" id="dsOpen">Abrir design</button><button class="btn soft sm" id="dsExportPng">Baixar PNG</button><button class="btn soft sm" id="dsExportSvg">Baixar SVG</button><button class="btn soft sm" id="dsExportPdf">PDF de todas as páginas</button><button class="btn soft sm" id="dsToEditor">Usar no editor / pôster</button></div>
       <p class="hint">Salve em .prismadesign para conservar textos, objetos e páginas editáveis. Ao enviar ao editor de pixels, a página vira uma imagem.</p>
-    </aside>
+    </section></aside><div id="dsPanelBackdrop" class="mobile-panel-backdrop" hidden></div><nav class="design-mobile-dock" aria-label="Ações de criação"><button data-ds-mobile="models">Modelos</button><button data-ds-mobile="elements">Adicionar</button><button data-ds-mobile="properties">Editar</button><button data-ds-mobile="layers">Objetos</button><button data-ds-mobile="export">Salvar</button></nav>
   </main>
 
   <!-- ============ PÔSTER ============ -->
   <main class="workspace poster" id="view-poster" hidden>
     <aside class="pside left" aria-label="Configurações do pôster">
       <section class="pblock">
-        <h2>Papel e impressora</h2>
+        <h2>Papel e impressora</h2><button class="btn primary block" id="pSafeA4">A4 seguro: imagem inteira + abas</button><label class="check"><input id="pSafePrint" type="checkbox" checked> Reservar no mínimo 5 mm para a impressora</label><p class="hint">O tamanho final considera margens e abas; não equivale a quatro A4 inteiras. Se sua impressora exige margem maior, aumente o valor abaixo.</p>
         <label class="fld"><span>Papel</span>
           <select class="input" id="pPaper">
             <option value="A4" selected>A4 — 210 × 297 mm</option>
@@ -363,7 +369,7 @@
         </div>
         <button class="tipchip" id="pOrientTip" hidden></button>
         <label class="sl"><span>Margem branca reservada</span><input type="range" id="pMargin" min="0" max="20" step="0.5" value="5"><output></output></label>
-        <p class="hint">Reserve uma margem maior que a área não imprimível da impressora para os códigos e registros também saírem no papel. No diálogo de impressão, selecione 100% / Tamanho real e desative Ajustar à página; o site não controla o driver da impressora.</p>
+        <p class="hint">Reserve pelo menos a margem não imprimível da sua impressora. Para salvar com abas e guias, use o PDF. Imprima em 100% / Tamanho real e desative Ajustar à página; o site não controla o driver da impressora.</p>
         <label class="sl"><span>Sobreposição para colar</span><input type="range" id="pOverlap" min="0" max="30" step="0.5" value="10"><output></output></label>
       </section>
 
@@ -403,11 +409,11 @@
       </section>
 
       <section class="pblock">
-        <h2>Marcas e montagem</h2>
+        <h2>Marcas e montagem</h2><label class="fld"><span>Tipo de montagem</span><select class="input" id="pGlueStyle"><option value="tabs">Abas brancas fora da arte visível</option><option value="overlap">Imagem repetida na sobreposição (avançado)</option></select></label><p class="hint" id="pPrintLayoutInfo" role="status"></p>
         <label class="check"><input type="checkbox" id="pMarkGlue" checked> Faixas de cola e guias de sobreposição (PDF)</label>
         <label class="check"><input type="checkbox" id="pMarkCut" checked> Marcas de corte nos cantos</label>
         <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) na margem branca</label>
-        <p class="hint">As faixas marcadas ficam à direita e embaixo, onde outra folha vai cobrir. Recorte só a margem branca da folha que vem por cima; não corte a imagem repetida.</p>
+        <p class="hint">As abas de cola ficam à direita e embaixo da parte visível de cada recorte. Elas ficam por baixo da próxima folha. Recorte a margem esquerda/superior da folha que entra por cima até o início da arte.</p>
         <label class="check"><input type="checkbox" id="pGuidePage" checked> Página de instruções com mapa de montagem</label>
         <label class="check"><input type="checkbox" id="pSkipBlank" checked> Pular folhas totalmente em branco</label>
       </section>
@@ -592,6 +598,7 @@
   <script src="js/editor/fx.js"></script>
   <script src="js/editor/layers.js"></script>
   <script src="js/editor/psd.js"></script>
+  <script src="js/editor/productivity.js"></script>
   <script src="js/editor/commands.js"></script>
   <script src="js/editor/panels.js"></script>
   <script src="js/poster/poster-geometry.js"></script>
@@ -602,7 +609,10 @@
   <script src="js/poster/poster-calibration.js"></script>
   <script src="vendor/fabric-6.9.0.min.js"></script>
   <script src="js/design/templates.js"></script>
+  <script src="js/design/template-scenes.js"></script>
   <script src="js/design/design.js"></script>
+  <script src="js/design/design-controls.js"></script>
   <script src="js/app.js"></script>
+  <script src="js/ui/mobile.js"></script>
 </body>
 </html>

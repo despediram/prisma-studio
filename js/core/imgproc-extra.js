@@ -573,7 +573,26 @@ function PrismaImgProcExtra(P) {
     return o;
   }
 
-  return { ADJ, FX, adjust: (img, name, p) => { if (!ADJ[name]) throw new Error('Ajuste desconhecido: ' + name); return ADJ[name](img, p || {}); },
+  // Limites do conteúdo visível, sem confundir branco opaco com transparência.
+  function alphaBounds(img){let x0=img.w,y0=img.h,x1=-1,y1=-1;for(let y=0;y<img.h;y++)for(let x=0;x<img.w;x++)if(img.d[(y*img.w+x)*4+3]>0){x0=Math.min(x0,x);y0=Math.min(y0,y);x1=Math.max(x1,x);y1=Math.max(y1,y);}return x1<0?{x:0,y:0,w:0,h:0}:{x:x0,y:y0,w:x1-x0+1,h:y1-y0+1};}
+  // Recorte clássico de fundo uniforme: só remove cores conectadas às bordas.
+  // Regiões fechadas da mesma cor (por exemplo, o branco de um olho) ficam intactas.
+  function backgroundMask(img,opts={},progress){
+    const {w,h,d}=img,n=w*h;if(n>40000000)throw Error('O recorte de fundo aceita até 40 MP. Redimensione a imagem antes.');
+    const tolerance=clamp(+opts.tolerance||0,0,100)*2.55,corners=[0,w-1,(h-1)*w,n-1];
+    let reference=opts.color?hex(opts.color):null;
+    if(!reference){let best=corners[0],score=-1;for(const i of corners){let count=0;for(const j of corners)if(Math.max(...[0,1,2].map(k=>Math.abs(d[i*4+k]-d[j*4+k])))<=Math.max(tolerance,12))count++;if(count>score){best=i;score=count;}}reference=[d[best*4],d[best*4+1],d[best*4+2]];}
+    const seen=new Uint8Array(n),queue=new Uint32Array(n);let head=0,tail=0;
+    const match=i=>d[i*4+3]===0||Math.max(Math.abs(d[i*4]-reference[0]),Math.abs(d[i*4+1]-reference[1]),Math.abs(d[i*4+2]-reference[2]))<=tolerance;
+    const offer=i=>{if(seen[i])return;seen[i]=1;if(match(i))queue[tail++]=i;};
+    for(let x=0;x<w;x++){offer(x);offer((h-1)*w+x);}for(let y=0;y<h;y++){offer(y*w);offer(y*w+w-1);}
+    const keep=new Uint8ClampedArray(n);keep.fill(255);
+    while(head<tail){const i=queue[head++],x=i%w;keep[i]=0;if(x)offer(i-1);if(x<w-1)offer(i+1);if(i>=w)offer(i-w);if(i<n-w)offer(i+w);if(progress&&(head&65535)===0)progress(.1+.7*head/n);}
+    const mask=opts.softness>0?featherMask(keep,w,h,clamp(+opts.softness,0,4)):keep,out=make(w,h);
+    for(let i=0;i<n;i++){const k=i*4;out.d[k]=out.d[k+1]=out.d[k+2]=255;out.d[k+3]=mask[i];}if(progress)progress(1);return out;
+  }
+
+  return { alphaBounds, backgroundMask, ADJ, FX, adjust: (img, name, p) => { if (!ADJ[name]) throw new Error('Ajuste desconhecido: ' + name); return ADJ[name](img, p || {}); },
     fx: (img, name, p, prog) => { if (FX[name]) return FX[name](img, p || {}, prog); return P.filter(img, name, p && p.__amount != null ? p.__amount : 100, p || {}); },
     superResolve, floodMask, featherMask, growMask, redEye };
 }

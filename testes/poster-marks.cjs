@@ -7,7 +7,7 @@ const {chromium}=require('playwright'),path=require('path'),fs=require('fs');
  const result=await p.evaluate(async()=>{
   const assert=(v,m)=>{if(!v)throw Error(m)},P=PS.poster,source=PS.canvas(410,584),x=PS.ctx(source);
   x.fillStyle='#4e9dc9';x.fillRect(0,0,410,584);x.fillStyle='#ed467f';x.fillRect(120,160,160,240);x.fillStyle='#fff';x.fillRect(190,270,60,50);
-  PS.doc.load(source,'Guias');Object.assign(P.cfg,{paper:'A4',paperW:210,paperH:297,orient:'portrait',mode:'grid',cols:2,rows:2,margin:0,overlap:10,fit:'cover',zoom:1,panX:0,panY:0,border:0,dpi:72,enhance:0,lift:0,format:'png',guidePage:false,markGlue:true,markCut:true,markLabels:true,skipBlank:false,pdfOrient:'auto'});
+  PS.doc.load(source,'Guias');Object.assign(P.cfg,{paper:'A4',paperW:210,paperH:297,orient:'portrait',mode:'grid',cols:2,rows:2,margin:0,safePrint:false,glueStyle:'overlap',overlap:10,fit:'cover',zoom:1,panX:0,panY:0,border:0,dpi:72,enhance:0,lift:0,format:'png',guidePage:false,markGlue:true,markCut:true,markLabels:true,skipBlank:false,pdfOrient:'auto'});
   await PS.setMode('poster');P.update();const g=P.geometry;
   assert(g.finalW===410&&g.finalH===584,'Medidas mudaram');
   assert(g.tiles.map(t=>PS.posterGlueGuides(g,t).length).join(',')==='2,1,1,0','Faixas das quatro folhas');

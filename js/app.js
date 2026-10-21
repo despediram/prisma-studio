@@ -23,7 +23,7 @@
     $('#view-editor').hidden = m !== 'editor';
     $('#view-poster').hidden = m !== 'poster';
     $('#view-design').hidden = m !== 'design';
-    if(m==='design'){PS.fx.close();PS.design.activate();}
+    if(m==='design'){PS.fx.close();await PS.design.activate();}
     if (m === 'poster') { PS.fx.close(); await PS.poster.refreshSource(); }
     else PS.view.render();
     syncTop();

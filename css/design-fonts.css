@@ -1,0 +1,7 @@
+/* Prisma Studio — fontes locais OFL 1.1. Sem requisições a provedores externos. */
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/dm-sans-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'DM Sans';font-style:normal;font-weight:700;font-display:swap;src:url('../vendor/fonts/dm-sans-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/cormorant-garamond-latin-400-normal.woff2') format('woff2')}
+@font-face{font-family:'Cormorant Garamond';font-style:normal;font-weight:700;font-display:swap;src:url('../vendor/fonts/cormorant-garamond-latin-700-normal.woff2') format('woff2')}
+@font-face{font-family:'Bebas Neue';font-style:normal;font-weight:400;font-display:swap;src:url('../vendor/fonts/bebas-neue-latin-400-normal.woff2') format('woff2')}
+.design-workspace{font-family:'DM Sans',Arial,sans-serif}.design-heading h2{font-family:'Cormorant Garamond',Georgia,serif}

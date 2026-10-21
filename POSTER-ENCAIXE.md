@@ -82,3 +82,7 @@ Arquivos: `js/poster/poster-marks.js` (novo, geometria e desenho compartilhados)
 O teste monta quatro folhas e compara 239.440 pixels da composição marcada com a composição limpa: nenhuma guia aparece no resultado. O teste de emendas anterior continua aprovado com 1.964.550 pixels comparados. PDFs revisados em retrato, paisagem convertida para retrato e com guias desligadas. O PDF recebido também foi corrigido sem redimensionar ou recomprimir as imagens; seus quatro fluxos de imagem têm hash idêntico ao original.
 
 O exemplo 2 × 2 em A4 com sobreposição de 10 mm mede 410 × 584 mm com margem zero. Com 5 mm de margem, a mesma grade mede 390 × 564 mm. Para conservar 410 × 584 mm com essa margem, use o modo por tamanho (sem travar proporção se quiser os dois valores exatos); serão necessárias 3 × 3 folhas. O programa não altera essa escolha silenciosamente.
+
+## Atualização do padrão A4 seguro
+
+A entrega atual separa o núcleo visível da imagem e as abas brancas no PDF. O padrão agora conserva a imagem inteira e reserva pelo menos 5 mm para a impressora. As configurações antigas migram uma vez para esse padrão; a alternativa com imagem repetida continua disponível. Veja [a revisão de Design, celular e A4](ATUALIZACAO-DESIGN-MOBILE.md) para geometria, instruções e a simulação de impressão de quatro folhas.

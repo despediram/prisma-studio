@@ -10,7 +10,7 @@ A biblioteca Fabric.js 6.9.0 foi incorporada localmente (MIT) para transformaç�
 
 | Arquivo | Responsabilidade |
 | --- | --- |
-| `js/design/templates.js` | Formatos com medidas físicas e oito modelos autorais editáveis. |
+| `js/design/templates.js` | Formatos com medidas físicas e 12 modelos autorais editáveis. |
 | `js/design/design.js` | Objetos, propriedades, páginas, histórico local, persistência e exportação. |
 | `vendor/fabric-6.9.0.min.js` | Motor Canvas de objetos, disponível offline. |
 | `licencas/fabric-6.9.0-LICENSE.txt` | Licença e atribuições da dependência. |

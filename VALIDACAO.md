@@ -156,3 +156,14 @@ A impressão física não foi executada: os cálculos, pixels repetidos, medidas
 ## 8. Faixas de cola sem margem branca
 
 Testes `poster.cjs` e `poster-marks.cjs` aprovados, sem erros de página. Guias testadas com margens 0 / 0,5 / 1 / 5 mm, orientações retrato/paisagem, vizinhas omitidas e guias desligadas. Uma montagem de 410 × 584 pixels conserva exatamente todos os 239.440 pixels da arte limpa após cobrir as faixas. PDF revisado visualmente por renderização Poppler/MuPDF. O PDF do usuário conserva quatro folhas A4 e todos os hashes dos fluxos de imagem; somente vetores/textos de cola foram adicionados.
+
+
+## 9. Design, celular e A4 com abas fora da arte — 21/10/2026
+
+Suíte completa `PRISMA_CHROMIUM=/tmp/prisma-chromium node testes/run.cjs` concluída com código 0: history, paint, preview, toolbar, regression, poster, poster-marks, poster-safe, design e studio-upgrade. A aplicação foi aberta por `file://`, com worker/fallback e recursos locais, sem erros de página nos cenários exercitados.
+
+Os novos testes conferiram 12 miniaturas distintas, 60 combinações de modelo/formato, controles contextuais, recorte de foto persistido, SVG, máscara reversível, ilha branca fechada preservada, alinhamento sem pixels no histórico e quatro viewports móveis com seleção/arraste por toque. A regressão abriu/exportou projeto, PSD e PDF e aplicou 39 filtros e 15 ajustes.
+
+Na montagem segura A4, 219.960 pixels coincidiram após simular bordas não imprimíveis de 5 mm, recorte e colagem de quatro folhas com abas opacas. A grade útil foi de 390 × 564 mm e a imagem retrato 1:2 ficou inteira em 282 × 564 mm. O teste anterior também comparou 1.964.550 pixels entre pares de folhas. PDFs em retrato e com rotação foram renderizados para inspeção; as páginas têm tamanho A4. Não houve impressão física nem medição em impressora real nesta etapa.
+
+Inventário de arquivos, mudanças de comportamento, fontes e limitações em [ATUALIZACAO-DESIGN-MOBILE.md](ATUALIZACAO-DESIGN-MOBILE.md).

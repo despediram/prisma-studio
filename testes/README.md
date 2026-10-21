@@ -33,3 +33,6 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 - `design.cjs`: oito modelos, reabertura de objetos/folhas/bloqueios, desfazer/refazer, agrupamento sem deslocamento, exportações PNG/PDF A5 de duas páginas, rejeição de imagens externas, troca de formato, envio ao Editor e tela de 390 px. Verifica console e ausência de rede.
 
 - `poster-marks.cjs`: faixas de cola com margem zero, vizinhas omitidas, orientação, opção desligada, dimensões e montagem comparada pixel a pixel sem guias aparentes. PDFs temporários para inspeção externa são gravados em `PRISMA_MARKS_OUTPUT` ou na pasta temporária do sistema.
+
+- `poster-safe.cjs`: 219.960 pixels conferidos após simular impressão em A4 com 5 mm não imprimíveis, abas brancas, recorte e montagem; proporção da imagem inteira e PDFs retrato/rotacionado.
+- `studio-upgrade.cjs`: miniaturas únicas, 60 cenas/formato, filtros de catálogo, tipografia, bloqueio, distribuição, foto com recorte/efeito e reabertura, SVG, recorte de fundo por máscara e igualdade worker/fallback. Confere quatro viewports e seleção/arraste por toque.

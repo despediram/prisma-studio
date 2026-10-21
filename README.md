@@ -6,11 +6,11 @@ Editor de imagens, criador de convites e montador de pôsteres. JavaScript puro,
 
 ## Três áreas de trabalho
 
-- **Editor:** camadas, máscaras, seleções, texto, pincel com fluxo/espaçamento, filtros, ajustes e arquivos PSD/Prisma. Histórico por comandos e diferenças em blocos; prévia WebGL com fallback no worker.
-- **Design:** oito modelos autorais de convites/cartões, texto e formas editáveis, fotos incorporadas, alinhamento, agrupamento, bloqueio, ordem dos objetos e até 40 páginas. Salva `.prismadesign`; exporta PNG e PDF; envia uma página ao Editor para tratamentos e montagem de pôster.
-- **Pôster:** divisão em milímetros, margens, faixas sobrepostas com pixels idênticos, montagem virtual das folhas, calibração da impressão, PDF e PNGs.
+- **Editor:** camadas, máscaras, seleções, texto, alinhamento do conteúdo, máscara para remover fundo uniforme, pincel com fluxo/espaçamento, filtros, ajustes e arquivos PSD/Prisma. Histórico por comandos e diferenças em blocos; prévia WebGL com fallback no worker.
+- **Design:** 12 modelos autorais de convites/cartões, texto e formas editáveis, fotos incorporadas, recorte/efeitos de fotos, tipografia, sombra, guias, alinhamento/distribuição, agrupamento, bloqueio, ordem dos objetos e até 40 páginas. Salva `.prismadesign`; exporta PNG, SVG e PDF; envia uma página ao Editor para tratamentos e montagem de pôster.
+- **Pôster:** divisão em milímetros, margens, faixas sobrepostas com pixels idênticos, montagem virtual das folhas, calibração da impressão, imagem inteira com abas brancas no modo A4 seguro, PDF e PNGs.
 
-[Manual completo](LEIA-ME.md) · [Encaixe dos pôsteres](POSTER-ENCAIXE.md) · [Mudanças desta entrega](DESIGN-E-GITHUB.md) · [Validação](VALIDACAO.md)
+[Manual completo](LEIA-ME.md) · [Encaixe dos pôsteres](POSTER-ENCAIXE.md) · [Mudanças desta entrega](DESIGN-E-GITHUB.md) · [Validação](VALIDACAO.md) · [Design, celular e A4 seguro](ATUALIZACAO-DESIGN-MOBILE.md)
 
 ## Uso do Design
 

@@ -847,6 +847,8 @@ function PrismaWorkerMain(self) {
         case 'fx': res = E.fx(args.img, args.name, args.params, progress); break;
         case 'superResolve': res = E.superResolve(args.img, args.w, args.h, args.strength, progress); break;
         case 'floodMask': res = E.floodMask(args.img, args.x, args.y, args.tolerance, args.contiguous, args.antialias); break;
+        case 'alphaBounds': res = E.alphaBounds(args.img); break;
+        case 'backgroundMask': res = E.backgroundMask(args.img,args.opts,progress); break;
         case 'redEye': res = E.redEye(args.img, args.x, args.y, args.radius, args.strength); break;
         default: throw new Error('Operação desconhecida: ' + op);
       }

@@ -139,6 +139,7 @@
             colorMask: () => P.colorMask(a.img, a.x, a.y, a.tolerance, a.contiguous, a.feather), trimBounds: () => P.trimBounds(a.img, a.tol),
             adjust: () => E.adjust(a.img, a.name, a.params), fx: () => E.fx(a.img, a.name, a.params, onProgress),
             superResolve: () => E.superResolve(a.img, a.w, a.h, a.strength, onProgress), floodMask: () => E.floodMask(a.img, a.x, a.y, a.tolerance, a.contiguous, a.antialias),
+            alphaBounds: () => E.alphaBounds(a.img), backgroundMask: () => E.backgroundMask(a.img,a.opts,onProgress),
             redEye: () => E.redEye(a.img, a.x, a.y, a.radius, a.strength)
           };
           resolve(map[op]());

@@ -7,14 +7,14 @@
   const DEFAULTS = {
     paper: 'A4', paperW: 210, paperH: 297, orient: 'portrait', margin: 5, overlap: 10,
     mode: 'grid', cols: 2, rows: 2, targetW: 600, targetH: 0, lock: true, lockFrom: 'w', scaleDpi: 100,
-    fit: 'cover', zoom: 1, panX: 0, panY: 0,
+    fit: 'contain', safePrint: true, glueStyle: 'tabs', zoom: 1, panX: 0, panY: 0,
     markGlue: true, markCut: true, markLabels: true, guidePage: true, skipBlank: true,
     dpi: 300, format: 'png', pdfOrient: 'auto', view: 'plan', theme: '',
     enhance: 45, lift: 0, border: 0, calX: 100, calY: 100, loupe: null
   };
   let cfg = Object.assign({}, DEFAULTS);
-  try { const saved=JSON.parse(localStorage.getItem('prisma.poster') || '{}'); Object.assign(cfg,saved,{panX:0,panY:0,zoom:1,format:saved.precisionGrid===1?saved.format||'png':'png'}); } catch (_) { /* sem armazenamento */ }
-  cfg.precisionGrid=1;
+  try { const saved=JSON.parse(localStorage.getItem('prisma.poster') || '{}'); Object.assign(cfg,saved,{panX:0,panY:0,zoom:1,format:saved.precisionGrid===1?saved.format||'png':'png'}); if(saved.mountingVersion!==2){cfg.safePrint=true;cfg.glueStyle='tabs';cfg.margin=Math.max(5,cfg.margin);cfg.fit='contain';cfg.markGlue=true;} } catch (_) { /* sem armazenamento */ }
+  cfg.precisionGrid=1;cfg.mountingVersion=2;
   const save = () => { try { localStorage.setItem('prisma.poster', JSON.stringify(cfg)); } catch (_) { /* ignora */ } };
 
   const src = { canvas: null, preview: null, key: '' };
@@ -56,7 +56,7 @@
     PS.$$('[data-mode-panel]').forEach(p => { p.hidden = p.dataset.modePanel !== cfg.mode; });
     $('#pCols').value = cfg.cols; $('#pRows').value = cfg.rows;
     $('#pTargetW').value = +(cfg.targetW / 10).toFixed(3); $('#pTargetLock').checked = cfg.lock;
-    $('#pScaleDpi').value = cfg.scaleDpi; $('#pMargin').value = cfg.margin; $('#pOverlap').value = cfg.overlap;
+    $('#pSafePrint').checked=cfg.safePrint;$('#pGlueStyle').value=cfg.glueStyle;$('#pScaleDpi').value = cfg.scaleDpi; $('#pMargin').value = cfg.margin; $('#pOverlap').value = cfg.overlap;
     $('#pMarkGlue').checked = cfg.markGlue; $('#pMarkCut').checked = cfg.markCut; $('#pMarkLabels').checked = cfg.markLabels;
     $('#pGuidePage').checked = cfg.guidePage; $('#pSkipBlank').checked = cfg.skipBlank;
     $('#pDpi').value = cfg.dpi; $('#pFormat').value = cfg.format; $('#pPdfOrient').value = cfg.pdfOrient;
@@ -66,7 +66,7 @@
   }
   initControls();
 
-  const change = (k, v, opts = {}) => { cfg[k] = v; if (opts.resetPan) { cfg.panX = 0; cfg.panY = 0; } save(); update(); };
+  const change = (k, v, opts = {}) => { cfg[k] = v;if(cfg.safePrint&&cfg.margin<5){cfg.margin=5;$('#pMargin').value=5;PS.toast('Modo A4 seguro reserva pelo menos 5 mm para a impressora.','info');} if (opts.resetPan) { cfg.panX = 0; cfg.panY = 0; } save(); update(); };
   $('#pPaper').addEventListener('change', e => { cfg.paper = e.target.value; $('#pCustomPaper').hidden = cfg.paper !== 'custom'; change('paper', cfg.paper); });
   $('#pPaperW').addEventListener('change', e => change('paperW', PS.clamp(+e.target.value || 210, 50, 2000)));
   $('#pPaperH').addEventListener('change', e => change('paperH', PS.clamp(+e.target.value || 297, 50, 2000)));
@@ -86,6 +86,9 @@
   $('#pTargetH').addEventListener('input', e => { cfg.lockFrom = 'h'; cfg.targetH = (+e.target.value || 0) * 10; syncTargetFields(); change('targetH', cfg.targetH); });
   $('#pTargetLock').addEventListener('change', e => { cfg.lock = e.target.checked; syncTargetFields(); change('lock', cfg.lock, { resetPan: true }); });
   const bindR = (id, key, fmt, k = 1) => PS.bindRange($('#' + id), (v) => change(key, v * k), fmt);
+  $('#pSafePrint').addEventListener('change',e=>change('safePrint',e.target.checked));
+  $('#pGlueStyle').addEventListener('change',e=>change('glueStyle',e.target.value));
+  $('#pSafeA4').addEventListener('click',()=>{Object.assign(cfg,{paper:'A4',paperW:210,paperH:297,orient:'portrait',mode:'grid',safePrint:true,margin:5,overlap:10,fit:'contain',glueStyle:'tabs',zoom:1,panX:0,panY:0,border:0,markGlue:true,markCut:true,markLabels:true});initControls();save();update();PS.toast('A4 seguro: imagem inteira, margem de 5 mm e abas brancas de 10 mm. Confira o tamanho final.','success');});
   bindR('pMargin', 'margin', v => `${PS.fmt(v, 1)} mm`);
   bindR('pOverlap', 'overlap', v => `${PS.fmt(v, 1)} mm`);
   bindR('pScaleDpi', 'scaleDpi', v => `${v} DPI`);
@@ -148,6 +151,8 @@
     if (!has) { g = null; drawPreview(); $('#pSheets').innerHTML = ''; resetStats(); renderSteps(); updatePrompt(); return; }
     if (cfg.mode === 'size') syncTargetFields();
     g = PS.posterGeometry(currentCfg(), src.canvas.width, src.canvas.height);
+    $('#pMargin').value=g.margin;$('#pMargin').parentElement.querySelector('output').textContent=PS.fmt(g.margin,1)+' mm';$('#pOverlap').value=g.ov;$('#pOverlap').parentElement.querySelector('output').textContent=PS.fmt(g.ov,1)+' mm';zoomCtl.set(cfg.zoom*100);
+    $('#pPrintLayoutInfo').textContent=`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de margem da impressora · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
     $('#pZoomRow').querySelector('input').disabled = false;
     $('#pCanvas').classList.toggle('draggable', g.canPan);
     // estatísticas
@@ -162,6 +167,7 @@
     $('#sDpiBar').style.width = `${q.pct * 100}%`; $('#sDpiBar').style.background = q.color;
     const notes = [...g.warnings];
     if(g.margin<3)notes.unshift('Margem menor que 3 mm: exige impressão sem bordas. Para impressora comum, use 5 mm; o tamanho ou a quantidade de folhas será recalculado.');
+    if(cfg.zoom>1&&cfg.fit==='contain')notes.unshift('Zoom acima de 100% pode cortar a imagem. Use A4 seguro para preservar a arte inteira.');
     if(g.ov===0&&cfg.markGlue)notes.unshift('Sobreposição em 0 mm: não há faixa para cola. Aumente Sobreposição para colar (recomendado: 10 mm).');
     if (g.effDpi < 150) notes.push(`Imagem com pouca resolução para esse tamanho (${q.note}).`);
     if (cfg.fit === 'cover' && (g.img.w - g.artRect.w > 1 || g.img.h - g.artRect.h > 1)) notes.push('Parte da imagem fica fora — arraste para enquadrar.');
@@ -208,12 +214,13 @@
       `Organize as folhas pelo código: a letra é a linha (A = topo) e o número é a coluna (1 = esquerda).`
     ];
     if (g.ov > 0) {
-      items.push(`Nas folhas com vizinha <strong>à esquerda ou acima</strong>, corte só a margem branca desses lados${cfg.markCut ? ', seguindo as marcas de corte' : ''}. <strong>Não corte a faixa de imagem repetida.</strong>`);
-      items.push(`Monte da esquerda para a direita e de cima para baixo: deite cada folha por cima da anterior, alinhando a borda cortada ao <strong>início da faixa marcada para cola</strong>, sem apagar ou saltar a parte repetida da imagem. A faixa de ${PS.fmt(g.ov, 1)} mm fica escondida — passe cola em bastão ou fita dupla face nela.`);
+      items.push(`Nas folhas com vizinha <strong>à esquerda ou acima</strong>, corte só a margem branca desses lados${cfg.markCut ? ', seguindo as marcas de corte' : ''}. <strong>${cfg.glueStyle==='tabs'?'Não corte as abas brancas à direita/embaixo da folha que fica por baixo.':'Não corte a faixa de imagem repetida.'}</strong>`);
+      items.push(`Monte da esquerda para a direita e de cima para baixo: deite cada folha por cima da anterior, alinhando a borda cortada ao <strong>início da faixa marcada para cola</strong>, fazendo o fim da arte de uma folha coincidir com o início da arte da próxima. ${cfg.glueStyle==='tabs'?'A aba branca':'A faixa de imagem repetida'} de ${PS.fmt(g.ov, 1)} mm fica escondida — passe cola em bastão ou fita dupla face nela.`);
     } else {
       items.push('Corte a margem branca de todos os lados que encostam em outra folha.');
       items.push('Encoste as bordas sem sobrepor e una por trás com fita adesiva.');
     }
+    if(cfg.safePrint)items.push('O modo seguro conserva 5 mm livres nas bordas de cada A4. Recorte as margens esquerda/superior das folhas internas até o início da arte; deixe as abas brancas da folha anterior por baixo.');
     items.push('Confira um detalhe da imagem nos dois extremos de cada emenda antes de colar. Não use Ajustar à página: a escala deve ser idêntica em todas as folhas.');
     items.push('Por fim, apare a margem externa e qualquer sobra fora do contorno azul do tamanho final.');
     ol.innerHTML = items.map(i => `<li>${i}</li>`).join('');
@@ -314,11 +321,12 @@
         ctx.shadowColor = 'rgba(0,0,0,.35)'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 3; ctx.fillStyle = '#fff';
         ctx.fillRect(px, py, g.pageW * s, g.pageH * s); ctx.shadowColor = 'transparent';
         const offX = px + (g.margin - t.x0) * s, offY = py + (g.margin - t.y0) * s;
-        const cell = { x: t.x0, y: t.y0, w: g.cw, h: g.ch };
+        const core=cfg.glueStyle==='tabs'?PS.posterCoreRect(g,t):{w:g.cw,h:g.ch};
+        const cell = { x: t.x0, y: t.y0, w: core.w, h: core.h };
         const inter = { x: Math.max(cell.x, vis.x), y: Math.max(cell.y, vis.y) };
         inter.w = Math.min(cell.x + cell.w, vis.x + vis.w) - inter.x; inter.h = Math.min(cell.y + cell.h, vis.y + vis.h) - inter.y;
         if (inter.w > 0 && inter.h > 0) drawArt(inter, offX, offY);
-        if(cfg.markGlue)PS.posterDrawGlueCanvas(ctx,g,t,px,py,s);
+        if(cfg.markGlue)PS.posterDrawGlueCanvas(ctx,g,t,px,py,s,undefined,cfg.glueStyle);
         ctx.setLineDash([]); ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.strokeRect(px + g.margin * s, py + g.margin * s, g.cw * s, g.ch * s);
         ctx.restore();
         badge(ctx, t.code, px + g.pageW * s / 2, py + g.pageH * s / 2, blank);
@@ -383,6 +391,8 @@
     cfg.panX = Math.abs(slackX) > 0.01 ? PS.clamp(pdrag.px - 2 * dx / slackX, -1, 1) : 0;
     cfg.panY = Math.abs(slackY) > 0.01 ? PS.clamp(pdrag.py - 2 * dy / slackY, -1, 1) : 0;
     g = PS.posterGeometry(currentCfg(), src.canvas.width, src.canvas.height);
+    $('#pMargin').value=g.margin;$('#pMargin').parentElement.querySelector('output').textContent=PS.fmt(g.margin,1)+' mm';$('#pOverlap').value=g.ov;$('#pOverlap').parentElement.querySelector('output').textContent=PS.fmt(g.ov,1)+' mm';zoomCtl.set(cfg.zoom*100);
+    $('#pPrintLayoutInfo').textContent=`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de margem da impressora · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
     drawPreview();
   });
   const endDrag = () => { if (pdrag) { pdrag = null; pc.classList.remove('dragging'); save(); update(); } };
@@ -511,6 +521,7 @@
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
     const pdf = await PDFDocument.create();
     pdf.setTitle(`Pôster ${PS.fmt(g.finalW / 10, 2)} × ${PS.fmt(g.finalH / 10, 2)} cm`);
+    pdf.setSubject(`Montagem ${cfg.glueStyle||'overlap'}; margem ${g.margin} mm; sobreposição ${g.ov} mm; escala 100%; arte ${g.finalW} x ${g.finalH} mm.`);
     pdf.setCreator('Prisma Studio'); pdf.setProducer('Prisma Studio (pdf-lib)');
     const font = await pdf.embedFont(StandardFonts.Helvetica), bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     const tiles = g.tiles.filter(t => !(t.blank && cfg.skipBlank));
@@ -539,12 +550,13 @@
       // O raster tem pixels extras de cobertura. Recorta no PDF sem esticá-lo:
       // cada pixel repetido cai na MESMA coordenada física nas duas folhas.
       const {pushGraphicsState,popGraphicsState,rectangle,clip,endPath}=window.PDFLib;
-      const I=physical.image,C=physical.clip;
+      const I=physical.image;let C=physical.clip;
+      if(cfg.glueStyle==='tabs'){const core=PS.posterCoreRect(g,t,tiles);C=rotate?{x:g.pageH-core.y-core.h,y:core.x,w:core.h,h:core.w}:core;}
       page.pushOperators(pushGraphicsState(),rectangle(C.x*K,(PH-C.y-C.h)*K,C.w*K,C.h*K),clip(),endPath());
       page.drawImage(im,{x:I.x*K,y:(PH-I.y-I.h)*K,width:I.w*K,height:I.h*K});
       page.pushOperators(popGraphicsState());
       // Guias na área repetida, totalmente coberta pela próxima folha.
-      if(cfg.markGlue)PS.posterDrawGluePdf(page,g,t,{P2,font:bold,rotate,tiles});
+      if(cfg.markGlue)PS.posterDrawGluePdf(page,g,t,{P2,font:bold,rotate,tiles,style:cfg.glueStyle});
       // marcas de corte (vetoriais, na margem)
       if (cfg.markCut && m >= 1.5) {
         const L = Math.min(m - 0.6, 5), gap = 0.6, th = 0.35;
@@ -616,7 +628,7 @@
       'A letra do código é a linha (A = topo) e o número é a coluna (1 = esquerda).',
       g.ov > 0 ? 'Nas folhas que têm vizinha à esquerda ou acima, corte a margem branca desses lados pelas marcas de corte.' : 'Corte a margem branca de todos os lados que encostam em outra folha.',
       g.ov > 0 ? `Monte da esquerda para a direita e de cima para baixo. Deite cada folha por cima da anterior, alinhando a borda cortada ao inicio da faixa marcada para cola; a faixa de ${PS.fmt(g.ov, 1)} mm fica escondida. Cole com cola em bastão ou fita dupla face.` : 'Encoste as bordas sem sobrepor e una as folhas por trás com fita.',
-      'Nao corte a faixa de imagem repetida. Confira os detalhes nos dois extremos antes de colar; apare as sobras externas no fim.'
+      'Nao corte as abas da folha que fica por baixo. Recorte a margem branca esquerda/superior da folha que entra por cima ate o inicio da arte. Confira os detalhes nos dois extremos antes de colar; apare as sobras externas no fim.'
     ];
     const maxW = (W - 2 * m - 8) * K;
     steps.forEach((st, i) => {

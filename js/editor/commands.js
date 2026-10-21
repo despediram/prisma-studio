@@ -362,6 +362,9 @@
       '-', ['Melhorar qualidade…', '', () => PS.panels.showTab('enhance'), hasDoc]
     ]],
     ['Camada', [
+      ['Alinhar conteúdo', '', null, hasDoc, PS.layerProductivityMenu()],
+      ['Remover fundo uniforme…', '', PS.backgroundDialog, hasDoc],
+      '-',
       ['Nova camada', K('Ctrl+Shift+N'), () => doc.addLayer(), hasDoc], ['Duplicar camada', '', () => doc.duplicateLayer(), hasDoc],
       ['Camada via cópia', K('Ctrl+J'), () => PS.layerViaCopy(false), hasDoc], ['Camada via recorte', K('Ctrl+Shift+J'), () => PS.layerViaCopy(true), hasSel],
       ['Excluir camada', '', () => doc.deleteLayer(), hasDoc],
