@@ -28,7 +28,7 @@
     let pw = cfg.paperW, ph = cfg.paperH;
     if ((cfg.orient === 'landscape') !== (pw > ph)) [pw, ph] = [ph, pw];
     g.pageW = pw; g.pageH = ph;
-    g.margin = PS.clamp(cfg.safePrint===true?Math.max(5,cfg.margin):cfg.margin, 0, Math.min(pw, ph) / 4);
+    g.margin = PS.clamp(cfg.margin, 0, Math.min(pw, ph) / 4);
     g.cw = pw - 2 * g.margin; g.ch = ph - 2 * g.margin;
     g.ov = PS.clamp(cfg.overlap, 0, Math.min(g.cw, g.ch) / 3);
     if (g.ov !== cfg.overlap) g.warnings.push('A sobreposição foi limitada a um terço da área útil da folha.');

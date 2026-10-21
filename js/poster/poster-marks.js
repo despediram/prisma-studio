@@ -24,7 +24,7 @@
    const start=P2(q.x+(vertical?0:inset),q.y+(vertical?inset:0)),end=vertical?P2(q.x,q.y+q.h-inset):P2(q.x+q.w-inset,q.y);
    page.drawLine({start,end,thickness:Math.min(.6,g.ov*K*.25),dashArray:[3,2],color:black});
    if(g.ov<2.5){page.pushOperators(popGraphicsState());continue;}
-   const label=`${q.from} > ${q.to} | COLE ${q.to} SOBRE ESTA FAIXA`,length=(vertical?q.h:q.w)-4;
+   const label=`${q.from} > ${q.to} | ALINHE ${q.to} NA LINHA: AS DUAS PONTAS`,length=(vertical?q.h:q.w)-4;
    const size=Math.min(7,g.ov*K*.45,length*K/font.widthOfTextAtSize(label,1));
    const labelW=font.widthOfTextAtSize(label,size)/K;
    const p=vertical?P2(q.x+q.w*.62,q.y+(q.h+labelW)/2):P2(q.x+(q.w-labelW)/2,q.y+q.h*.62);
@@ -40,7 +40,7 @@
    const inset=Math.min(.35,g.ov*.3),vertical=q.axis==='vertical';
    ctx.strokeStyle='#222';ctx.lineWidth=Math.min(.22,g.ov*.25)*s;ctx.setLineDash([1*s,.7*s]);ctx.beginPath();ctx.moveTo(ox+(q.x+(vertical?0:inset))*s,oy+(q.y+(vertical?inset:0))*s);ctx.lineTo(ox+(vertical?q.x:q.x+q.w-inset)*s,oy+(vertical?q.y+q.h-inset:q.y)*s);ctx.stroke();ctx.setLineDash([]);
    if(g.ov<2.5){ctx.restore();continue;}
-   const label=`${q.from} > ${q.to} | COLE ${q.to} SOBRE ESTA FAIXA`,size=Math.min(2.47,g.ov*.45)*s;
+   const label=`${q.from} > ${q.to} | ALINHE ${q.to} NA LINHA: AS DUAS PONTAS`,size=Math.min(2.47,g.ov*.45)*s;
    ctx.save();ctx.fillStyle='#222';ctx.font=`${size}px Arial`;ctx.textAlign='center';ctx.textBaseline='middle';
    if(vertical){ctx.translate(ox+(q.x+q.w*.55)*s,oy+(q.y+q.h/2)*s);ctx.rotate(-Math.PI/2);ctx.fillText(label,0,0,(q.h-4)*s);}else ctx.fillText(label,ox+(q.x+q.w/2)*s,oy+(q.y+q.h*.55)*s,(q.w-4)*s);ctx.restore();ctx.restore();
   }

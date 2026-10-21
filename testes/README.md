@@ -36,3 +36,5 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 
 - `poster-safe.cjs`: 219.960 pixels conferidos após simular impressão em A4 com 5 mm não imprimíveis, abas brancas, recorte e montagem; proporção da imagem inteira e PDFs retrato/rotacionado.
 - `studio-upgrade.cjs`: miniaturas únicas, 60 cenas/formato, filtros de catálogo, tipografia, bloqueio, distribuição, foto com recorte/efeito e reabertura, SVG, recorte de fundo por máscara e igualdade worker/fallback. Confere quatro viewports e seleção/arraste por toque.
+
+- `poster-bleed.cjs`: sangria sem moldura, abas fora do núcleo, zero mm sem imposição de 5 mm, três margens/orientações e PDFs A4 reais para inspeção. Use `PRISMA_BLEED_OUTPUT` para salvar os PDFs/referências em um diretório de QA. A montagem em coordenadas inteiras compara todos os bytes; a variante fracionária verifica exportação e escala física sem arredondar as emendas.

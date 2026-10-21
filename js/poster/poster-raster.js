@@ -25,9 +25,7 @@
       const job=(async()=>{
         const ppm=dpi/25.4,size=BLOCK+2*HALO,ox=bx*BLOCK-HALO,oy=by*BLOCK-HALO;
         const c=PS.canvas(size,size),ctx=PS.ctx(c);ctx.fillStyle='#fff';ctx.fillRect(0,0,size,size);
-        ctx.save();ctx.beginPath();ctx.rect(g.visible.x*ppm-ox,g.visible.y*ppm-oy,g.visible.w*ppm,g.visible.h*ppm);ctx.clip();
-        ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
-        ctx.drawImage(source,g.img.x*ppm-ox,g.img.y*ppm-oy,g.img.w*ppm,g.img.h*ppm);ctx.restore();
+        PS.posterDrawSource(ctx,source,g,{x:ox/ppm,y:oy/ppm,w:size/ppm,h:size/ppm},-ox,-oy,ppm,cfg.bleed);
         let img=PS.getImg(c);
         // Nitidez local no mesmo raster de saída. O halo não aparece na arte.
         // Evita que upscalers por folha criem fases/contornos diferentes na emenda.

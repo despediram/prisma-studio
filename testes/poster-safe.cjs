@@ -6,7 +6,7 @@ const{chromium}=require('playwright'),path=require('path'),fs=require('fs');
 const result=await p.evaluate(async()=>{
  const P=PS.poster,ok=(v,m)=>{if(!v)throw Error(m)},source=PS.canvas(160,320),x=PS.ctx(source),d=x.createImageData(160,320);
  for(let y=0;y<320;y++)for(let xx=0;xx<160;xx++){const n=(y*160+xx)*4;d.data[n]=xx*13%256;d.data[n+1]=y*7%256;d.data[n+2]=(xx+y)*11%256;d.data[n+3]=255;}x.putImageData(d,0,0);PS.doc.load(source,'Grade de encaixe');
- Object.assign(P.cfg,{mode:'grid',paper:'A4',paperW:210,paperH:297,cols:2,rows:2,orient:'portrait',safePrint:true,margin:0,overlap:10,glueStyle:'tabs',fit:'contain',zoom:1,panX:0,panY:0,border:0,dpi:72,enhance:0,lift:0,format:'png',skipBlank:false,guidePage:false,markGlue:true,markCut:true,markLabels:true});await PS.setMode('poster');P.update();const g=P.geometry;
+ Object.assign(P.cfg,{mode:'grid',paper:'A4',paperW:210,paperH:297,cols:2,rows:2,orient:'portrait',safePrint:true,margin:5,overlap:10,glueStyle:'tabs',fit:'contain',zoom:1,panX:0,panY:0,border:0,dpi:72,enhance:0,lift:0,format:'png',skipBlank:false,guidePage:false,markGlue:true,markCut:true,markLabels:true});await PS.setMode('poster');P.update();const g=P.geometry;
  ok(g.margin===5,'Margem segura');ok(g.areaW===390&&g.areaH===564,'Área útil da grade');ok(g.finalW===282&&g.finalH===564,'Arte não preservou proporção');ok(Math.abs(g.img.w-160*g.mmPerPx)<1e-9&&Math.abs(g.img.h-320*g.mmPerPx)<1e-9,'Escala não uniforme');ok(g.visible.w===g.img.w&&g.visible.h===g.img.h,'Imagem foi cortada');
  const assembled=PS.canvas(g.areaW,g.areaH),ax=PS.ctx(assembled);ax.fillStyle='white';ax.fillRect(0,0,g.areaW,g.areaH);
  const printed=[];

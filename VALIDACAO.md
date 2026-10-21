@@ -167,3 +167,10 @@ Os novos testes conferiram 12 miniaturas distintas, 60 combinações de modelo/f
 Na montagem segura A4, 219.960 pixels coincidiram após simular bordas não imprimíveis de 5 mm, recorte e colagem de quatro folhas com abas opacas. A grade útil foi de 390 × 564 mm e a imagem retrato 1:2 ficou inteira em 282 × 564 mm. O teste anterior também comparou 1.964.550 pixels entre pares de folhas. PDFs em retrato e com rotação foram renderizados para inspeção; as páginas têm tamanho A4. Não houve impressão física nem medição em impressora real nesta etapa.
 
 Inventário de arquivos, mudanças de comportamento, fontes e limitações em [ATUALIZACAO-DESIGN-MOBILE.md](ATUALIZACAO-DESIGN-MOBILE.md).
+
+
+## 10. Sangria sem moldura extra e corte por coordenadas
+
+As regressões `poster-safe.cjs`, `poster-marks.cjs` e `poster.cjs` passaram após a alteração. O teste novo `poster-bleed.cjs` validou três configurações (5 mm, 0 mm e 3,5 mm), exportação de quatro A4 e montagem com abas fora do núcleo. PDFs reais foram renderizados e montados, com diagonais contínuas nas emendas; diferença média de cor menor que 2/255 em relação ao Canvas, por antialiasing/reamostragem entre renderizadores. A inspeção visual confirmou sangria nas bordas e abas brancas fora da arte visível. Não houve impressão física nesta etapa.
+
+Arquivos, comportamento e instruções atuais: [POSTER-SANGRIA.md](POSTER-SANGRIA.md).

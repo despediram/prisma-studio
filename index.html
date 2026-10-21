@@ -340,7 +340,7 @@
   <main class="workspace poster" id="view-poster" hidden>
     <aside class="pside left" aria-label="Configurações do pôster">
       <section class="pblock">
-        <h2>Papel e impressora</h2><button class="btn primary block" id="pSafeA4">A4 seguro: imagem inteira + abas</button><label class="check"><input id="pSafePrint" type="checkbox" checked> Reservar no mínimo 5 mm para a impressora</label><p class="hint">O tamanho final considera margens e abas; não equivale a quatro A4 inteiras. Se sua impressora exige margem maior, aumente o valor abaixo.</p>
+        <h2>Papel e impressora</h2><button class="btn primary block" id="pSafeA4">A4: imagem inteira, só abas de cola</button><label class="check"><input id="pSafePrint" type="checkbox" checked> Compensar a área que a impressora não imprime</label><p class="hint">A compensação preserva os detalhes nas emendas. Informe a margem real da impressora abaixo; desative apenas se imprimir sem bordas. A arte não será ampliada folha por folha.</p>
         <label class="fld"><span>Papel</span>
           <select class="input" id="pPaper">
             <option value="A4" selected>A4 — 210 × 297 mm</option>
@@ -368,8 +368,8 @@
           <button data-o="landscape"><i class="fa-regular fa-file fa-rotate-90"></i>Paisagem</button>
         </div>
         <button class="tipchip" id="pOrientTip" hidden></button>
-        <label class="sl"><span>Margem branca reservada</span><input type="range" id="pMargin" min="0" max="20" step="0.5" value="5"><output></output></label>
-        <p class="hint">Reserve pelo menos a margem não imprimível da sua impressora. Para salvar com abas e guias, use o PDF. Imprima em 100% / Tamanho real e desative Ajustar à página; o site não controla o driver da impressora.</p>
+        <label class="sl"><span>Área não imprimível da impressora (por lado)</span><input type="range" id="pMargin" min="0" max="20" step="0.5" value="5"><output></output></label>
+        <label class="check"><input id="pBleed" type="checkbox" checked> Sem moldura extra: arte com sangria até as bordas</label><p class="hint">A sangria repete a borda fora da arte final e será descartada no acabamento. As abas de cola continuam brancas. Informe a margem não imprimível da sua impressora; se os lados forem diferentes, use a maior medida. Para salvar com abas e guias, use o PDF. Imprima em 100% / Tamanho real e desative Ajustar à página; o site não controla o driver da impressora.</p>
         <label class="sl"><span>Sobreposição para colar</span><input type="range" id="pOverlap" min="0" max="30" step="0.5" value="10"><output></output></label>
       </section>
 
@@ -404,7 +404,7 @@
           <button data-f="contain" title="Mostra a imagem inteira; pode sobrar papel">Inteira</button>
         </div>
         <label class="sl" id="pZoomRow"><span>Zoom da arte</span><input type="range" id="pZoom" min="100" max="300" value="100"><output></output></label>
-        <label class="sl"><span>Borda branca (moldura)</span><input type="range" id="pBorder" min="0" max="80" step="1" value="0"><output></output></label>
+        <label class="sl"><span>Moldura branca opcional</span><input type="range" id="pBorder" min="0" max="80" step="1" value="0"><output></output></label>
         <p class="hint">Arraste a arte na prévia para escolher o enquadramento.</p>
       </section>
 
@@ -412,8 +412,8 @@
         <h2>Marcas e montagem</h2><label class="fld"><span>Tipo de montagem</span><select class="input" id="pGlueStyle"><option value="tabs">Abas brancas fora da arte visível</option><option value="overlap">Imagem repetida na sobreposição (avançado)</option></select></label><p class="hint" id="pPrintLayoutInfo" role="status"></p>
         <label class="check"><input type="checkbox" id="pMarkGlue" checked> Faixas de cola e guias de sobreposição (PDF)</label>
         <label class="check"><input type="checkbox" id="pMarkCut" checked> Marcas de corte nos cantos</label>
-        <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) na margem branca</label>
-        <p class="hint">As abas de cola ficam à direita e embaixo da parte visível de cada recorte. Elas ficam por baixo da próxima folha. Recorte a margem esquerda/superior da folha que entra por cima até o início da arte.</p>
+        <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) na área de acabamento</label>
+        <p class="hint">As abas de cola ficam à direita e embaixo da parte visível de cada recorte. Elas ficam por baixo da próxima folha. Nas folhas internas, corte a distância indicada a partir da borda esquerda/superior do papel; não use a largura da borda branca da impressora como referência.</p>
         <label class="check"><input type="checkbox" id="pGuidePage" checked> Página de instruções com mapa de montagem</label>
         <label class="check"><input type="checkbox" id="pSkipBlank" checked> Pular folhas totalmente em branco</label>
       </section>
@@ -601,11 +601,12 @@
   <script src="js/editor/productivity.js"></script>
   <script src="js/editor/commands.js"></script>
   <script src="js/editor/panels.js"></script>
-  <script src="js/poster/poster-geometry.js"></script>
-  <script src="js/poster/poster-raster.js"></script>
-  <script src="js/poster/poster-marks.js"></script>
-  <script src="js/poster/poster.js"></script>
-  <script src="js/poster/poster-assembly.js"></script>
+  <script src="js/poster/poster-geometry.js?v=4"></script>
+  <script src="js/poster/poster-raster.js?v=4"></script>
+  <script src="js/poster/poster-marks.js?v=4"></script>
+  <script src="js/poster/poster-page.js?v=4"></script>
+  <script src="js/poster/poster.js?v=4"></script>
+  <script src="js/poster/poster-assembly.js?v=4"></script>
   <script src="js/poster/poster-calibration.js"></script>
   <script src="vendor/fabric-6.9.0.min.js"></script>
   <script src="js/design/templates.js"></script>

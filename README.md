@@ -40,3 +40,6 @@ Todas as dependências de execução estão em `vendor/`; não há CDN. Fabric.j
 O módulo Design é uma implementação própria com recursos comuns de editores visuais. Não contém código, modelos, catálogo premium ou APIs privadas do Canva/Photoshop. Não implementa todas as funções desses produtos.
 
 Para repetir os testes em navegador real, consulte [testes/README.md](testes/README.md). O app não precisa de Node.js para funcionar.
+
+
+Atualização de impressão sem moldura extra: [sangria, compensação e corte medido](POSTER-SANGRIA.md). Esta revisão substitui a reserva branca e o mínimo obrigatório de 5 mm descritos nas etapas anteriores.

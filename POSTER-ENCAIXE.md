@@ -86,3 +86,6 @@ O exemplo 2 × 2 em A4 com sobreposição de 10 mm mede 410 × 584 mm com margem
 ## Atualização do padrão A4 seguro
 
 A entrega atual separa o núcleo visível da imagem e as abas brancas no PDF. O padrão agora conserva a imagem inteira e reserva pelo menos 5 mm para a impressora. As configurações antigas migram uma vez para esse padrão; a alternativa com imagem repetida continua disponível. Veja [a revisão de Design, celular e A4](ATUALIZACAO-DESIGN-MOBILE.md) para geometria, instruções e a simulação de impressão de quatro folhas.
+
+
+Atualização de impressão sem moldura extra: [sangria, compensação e corte medido](POSTER-SANGRIA.md). Esta revisão substitui a reserva branca e o mínimo obrigatório de 5 mm descritos nas etapas anteriores.
