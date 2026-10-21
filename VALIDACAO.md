@@ -152,3 +152,7 @@ O workflow de Pages segue as versões da documentação oficial consultada em 21
 `PRISMA_CHROMIUM=/tmp/prisma-chromium node testes/run.cjs`: todos os sete programas de validação concluídos com código 0. Histórico de 24 MP: delta de 3.669 bytes para a pequena edição de teste, 100 desfazer/refazer sem divergência. Prévia acelerada: mediana de 33 ms no ambiente de teste com SwiftShader; não é garantia de desempenho em qualquer dispositivo. Regressão: 39 filtros, 15 ajustes, PSD, Prisma e PDF sem erros de console ou rede. Pôster: 18 pares de faixas, 1.964.550 pixels comparados exatamente e montagem com quatro folhas. Design: oito modelos e PDF A5 de duas páginas, sem erros de console/rede.
 
 A impressão física não foi executada: os cálculos, pixels repetidos, medidas e posicionamento no PDF foram verificados automaticamente. A escala efetiva depende da configuração e calibração da impressora.
+
+## 8. Faixas de cola sem margem branca
+
+Testes `poster.cjs` e `poster-marks.cjs` aprovados, sem erros de página. Guias testadas com margens 0 / 0,5 / 1 / 5 mm, orientações retrato/paisagem, vizinhas omitidas e guias desligadas. Uma montagem de 410 × 584 pixels conserva exatamente todos os 239.440 pixels da arte limpa após cobrir as faixas. PDF revisado visualmente por renderização Poppler/MuPDF. O PDF do usuário conserva quatro folhas A4 e todos os hashes dos fluxos de imagem; somente vetores/textos de cola foram adicionados.

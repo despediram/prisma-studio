@@ -404,9 +404,10 @@
 
       <section class="pblock">
         <h2>Marcas e montagem</h2>
-        <label class="check"><input type="checkbox" id="pMarkGlue" checked> Registros de alinhamento nas margens</label>
+        <label class="check"><input type="checkbox" id="pMarkGlue" checked> Faixas de cola e guias de sobreposição (PDF)</label>
         <label class="check"><input type="checkbox" id="pMarkCut" checked> Marcas de corte nos cantos</label>
-        <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) somente na margem</label>
+        <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) na margem branca</label>
+        <p class="hint">As faixas marcadas ficam à direita e embaixo, onde outra folha vai cobrir. Recorte só a margem branca da folha que vem por cima; não corte a imagem repetida.</p>
         <label class="check"><input type="checkbox" id="pGuidePage" checked> Página de instruções com mapa de montagem</label>
         <label class="check"><input type="checkbox" id="pSkipBlank" checked> Pular folhas totalmente em branco</label>
       </section>
@@ -595,6 +596,7 @@
   <script src="js/editor/panels.js"></script>
   <script src="js/poster/poster-geometry.js"></script>
   <script src="js/poster/poster-raster.js"></script>
+  <script src="js/poster/poster-marks.js"></script>
   <script src="js/poster/poster.js"></script>
   <script src="js/poster/poster-assembly.js"></script>
   <script src="js/poster/poster-calibration.js"></script>

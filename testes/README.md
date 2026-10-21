@@ -31,3 +31,5 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 - `poster.cjs`: comparação exata das faixas repetidas em 150/200/300/400 DPI, margens e sobreposições fracionárias, nitidez e clareamento; folhas A4 completas em 300 DPI; posicionamento físico no PDF, orientação, calibração e montagem por folhas.
 
 - `design.cjs`: oito modelos, reabertura de objetos/folhas/bloqueios, desfazer/refazer, agrupamento sem deslocamento, exportações PNG/PDF A5 de duas páginas, rejeição de imagens externas, troca de formato, envio ao Editor e tela de 390 px. Verifica console e ausência de rede.
+
+- `poster-marks.cjs`: faixas de cola com margem zero, vizinhas omitidas, orientação, opção desligada, dimensões e montagem comparada pixel a pixel sem guias aparentes. PDFs temporários para inspeção externa são gravados em `PRISMA_MARKS_OUTPUT` ou na pasta temporária do sistema.

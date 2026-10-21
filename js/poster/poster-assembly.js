@@ -29,7 +29,8 @@
         const paper={x:t.x0-left,y:t.y0-top,w:g.cw+left+right,h:g.ch+top+bottom};
         ctx.fillStyle='#fff';ctx.fillRect(ox+paper.x*s,oy+paper.y*s,paper.w*s,paper.h*s);
         ctx.save();ctx.beginPath();ctx.rect(ox+t.x0*s,oy+t.y0*s,g.cw*s,g.ch*s);ctx.clip();ctx.imageSmoothingQuality='high';
-        ctx.drawImage(canvas,ox+p.x*s,oy+p.y*s,p.w*s,p.h*s);ctx.restore();
+        ctx.drawImage(canvas,ox+p.x*s,oy+p.y*s,p.w*s,p.h*s);
+        if(P.cfg.markGlue)PS.posterDrawGlueCanvas(ctx,g,t,ox+(t.x0-g.margin)*s,oy+(t.y0-g.margin)*s,s,sheets.map(v=>v.tile));ctx.restore();
       }
       if($('#pAssemblyGuides').checked){
         ctx.strokeStyle='#00a7e1';ctx.lineWidth=1.5;ctx.strokeRect(ox+g.finalRect.x*s,oy+g.finalRect.y*s,g.finalRect.w*s,g.finalRect.h*s);

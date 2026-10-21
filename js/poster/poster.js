@@ -161,6 +161,8 @@
     $('#sDpi').title = q.note;
     $('#sDpiBar').style.width = `${q.pct * 100}%`; $('#sDpiBar').style.background = q.color;
     const notes = [...g.warnings];
+    if(g.margin<3)notes.unshift('Margem menor que 3 mm: exige impressão sem bordas. Para impressora comum, use 5 mm; o tamanho ou a quantidade de folhas será recalculado.');
+    if(g.ov===0&&cfg.markGlue)notes.unshift('Sobreposição em 0 mm: não há faixa para cola. Aumente Sobreposição para colar (recomendado: 10 mm).');
     if (g.effDpi < 150) notes.push(`Imagem com pouca resolução para esse tamanho (${q.note}).`);
     if (cfg.fit === 'cover' && (g.img.w - g.artRect.w > 1 || g.img.h - g.artRect.h > 1)) notes.push('Parte da imagem fica fora — arraste para enquadrar.');
     $('#pNote').textContent = notes[0] || `${PS.fmt(g.ov, 1)} mm de sobreposição · margem de ${PS.fmt(g.margin, 1)} mm`;
@@ -207,7 +209,7 @@
     ];
     if (g.ov > 0) {
       items.push(`Nas folhas com vizinha <strong>à esquerda ou acima</strong>, corte só a margem branca desses lados${cfg.markCut ? ', seguindo as marcas de corte' : ''}. <strong>Não corte a faixa de imagem repetida.</strong>`);
-      items.push(`Monte da esquerda para a direita e de cima para baixo: deite cada folha por cima da anterior, alinhando a borda cortada aos <strong>registros das margens</strong>, sem apagar ou saltar a parte repetida da imagem. A faixa de ${PS.fmt(g.ov, 1)} mm fica escondida — passe cola em bastão ou fita dupla face nela.`);
+      items.push(`Monte da esquerda para a direita e de cima para baixo: deite cada folha por cima da anterior, alinhando a borda cortada ao <strong>início da faixa marcada para cola</strong>, sem apagar ou saltar a parte repetida da imagem. A faixa de ${PS.fmt(g.ov, 1)} mm fica escondida — passe cola em bastão ou fita dupla face nela.`);
     } else {
       items.push('Corte a margem branca de todos os lados que encostam em outra folha.');
       items.push('Encoste as bordas sem sobrepor e una por trás com fita adesiva.');
@@ -316,9 +318,7 @@
         const inter = { x: Math.max(cell.x, vis.x), y: Math.max(cell.y, vis.y) };
         inter.w = Math.min(cell.x + cell.w, vis.x + vis.w) - inter.x; inter.h = Math.min(cell.y + cell.h, vis.y + vis.h) - inter.y;
         if (inter.w > 0 && inter.h > 0) drawArt(inter, offX, offY);
-        ctx.strokeStyle = 'rgba(230,0,126,.9)'; ctx.setLineDash([4, 3]); ctx.lineWidth = 1;
-        if (cfg.markGlue && t.right && g.ov > 0) { const x = px + (g.margin + g.stepX) * s; ctx.beginPath(); ctx.moveTo(x, py + g.margin * s); ctx.lineTo(x, py + (g.margin + g.ch) * s); ctx.stroke(); }
-        if (cfg.markGlue && t.bottom && g.ov > 0) { const y = py + (g.margin + g.stepY) * s; ctx.beginPath(); ctx.moveTo(px + g.margin * s, y); ctx.lineTo(px + (g.margin + g.cw) * s, y); ctx.stroke(); }
+        if(cfg.markGlue)PS.posterDrawGlueCanvas(ctx,g,t,px,py,s);
         ctx.setLineDash([]); ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.strokeRect(px + g.margin * s, py + g.margin * s, g.cw * s, g.ch * s);
         ctx.restore();
         badge(ctx, t.code, px + g.pageW * s / 2, py + g.pageH * s / 2, blank);
@@ -481,7 +481,7 @@
   // Desenha a célula imprimível da folha t.
   async function renderTile(t,dpi,onProgress) {
     const result=await renderRegion({x:t.x0,y:t.y0,w:g.cw,h:g.ch},dpi,{onProgress});
-    // Arte limpa: códigos, instruções e registros pertencem somente às margens.
+    // Raster limpo. As guias do PDF são vetoriais e ficam na faixa coberta.
     return result.c;
   }
   P.renderTile = renderTile;
@@ -543,12 +543,8 @@
       page.pushOperators(pushGraphicsState(),rectangle(C.x*K,(PH-C.y-C.h)*K,C.w*K,C.h*K),clip(),endPath());
       page.drawImage(im,{x:I.x*K,y:(PH-I.y-I.h)*K,width:I.w*K,height:I.h*K});
       page.pushOperators(popGraphicsState());
-      // Registros de alinhamento nas margens, nunca sobre um rosto ou a arte.
-      if(cfg.markGlue&&g.ov>0&&m>=1.5){
-        const tick=Math.min(3,m-.6),line=(x1,y1,x2,y2)=>page.drawLine({start:P2(x1,y1),end:P2(x2,y2),thickness:.5,color:gray});
-        if(t.right){const xx=m+g.stepX;line(xx,m-tick,xx,m-.4);line(xx,m+g.ch+.4,xx,m+g.ch+tick);}
-        if(t.bottom){const yy=m+g.stepY;line(m-tick,yy,m-.4,yy);line(m+g.cw+.4,yy,m+g.cw+tick,yy);}
-      }
+      // Guias na área repetida, totalmente coberta pela próxima folha.
+      if(cfg.markGlue)PS.posterDrawGluePdf(page,g,t,{P2,font:bold,rotate,tiles});
       // marcas de corte (vetoriais, na margem)
       if (cfg.markCut && m >= 1.5) {
         const L = Math.min(m - 0.6, 5), gap = 0.6, th = 0.35;
@@ -619,7 +615,7 @@
       'Confira a régua abaixo com uma régua de verdade: ela deve medir exatamente 10 cm.',
       'A letra do código é a linha (A = topo) e o número é a coluna (1 = esquerda).',
       g.ov > 0 ? 'Nas folhas que têm vizinha à esquerda ou acima, corte a margem branca desses lados pelas marcas de corte.' : 'Corte a margem branca de todos os lados que encostam em outra folha.',
-      g.ov > 0 ? `Monte da esquerda para a direita e de cima para baixo. Deite cada folha por cima da anterior, alinhando a borda cortada aos registros das margens; a faixa de ${PS.fmt(g.ov, 1)} mm fica escondida. Cole com cola em bastão ou fita dupla face.` : 'Encoste as bordas sem sobrepor e una as folhas por trás com fita.',
+      g.ov > 0 ? `Monte da esquerda para a direita e de cima para baixo. Deite cada folha por cima da anterior, alinhando a borda cortada ao inicio da faixa marcada para cola; a faixa de ${PS.fmt(g.ov, 1)} mm fica escondida. Cole com cola em bastão ou fita dupla face.` : 'Encoste as bordas sem sobrepor e una as folhas por trás com fita.',
       'Nao corte a faixa de imagem repetida. Confira os detalhes nos dois extremos antes de colar; apare as sobras externas no fim.'
     ];
     const maxW = (W - 2 * m - 8) * K;
