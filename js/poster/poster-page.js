@@ -1,6 +1,8 @@
 /* Prisma Studio — desenho compartilhado da arte e do recorte físico de cada folha.
  * A margem descreve o que a impressora não imprime; não cria uma segunda moldura.
  * A sangria repete somente os pixels de borda, fora da arte final, sem ampliá-la.
+ * No modo celular, preenche também sobras de proporção nas folhas; são aparadas
+ * no acabamento. O retângulo final e os detalhes originais permanecem intactos.
  */
 (function(){
  'use strict';const PS=window.PS;
@@ -12,8 +14,8 @@
   if(!cfg.bleed)return core;
   return{x:0,y:0,w:right?core.x+core.w:g.pageW,h:bottom?core.y+core.h:g.pageH};
  };
- PS.posterDrawSource=(ctx,source,g,rect,ox,oy,s,bleed=false)=>{
-  const v=g.visible,extra=bleed&&!g.border?g.margin:0;
+ PS.posterDrawSource=(ctx,source,g,rect,ox,oy,s,bleed=false,edgeFill=false)=>{
+  const v=g.visible,extra=bleed&&!g.border?(edgeFill?Math.max(g.areaW,g.areaH,g.pageW,g.pageH):g.margin):0;
   const left=Math.max(rect.x,v.x-extra),top=Math.max(rect.y,v.y-extra),right=Math.min(rect.x+rect.w,v.x+v.w+extra),bottom=Math.min(rect.y+rect.h,v.y+v.h+extra);
   if(right<=left||bottom<=top)return;
   ctx.save();ctx.beginPath();ctx.rect(ox+left*s,oy+top*s,(right-left)*s,(bottom-top)*s);ctx.clip();ctx.imageSmoothingQuality='high';

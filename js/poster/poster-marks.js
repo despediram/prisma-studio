@@ -18,6 +18,7 @@
  // A faixa de segurança pertence à imagem. Só depois dela começa a cola branca.
  PS.posterInkGuide=(g,q,style)=>{if(style!=='tabs')return q;const v=q.axis==='vertical',b=PS.posterSeamBleed(g);return{...q,x:q.x+(v?b:0),y:q.y+(v?0:b),w:q.w-(v?b:0),h:q.h-(v?0:b)};};
  PS.posterDrawGluePdf=(page,g,t,{P2,font,rotate=false,tiles,style='overlap'})=>{
+  if(style==='image')return; // Nenhuma tinta, linha ou fundo sobre os pixels repetidos.
   const {rgb,degrees,pushGraphicsState,popGraphicsState,rectangle,clip,endPath}=window.PDFLib,black=rgb(.12,.12,.12),white=rgb(1,1,1);
   for(const guide of PS.posterGlueGuides(g,t,tiles)){
    const q=PS.posterInkGuide(g,guide,style);
@@ -38,6 +39,7 @@
   }
  };
  PS.posterDrawGlueCanvas=(ctx,g,t,ox,oy,s,tiles,style='overlap')=>{
+  if(style==='image')return;
   ctx.save();
   for(const guide of PS.posterGlueGuides(g,t,tiles)){
    const q=PS.posterInkGuide(g,guide,style);

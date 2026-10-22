@@ -342,7 +342,7 @@
   <main class="workspace poster" id="view-poster" hidden>
     <aside class="pside left" aria-label="Configurações do pôster">
       <section class="pblock">
-        <h2>Papel e impressora</h2><button class="btn primary block" id="pSafeA4">A4: imagem inteira, só abas de cola</button><label class="check"><input id="pSafePrint" type="checkbox" checked> Compensar a área que a impressora não imprime</label><p class="hint">A compensação preserva os detalhes nas emendas. Informe a margem real da impressora abaixo; desative apenas se imprimir sem bordas. A arte não será ampliada folha por folha.</p>
+        <h2>Papel e impressora</h2><button class="btn primary block" id="pSafeA4">A4 para celular: sem abas brancas</button><label class="check"><input id="pSafePrint" type="checkbox" checked> Compensar a área que a impressora não imprime</label><p class="hint">No modo celular, deixe a compensação desligada: o arquivo ocupa a folha e repete a imagem nas emendas. A impressora ainda pode criar uma borda branca; apare essa borda nos lados que entram por cima. O site não controla a margem física da impressora.</p>
         <label class="fld"><span>Papel</span>
           <select class="input" id="pPaper">
             <option value="A4" selected>A4 — 210 × 297 mm</option>
@@ -371,7 +371,7 @@
         </div>
         <button class="tipchip" id="pOrientTip" hidden></button>
         <label class="sl"><span>Área não imprimível da impressora (por lado)</span><input type="range" id="pMargin" min="0" max="20" step="0.5" value="5"><output></output></label>
-        <label class="check"><input id="pBleed" type="checkbox" checked> Sem moldura extra: arte com sangria até as bordas</label><p class="hint">A sangria repete a borda fora da arte final e será descartada no acabamento. As abas de cola continuam brancas. Informe a margem não imprimível da sua impressora; se os lados forem diferentes, use a maior medida. Para salvar com abas e guias, use o PDF. Imprima em 100% / Tamanho real e desative Ajustar à página; o site não controla o driver da impressora.</p>
+        <label class="check"><input id="pBleed" type="checkbox" checked> Sem moldura extra: arte com sangria até as bordas</label><p class="hint">No modo celular, o PDF e as folhas levam imagem até as bordas e repetem os detalhes nas emendas, sem pintar abas brancas. As sobras fora da arte final são sangria para aparar. Imprima todas as páginas juntas pelo mesmo aplicativo; corte a borda branca esquerda/superior da folha que entra por cima e faça a imagem coincidir nas duas pontas. Ajustes automáticos iguais preservam o encaixe, mas podem reduzir o tamanho final.</p>
         <label class="sl"><span>Sobreposição para colar</span><input type="range" id="pOverlap" min="0" max="30" step="0.5" value="10"><output></output></label>
       </section>
 
@@ -411,11 +411,11 @@
       </section>
 
       <section class="pblock">
-        <h2>Marcas e montagem</h2><label class="fld"><span>Tipo de montagem</span><select class="input" id="pGlueStyle"><option value="tabs">Abas brancas fora da arte visível</option><option value="overlap">Imagem repetida na sobreposição (avançado)</option></select></label><p class="hint" id="pPrintLayoutInfo" role="status"></p>
+        <h2>Marcas e montagem</h2><label class="fld"><span>Tipo de montagem</span><select class="input" id="pGlueStyle"><option value="image">Celular · imagem repetida, sem abas brancas</option><option value="tabs">Avançado · abas brancas fora da arte visível</option><option value="overlap">Imagem repetida na sobreposição (avançado)</option></select></label><p class="hint" id="pPrintLayoutInfo" role="status"></p>
         <label class="check"><input type="checkbox" id="pMarkGlue" checked> Faixas de cola e guias de sobreposição (PDF)</label>
         <label class="check"><input type="checkbox" id="pMarkCut" checked> Marcas de corte nos cantos</label>
         <label class="check"><input type="checkbox" id="pMarkLabels" checked> Código da folha (A1, A2…) na área de acabamento</label>
-        <p class="hint">As abas ficam à direita/embaixo. Uma faixa de até 1 mm repete a imagem para proteger a emenda; depois vem a cola branca. Faça a imagem coincidir nas duas pontas e esconda o pontilhado por baixo da próxima folha. Nas folhas internas, corte a distância indicada a partir da borda esquerda/superior do papel; não use a largura da borda branca da impressora como referência.</p>
+        <p class="hint">No modo celular, a faixa inteira repete a arte, sem tinta branca nem pontilhado. Apare a borda branca esquerda/superior da folha que vai por cima e alinhe dois detalhes afastados. No modo avançado de abas brancas, siga as medidas e marcas específicas indicadas abaixo.</p>
         <label class="check"><input type="checkbox" id="pGuidePage" checked> Página de instruções com mapa de montagem</label>
         <label class="check"><input type="checkbox" id="pSkipBlank" checked> Pular folhas totalmente em branco</label>
       </section>
@@ -509,7 +509,7 @@
         <button class="btn primary block lg" id="pExportPdf" disabled><i class="fa-solid fa-file-pdf"></i>Baixar PDF para imprimir</button>
         <button class="btn soft block" id="pPrintNow" disabled><i class="fa-solid fa-print"></i>Abrir PDF para imprimir</button>
         <button class="btn soft block" id="pExportZip" disabled><i class="fa-solid fa-file-zipper"></i>Baixar folhas em PNG (ZIP)</button>
-        <p class="hint" id="pExportHint">Imprima em <strong>tamanho real (100%)</strong>. Desative “ajustar à página”.</p>
+        <p class="hint" id="pExportHint">Celular: imprima todas as páginas juntas e use a mesma opção em todas. A borda física da impressora deve ser aparada nos lados que entram por cima.</p>
         <button class="btn ghost sm block" id="pUpscaleHint" hidden><i class="fa-solid fa-up-right-and-down-left-from-center"></i><span>Ampliar a imagem para imprimir melhor</span></button>
       </section>
       <section class="pblock">
@@ -603,12 +603,12 @@
   <script src="js/editor/productivity.js"></script>
   <script src="js/editor/commands.js"></script>
   <script src="js/editor/panels.js"></script>
-  <script src="js/poster/poster-geometry.js?v=5"></script>
-  <script src="js/poster/poster-raster.js?v=5"></script>
-  <script src="js/poster/poster-marks.js?v=5"></script>
-  <script src="js/poster/poster-page.js?v=5"></script>
-  <script src="js/poster/poster.js?v=5"></script>
-  <script src="js/poster/poster-assembly.js?v=5"></script>
+  <script src="js/poster/poster-geometry.js?v=6"></script>
+  <script src="js/poster/poster-raster.js?v=6"></script>
+  <script src="js/poster/poster-marks.js?v=6"></script>
+  <script src="js/poster/poster-page.js?v=6"></script>
+  <script src="js/poster/poster.js?v=6"></script>
+  <script src="js/poster/poster-assembly.js?v=6"></script>
   <script src="js/poster/poster-calibration.js"></script>
   <script src="vendor/fabric-6.9.0.min.js"></script>
   <script src="js/design/templates.js"></script>

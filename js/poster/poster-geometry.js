@@ -68,7 +68,11 @@
     // 2) encaixe da imagem no alvo (preencher/inteira) + zoom + deslocamento; a borda branca encolhe a área da arte
     const bd = PS.clamp(cfg.border || 0, 0, Math.min(g.target.w, g.target.h) / 3);
     g.border = bd;
-    const T = { x: g.target.x + bd, y: g.target.y + bd, w: g.target.w - 2 * bd, h: g.target.h - 2 * bd }, zoom = Math.max(1, cfg.zoom || 1);
+    // Proteção externa do modo celular: imagem original recuada, preenchimento
+    // por extensão de borda até o papel (sem branco). Não altera a escala por folha.
+    g.edgeGuard=cfg.glueStyle==='image'?Math.min(12,g.target.w/6,g.target.h/6):0;
+    const inset=bd+g.edgeGuard;
+    const T = { x: g.target.x + inset, y: g.target.y + inset, w: g.target.w - 2 * inset, h: g.target.h - 2 * inset }, zoom = Math.max(1, cfg.zoom || 1);
     g.artRect = T;
     let s = cfg.fit === 'contain' ? Math.min(T.w / imgW, T.h / imgH) : Math.max(T.w / imgW, T.h / imgH);
     s *= zoom;
@@ -87,7 +91,7 @@
     g.finalW = (cfg.fit === 'contain' ? g.visible.w : T.w) + 2 * bd;
     g.finalH = (cfg.fit === 'contain' ? g.visible.h : T.h) + 2 * bd;
     // retângulo do pôster final (com a borda) — usado na vista montada
-    g.finalRect = cfg.fit === 'contain' ? { x: g.visible.x - bd, y: g.visible.y - bd, w: g.finalW, h: g.finalH } : { ...g.target };
+    g.finalRect = cfg.fit === 'contain' ? { x: g.visible.x - bd, y: g.visible.y - bd, w: g.finalW, h: g.finalH } : { x:T.x-bd,y:T.y-bd,w:g.finalW,h:g.finalH };
 
     // 4) folhas
     g.tiles = [];

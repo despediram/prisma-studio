@@ -1,0 +1,40 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Prisma — teste de pôster para celular</title>
+<style>body{padding-right:430px;font:16px system-ui;background:#171b20;color:#eee;margin:20px}iframe{position:fixed;right:24px;top:16px;width:390px;height:700px;border:1px solid #555}canvas{max-width:340px;max-height:420px;border:1px solid #555}a{color:#46c4f6;display:block}#samples{display:flex;gap:20px;flex-wrap:wrap}</style>
+<h1>Conferência do PDF para celular</h1><button id="run">Executar validação</button><pre id="status">Aguardando o editor.</pre><div id="downloads"></div><div id="samples"></div><iframe src="../index.html" title="Prisma no celular"></iframe>
+<script>
+/* Prisma Studio — teste de integração manual reproduzível, sem dependências externas.
+ * Exercita o motor e o PDF reais. A impressão física é conferida em etapa externa.
+ */
+const frame=document.querySelector('iframe'),status=document.querySelector('#status');
+frame.onload=()=>status.textContent='Editor pronto. Execute a validação.';
+document.querySelector('#run').onclick=async()=>{
+ document.querySelector('#downloads').replaceChildren();
+ const PS=frame.contentWindow.PS,P=PS.poster,ok=(v,m)=>{if(!v)throw Error(m)},runs=[];
+ const fixture=PS.canvas(395,569),cx=PS.ctx(fixture);cx.fillStyle='#68aecc';cx.fillRect(0,0,395,569);
+ for(let y=0;y<569;y+=23)for(let x=0;x<395;x+=23){cx.fillStyle=(Math.floor(x/23)+Math.floor(y/23))%2?'#ef8397':'#68aecc';cx.fillRect(x,y,23,23);}
+ cx.strokeStyle='#14304c';cx.lineWidth=5;cx.beginPath();cx.moveTo(0,0);cx.lineTo(395,569);cx.moveTo(395,0);cx.lineTo(0,569);cx.stroke();
+ cx.fillStyle='#2a234a';cx.font='bold 38px Arial';cx.fillText('ENCAIXE',106,275);cx.fillText('A4',163,325);
+ PS.doc.load(fixture,'Conferência de encaixe');
+ try{
+  // Usa o botão público: verifica também migração, controles e padrão.
+  frame.contentDocument.querySelector('#pSafeA4').click();
+  ok(P.cfg.glueStyle==='image'&&P.cfg.margin===0&&P.cfg.overlap===25,'Preset de celular');
+  ok(!P.cfg.markGlue&&!P.cfg.markCut&&!P.cfg.markLabels&&!P.cfg.guidePage,'Sem guias/abas impressas');
+  await PS.setMode('poster');
+  for(const [cols,rows,orient] of [[2,2,'portrait'],[3,4,'portrait'],[4,3,'landscape']]){
+   Object.assign(P.cfg,{cols,rows,orient,mode:'grid',dpi:101.6,enhance:0,lift:0,skipBlank:false});P.update();const g=P.geometry;
+   ok(Math.abs(g.img.w/g.img.h-fixture.width/fixture.height)<1e-9,'Imagem deformada');ok(Math.abs(g.visible.w-g.img.w)<1e-7&&Math.abs(g.visible.h-g.img.h)<1e-7,'Imagem cortada');
+   ok(g.visible.x>=12-1e-8&&g.visible.y>=12-1e-8,'Proteção externa');
+   for(const t of g.tiles){const C=PS.posterPageArtRect(g,t,P.cfg);ok(C.x===0&&C.y===0&&C.w===g.pageW&&C.h===g.pageH,'Arquivo não cobre a folha');
+    const out=await P.getRaster().render({x:t.x0,y:t.y0,w:g.cw,h:g.ch},25.4);const rgba=PS.getImg(out.c).d;
+    for(let n=0;n<rgba.length;n+=4)ok(rgba[n]<245||rgba[n+1]<245||rgba[n+2]<245,'Tinta branca adicionada em '+t.code);
+   }
+   if(cols===2||cols===3){const blob=await P.buildPdf(()=>{}),r=new FileReader();await new Promise((res,rej)=>{r.onload=res;r.onerror=rej;r.readAsDataURL(blob)});const a=document.createElement('a');a.id='pdf'+cols;a.href=r.result;a.download=`teste-celular-${cols}x${rows}.pdf`;a.textContent=`PDF real ${cols} × ${rows} — ${g.tiles.length} páginas`;document.querySelector('#downloads').append(a);}
+   runs.push({cols,rows,orient,paginas:g.tiles.length,final:[g.finalW,g.finalH],overlap:g.ov});status.textContent=JSON.stringify(runs,null,2);
+  }
+  // Prévia do editor com montagem folha a folha; PDF permanece limpo.
+  Object.assign(P.cfg,{cols:2,rows:2,orient:'portrait',view:'assembly'});P.update();await P.assembly.prepare();
+  status.textContent='PASSOU: arte íntegra, folhas completas sem branco, 4/12/12 folhas.\n'+JSON.stringify(runs,null,2);
+ }catch(e){status.textContent='FALHOU: '+e.stack;throw e;}
+};
+</script></html>

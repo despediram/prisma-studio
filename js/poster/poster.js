@@ -5,17 +5,19 @@
   const K = PS.PT_PER_MM;
 
   const DEFAULTS = {
-    paper: 'A4', paperW: 210, paperH: 297, orient: 'portrait', margin: 5, overlap: 10,
+    paper: 'A4', paperW: 210, paperH: 297, orient: 'portrait', margin: 0, overlap: 25,
     mode: 'grid', cols: 2, rows: 2, targetW: 600, targetH: 0, lock: true, lockFrom: 'w', scaleDpi: 100,
-    fit: 'contain', safePrint: true, bleed: true, glueStyle: 'tabs', zoom: 1, panX: 0, panY: 0,
-    markGlue: true, markCut: true, markLabels: true, guidePage: true, skipBlank: true,
+    fit: 'contain', safePrint: false, bleed: true, glueStyle: 'image', zoom: 1, panX: 0, panY: 0,
+    markGlue: false, markCut: false, markLabels: false, guidePage: false, skipBlank: true,
     dpi: 300, format: 'png', pdfOrient: 'auto', view: 'plan', theme: '',
     enhance: 45, lift: 0, border: 0, calX: 100, calY: 100, loupe: null
   };
   let cfg = Object.assign({}, DEFAULTS);
   try { const saved=JSON.parse(localStorage.getItem('prisma.poster') || '{}'); Object.assign(cfg,saved,{panX:0,panY:0,zoom:1,format:saved.precisionGrid===1?saved.format||'png':'png'}); if(![2,3].includes(saved.mountingVersion)){cfg.safePrint=true;cfg.glueStyle='tabs';cfg.margin=Math.max(5,cfg.margin);cfg.fit='contain';cfg.markGlue=true;} } catch (_) { /* sem armazenamento */ }
-  if(cfg.mountingVersion!==3){cfg.bleed=true;cfg.border=0;}
-  cfg.precisionGrid=1;cfg.mountingVersion=3;
+  // Migra a antiga aba branca: celular usa imagem repetida, sem tinta branca ou guia sobre a arte.
+  const phoneSettings={safePrint:false,margin:0,overlap:25,bleed:true,border:0,glueStyle:'image',fit:'contain',zoom:1,panX:0,panY:0,markGlue:false,markCut:false,markLabels:false,guidePage:false,calX:100,calY:100};
+  if(cfg.mountingVersion!==4)Object.assign(cfg,phoneSettings);
+  cfg.precisionGrid=1;cfg.mountingVersion=4;
   const save = () => { try { localStorage.setItem('prisma.poster', JSON.stringify(cfg)); } catch (_) { /* ignora */ } };
 
   const src = { canvas: null, preview: null, key: '' };
@@ -23,7 +25,7 @@
   const P = PS.poster = { cfg, get geometry() { return g; } };
   let rasterKey='', raster=null;
   function currentRaster() {
-    const key=JSON.stringify([src.key,g.img,g.visible,g.target,g.margin,cfg.bleed,cfg.enhance,cfg.lift]);
+    const key=JSON.stringify([src.key,g.img,g.visible,g.target,g.margin,cfg.bleed,cfg.glueStyle,cfg.enhance,cfg.lift]);
     if(key!==rasterKey){raster=PS.createPosterRaster(src.canvas,g,cfg);rasterKey=key;}
     return raster;
   }
@@ -89,8 +91,8 @@
   const bindR = (id, key, fmt, k = 1) => PS.bindRange($('#' + id), (v) => change(key, v * k), fmt);
   $('#pSafePrint').addEventListener('change',e=>{cfg.safePrint=e.target.checked;cfg.margin=cfg.safePrint?(cfg.margin||5):0;save();update();});
   $('#pBleed').addEventListener('change',e=>change('bleed',e.target.checked));
-  $('#pGlueStyle').addEventListener('change',e=>change('glueStyle',e.target.value));
-  $('#pSafeA4').addEventListener('click',()=>{Object.assign(cfg,{paper:'A4',paperW:210,paperH:297,orient:'portrait',mode:'grid',safePrint:true,bleed:true,margin:cfg.margin||5,overlap:10,fit:'contain',glueStyle:'tabs',zoom:1,panX:0,panY:0,border:0,markGlue:true,markCut:true,markLabels:true});initControls();save();update();PS.toast('A4 sem moldura extra: imagem inteira e abas de cola. Confira a margem real da impressora e imprima em 100%.','success');});
+  $('#pGlueStyle').addEventListener('change',e=>{if(e.target.value==='image'){Object.assign(cfg,phoneSettings);initControls();save();update();}else change('glueStyle',e.target.value);});
+  $('#pSafeA4').addEventListener('click',()=>{Object.assign(cfg,phoneSettings,{paper:'A4',paperW:210,paperH:297,orient:'portrait',mode:'grid'});initControls();save();update();PS.toast('A4 para celular: 25 mm de imagem repetida, sem abas brancas. Apare a borda branca da folha de cima e alinhe a arte nas duas pontas.','success',7000);});
   PS.bindRange($('#pMargin'),v=>{cfg.safePrint=v>0;$('#pSafePrint').checked=cfg.safePrint;change('margin',v);},v=>`${PS.fmt(v,1)} mm`);
   bindR('pOverlap', 'overlap', v => `${PS.fmt(v, 1)} mm`);
   bindR('pScaleDpi', 'scaleDpi', v => `${v} DPI`);
@@ -154,7 +156,7 @@
     if (cfg.mode === 'size') syncTargetFields();
     g = PS.posterGeometry(currentCfg(), src.canvas.width, src.canvas.height);
     $('#pMargin').value=g.margin;$('#pMargin').parentElement.querySelector('output').textContent=PS.fmt(g.margin,1)+' mm';$('#pOverlap').value=g.ov;$('#pOverlap').parentElement.querySelector('output').textContent=PS.fmt(g.ov,1)+' mm';zoomCtl.set(cfg.zoom*100);
-    $('#pPrintLayoutInfo').textContent=`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de corte a partir da borda do papel · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
+    $('#pPrintLayoutInfo').textContent=cfg.glueStyle==='image'?`Celular: ${PS.fmt(g.ov,1)} mm de imagem repetida, sem abas brancas ou linhas no arquivo. Proteção externa de 12 mm com extensão da imagem (aparar no acabamento). Corte a borda branca esquerda/superior da folha que vai por cima e alinhe pelos detalhes da imagem. Tamanho nominal: ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm; o ajuste automático da impressão pode reduzi-lo.`:`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de corte a partir da borda do papel · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
     $('#pZoomRow').querySelector('input').disabled = false;
     $('#pCanvas').classList.toggle('draggable', g.canPan);
     // estatísticas
@@ -168,7 +170,7 @@
     $('#sDpi').title = q.note;
     $('#sDpiBar').style.width = `${q.pct * 100}%`; $('#sDpiBar').style.background = q.color;
     const notes = [...g.warnings];
-    if(g.margin<3)notes.unshift('Margem menor que 3 mm: exige impressão sem bordas. Para impressora comum, use 5 mm; o tamanho ou a quantidade de folhas será recalculado.');
+    if(cfg.glueStyle!=='image'&&g.margin<3)notes.unshift('Margem menor que 3 mm: exige impressão sem bordas. Para impressora comum, use 5 mm; o tamanho ou a quantidade de folhas será recalculado.');
     if(cfg.zoom>1&&cfg.fit==='contain')notes.unshift('Zoom acima de 100% pode cortar a imagem. Use A4 seguro para preservar a arte inteira.');
     if(g.ov===0&&cfg.markGlue)notes.unshift('Sobreposição em 0 mm: não há faixa para cola. Aumente Sobreposição para colar (recomendado: 10 mm).');
     if (g.effDpi < 150) notes.push(`Imagem com pouca resolução para esse tamanho (${q.note}).`);
@@ -192,6 +194,7 @@
       tip.hidden = !(nOther < printed);
       if (!tip.hidden) tip.innerHTML = `<i class="fa-solid fa-lightbulb"></i>Em ${cfg.orient === 'portrait' ? 'paisagem' : 'retrato'} usaria ${nOther} folhas em vez de ${printed}. Trocar`;
     } else tip.hidden = true;
+    $('#pExportHint').textContent=cfg.glueStyle==='image'?'Celular: imprima todas as páginas juntas, com a mesma opção. Apare a borda branca esquerda/superior da folha de cima e alinhe a imagem repetida.':'Imprima em tamanho real (100%). Desative ajustar à página.';
     renderSteps(); drawPreview(); scheduleSheets(); updatePrompt(); scheduleLoupe();
     P.assembly?.invalidate();
   }
@@ -210,6 +213,17 @@
   function renderSteps() {
     const ol = $('#pSteps');
     if (!g) { ol.innerHTML = '<li>Abra uma imagem para ver as instruções de montagem.</li>'; return; }
+    if(cfg.glueStyle==='image'){
+      const steps=[
+        'Imprima todas as páginas do mesmo PDF pelo mesmo aplicativo, no mesmo papel e com a mesma opção. O site não acrescenta bordas brancas nem exige alterar a configuração da impressora.',
+        `Organize na ordem das páginas: ${g.cols} colunas × ${g.rows} linhas, da esquerda para a direita e de cima para baixo. Confira as miniaturas das folhas abaixo.`,
+        'Na folha que entra por cima, apare SOMENTE a borda branca esquerda se houver folha à esquerda e a borda branca superior se houver folha acima. Corte até começar a imagem. A margem da impressora precisa sair desses lados para não tapar a arte.',
+        `Deslize a folha por cima da anterior até os mesmos detalhes coincidirem nas DUAS pontas da emenda. Há ${PS.fmt(g.ov,1)} mm de imagem repetida no arquivo; não encoste as bordas do papel e não use uma medida fixa de sobreposição após imprimir.`,
+        'Confira cabelo, olhos ou linhas em dois pontos afastados. Só cole quando ambos encaixarem. A parte repetida fica escondida por baixo; termine aparando as sobras externas no contorno azul da prévia.',
+        'O ajuste automático pode reduzir o tamanho final, mas uma redução igual em todas as páginas mantém o encaixe. Se uma folha sair com escala ou rotação diferente, é preciso reimprimi-la com a mesma opção. A borda física da impressora não pode ser removida pelo site.'
+      ];
+      ol.innerHTML=steps.map(i=>`<li>${i}</li>`).join('');return;
+    }
     const paper = `${PS.PAPER_NAMES[cfg.paper]} ${g.pageW > g.pageH ? 'paisagem' : 'retrato'}`;
     const rotated = cfg.pdfOrient === 'portrait' && g.pageW > g.pageH;
     const items = [
@@ -327,7 +341,7 @@
         const offX = px + (g.margin - t.x0) * s, offY = py + (g.margin - t.y0) * s;
         const core=PS.posterPageArtRect(g,t,cfg);
         ctx.save();ctx.beginPath();ctx.rect(px+core.x*s,py+core.y*s,core.w*s,core.h*s);ctx.clip();
-        PS.posterDrawSource(ctx,img,g,{x:t.x0-g.margin,y:t.y0-g.margin,w:g.pageW,h:g.pageH},offX,offY,s,cfg.bleed);ctx.restore();
+        PS.posterDrawSource(ctx,img,g,{x:t.x0-g.margin,y:t.y0-g.margin,w:g.pageW,h:g.pageH},offX,offY,s,cfg.bleed,cfg.glueStyle==='image');ctx.restore();
         if(cfg.markGlue)PS.posterDrawGlueCanvas(ctx,g,t,px,py,s,undefined,cfg.glueStyle);
         ctx.setLineDash([]); ctx.strokeStyle = 'rgba(0,0,0,.18)'; ctx.strokeRect(px + g.margin * s, py + g.margin * s, g.cw * s, g.ch * s);
         ctx.restore();
@@ -394,7 +408,7 @@
     cfg.panY = Math.abs(slackY) > 0.01 ? PS.clamp(pdrag.py - 2 * dy / slackY, -1, 1) : 0;
     g = PS.posterGeometry(currentCfg(), src.canvas.width, src.canvas.height);
     $('#pMargin').value=g.margin;$('#pMargin').parentElement.querySelector('output').textContent=PS.fmt(g.margin,1)+' mm';$('#pOverlap').value=g.ov;$('#pOverlap').parentElement.querySelector('output').textContent=PS.fmt(g.ov,1)+' mm';zoomCtl.set(cfg.zoom*100);
-    $('#pPrintLayoutInfo').textContent=`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de corte a partir da borda do papel · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
+    $('#pPrintLayoutInfo').textContent=cfg.glueStyle==='image'?`Celular: ${PS.fmt(g.ov,1)} mm de imagem repetida, sem abas brancas ou linhas no arquivo. Proteção externa de 12 mm com extensão da imagem (aparar no acabamento). Corte a borda branca esquerda/superior da folha que vai por cima e alinhe pelos detalhes da imagem. Tamanho nominal: ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm; o ajuste automático da impressão pode reduzi-lo.`:`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de corte a partir da borda do papel · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
     drawPreview();
   });
   const endDrag = () => { if (pdrag) { pdrag = null; pc.classList.remove('dragging'); save(); update(); } };
@@ -421,7 +435,7 @@
       x.fillStyle = '#fff'; x.fillRect(0, 0, tw, th);
       const core=PS.posterPageArtRect(g,t,cfg);
       x.save();x.beginPath();x.rect(core.x*s,core.y*s,core.w*s,core.h*s);x.clip();
-      PS.posterDrawSource(x,src.preview,g,{x:t.x0-g.margin,y:t.y0-g.margin,w:g.pageW,h:g.pageH},(g.margin-t.x0)*s,(g.margin-t.y0)*s,s,cfg.bleed);x.restore();
+      PS.posterDrawSource(x,src.preview,g,{x:t.x0-g.margin,y:t.y0-g.margin,w:g.pageW,h:g.pageH},(g.margin-t.x0)*s,(g.margin-t.y0)*s,s,cfg.bleed,cfg.glueStyle==='image');x.restore();
       if(cfg.markGlue)PS.posterDrawGlueCanvas(x,g,t,0,0,s,undefined,cfg.glueStyle);
       const th2 = document.createElement('div'); th2.className = 'thumb'; th2.appendChild(c);
       const lbl = document.createElement('span'); lbl.innerHTML = `<b>${t.code}</b>${blank ? ' · pulada' : ''}`;
@@ -517,7 +531,7 @@
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
     const pdf = await PDFDocument.create();
     pdf.setTitle(`Pôster ${PS.fmt(g.finalW / 10, 2)} × ${PS.fmt(g.finalH / 10, 2)} cm`);
-    pdf.setSubject(`Montagem ${cfg.glueStyle||'overlap'}; margem ${g.margin} mm; sobreposição ${g.ov} mm; seguranca da emenda ${PS.posterSeamBleed(g)} mm; escala 100%; arte ${g.finalW} x ${g.finalH} mm.`);
+    pdf.setSubject(`Montagem ${cfg.glueStyle||'overlap'}; margem ${g.margin} mm; sobreposição ${g.ov} mm; seguranca da emenda ${PS.posterSeamBleed(g)} mm; escala nominal 100%; arte ${g.finalW} x ${g.finalH} mm.`);
     pdf.setCreator('Prisma Studio'); pdf.setProducer('Prisma Studio (pdf-lib)');
     const font = await pdf.embedFont(StandardFonts.Helvetica), bold = await pdf.embedFont(StandardFonts.HelveticaBold);
     const tiles = g.tiles.filter(t => !(t.blank && cfg.skipBlank));
@@ -618,7 +632,14 @@
     let y = oy + g.areaH * s + 12;
     T('Como montar', m, y, 12, bold); y += 6;
     const rotated = cfg.pdfOrient === 'portrait' && g.pageW > g.pageH;
-    const steps = [
+    const steps = cfg.glueStyle==='image'?[
+      'Imprima todas as paginas juntas, no mesmo papel e aplicativo, com a mesma opcao.',
+      'O PDF nao tem abas brancas. A impressora ainda pode criar margens brancas.',
+      'Na folha que entra por cima, apare a borda branca esquerda/superior ate comecar a imagem.',
+      'Deslize a folha ate os detalhes repetidos coincidirem nas DUAS pontas. Nao encoste as bordas do papel.',
+      `A repeticao de ${PS.fmt(g.ov,1)} mm fica escondida por baixo. Cole somente depois de conferir o encaixe.`,
+      'Apare o contorno externo. Ajustes automaticos iguais preservam o encaixe, mas podem reduzir o tamanho final.'
+    ]:[
       `Imprima este PDF em tamanho real (100%). Desative "Ajustar a pagina", "Preencher" e expansao automatica sem bordas.${rotated ? ' As folhas saem em pé; deite-as para montar.' : ''}`,
       'Confira a escala nas duas direcoes usando a folha de teste 100 x 100 mm antes de imprimir todas as folhas.',
       'A letra do código é a linha (A = topo) e o número é a coluna (1 = esquerda).',
@@ -666,7 +687,7 @@
       let blob;
       await PS.withBusy('Gerando o PDF', 'Renderizando as folhas em alta resolução…', async prog => { blob = await buildPdf(prog); });
       PS.download(blob, `poster_${Math.round(g.finalW / 10)}x${Math.round(g.finalH / 10)}cm_${g.cols}x${g.rows}_${cfg.paper}.pdf`);
-      PS.toast(`PDF pronto (${PS.bytes(blob.size)}). Imprima em tamanho real (100%).`, 'success', 5000);
+      PS.toast(`PDF pronto (${PS.bytes(blob.size)}). ${cfg.glueStyle==='image'?'Todas as folhas usam A4 com imagem repetida.':'Imprima em tamanho real (100%).'}`, 'success', 5000);
     } catch (e) { console.error(e); PS.toast('Não foi possível gerar o PDF: ' + e.message, 'error', 6000); }
   });
   $('#pPrintNow').addEventListener('click', async () => {
@@ -677,7 +698,7 @@
       await PS.withBusy('Gerando o PDF', 'Ele vai abrir numa nova aba para você imprimir.', async prog => { blob = await buildPdf(prog); });
       const url = URL.createObjectURL(blob);
       if (win) win.location.href = url; else { PS.download(blob, 'poster.pdf'); PS.toast('O navegador bloqueou a nova aba; o PDF foi baixado.', 'info'); }
-      PS.toast('Na janela de impressão escolha “Tamanho real” ou 100%.', 'success', 6000);
+      PS.toast(cfg.glueStyle==='image'?'Use a mesma opção em todas as páginas. Na montagem, apare a borda branca da folha de cima e alinhe a imagem repetida.':'Na janela de impressão escolha “Tamanho real” ou 100%.', 'success', 7000);
       setTimeout(() => URL.revokeObjectURL(url), 120000);
     } catch (e) { if (win) win.close(); PS.toast('Não foi possível gerar o PDF: ' + e.message, 'error'); }
   });
