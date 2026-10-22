@@ -181,10 +181,11 @@
   PS.$$('#upFactor button').forEach(b => b.addEventListener('click', () => { upFactor = +b.dataset.f; PS.$$('#upFactor button').forEach(x => x.classList.toggle('active', x === b)); updateUpInfo(); }));
   ['upDenoise', 'upDetail', 'dnStrength', 'dnChroma', 'dnPreserve', 'shAmount', 'shRadius', 'shThreshold', 'dbStrength'].forEach(id => PS.bindRange(PS.$('#' + id), () => {}));
   function updateUpInfo() {
-    if (!doc.has) { PS.$('#upResult').textContent = '—'; return; }
+    if (!doc.has) { PS.$('#upResult').textContent = '—'; PS.$('#btnUpscale').disabled = true; return; }
     const w = Math.round(doc.w * upFactor), h = Math.round(doc.h * upFactor), mp = w * h / 1e6;
-    PS.$('#upResult').innerHTML = `Resultado: <strong>${PS.fmtInt(w)} × ${PS.fmtInt(h)} px</strong> (${PS.fmt(mp, 1)} MP) — a 300 DPI imprime ${PS.fmt(w / 300 * 2.54, 1)} × ${PS.fmt(h / 300 * 2.54, 1)} cm.` + (mp > 100 ? ' <span style="color:var(--danger)">Grande demais para o navegador; escolha um fator menor.</span>' : '');
-    PS.$('#btnUpscale').disabled = mp > 100;
+    PS.$('#upResult').innerHTML = `Resultado: <strong>${PS.fmtInt(w)} × ${PS.fmtInt(h)} px</strong> (${PS.fmt(mp, 1)} MP) — a 300 DPI imprime ${PS.fmt(w / 300 * 2.54, 1)} × ${PS.fmt(h / 300 * 2.54, 1)} cm.` + (mp > 100 ? ' <span class="hint">Imagem grande: o processamento pode consumir bastante memória.</span>' : '');
+    // O tamanho selecionado não tem teto fixo de MP; só rejeita dimensões inválidas.
+    PS.$('#btnUpscale').disabled = !PS.imageSize.valid(w, h);
   }
   let upMethod = 'sr';
   PS.$$('#upMethod button').forEach(b => b.addEventListener('click', () => { upMethod = b.dataset.m; PS.$$('#upMethod button').forEach(x => x.classList.toggle('active', x === b)); }));
@@ -193,7 +194,11 @@
     if (ok) PS.toast(`Imagem ampliada para ${PS.fmtInt(doc.w)} × ${PS.fmtInt(doc.h)} px.`, 'success');
     return ok;
   };
-  PS.$('#btnUpscale').addEventListener('click', () => doc.has && PS.upscaleTo(upFactor));
+  PS.$('#btnUpscale').addEventListener('click', async () => {
+    if (!doc.has) return;
+    try { await PS.upscaleTo(upFactor); }
+    catch (e) { PS.toast(e.message || 'Não foi possível ampliar a imagem.', 'error', 7000); }
+  });
   PS.$('#btnDenoise').addEventListener('click', async () => { if (!doc.has) return; await doc.process('denoise', { strength: +PS.$('#dnStrength').value, chroma: +PS.$('#dnChroma').value, preserve: +PS.$('#dnPreserve').value }, 'Redução de ruído', 'fa-feather', 'Reduzindo ruído'); PS.toast('Ruído reduzido.', 'success'); });
   PS.$('#btnSharpen').addEventListener('click', async () => { if (!doc.has) return; await doc.process('smartSharpen', { amount: +PS.$('#shAmount').value, radius: +PS.$('#shRadius').value, threshold: +PS.$('#shThreshold').value }, 'Nitidez inteligente', 'fa-diamond', 'Aplicando nitidez'); PS.toast('Nitidez aplicada.', 'success'); });
   PS.$('#btnDeblock').addEventListener('click', async () => { if (!doc.has) return; await doc.process('filter', { name: 'deblock', amount: 100, opt: { strength: +PS.$('#dbStrength').value } }, 'Remover artefatos de JPG', 'fa-broom', 'Removendo artefatos'); PS.toast('Artefatos de compressão suavizados.', 'success'); });

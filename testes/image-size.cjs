@@ -28,3 +28,18 @@ sandbox.refreshPlan();assert.equal($('go').disabled,false);assert.match($('outpu
 values.scale='auto';sandbox.refreshPlan();assert.match($('outputSummary').textContent,/saída: 8000 × 6000/);assert.equal($('go').disabled,false);
 values.scale='8';sandbox.refreshPlan();assert.equal($('go').disabled,false);assert.match($('outputSummary').textContent,/64000 × 48000/);
 console.log('OK: sem teto de MP/lado; Auto preserva original; falha real detectada; painel móvel permite 192 MP e 8×. Alocações enormes simuladas.');
+
+// Regressão do botão da aba Melhorar: era um segundo bloqueio, fora do ampliador de IA.
+const panelSource=fs.readFileSync(path.join(__dirname,'../js/editor/panels.js'),'utf8');
+const controlsPanel=new Map(),panel$=id=>{if(!controlsPanel.has(id))controlsPanel.set(id,{textContent:'',innerHTML:'',disabled:false});return controlsPanel.get(id)};
+const panelDoc={has:true,w:4208,h:5980};
+const panelContext={doc:panelDoc,upFactor:2,PS:{$:panel$,imageSize:S,fmtInt:v=>v.toLocaleString('pt-BR'),fmt:(v,n)=>v.toLocaleString('pt-BR',{minimumFractionDigits:n,maximumFractionDigits:n})}};
+vm.createContext(panelContext);
+vm.runInContext(panelSource.slice(panelSource.indexOf('  function updateUpInfo()'),panelSource.indexOf("  let upMethod = 'sr';")),panelContext);
+for(const [w,h] of [[4208,5980],[6000,4000],[8000,6000]])for(const factor of [1.5,2,3,4]){
+ panelDoc.w=w;panelDoc.h=h;panelContext.upFactor=factor;panelContext.updateUpInfo();assert.equal(panel$('#btnUpscale').disabled,false);assert(!/Grande demais|fator menor/.test(panel$('#upResult').innerHTML));
+}
+panelDoc.w=4208;panelDoc.h=5980;panelContext.upFactor=2;panelContext.updateUpInfo();assert.match(panel$('#upResult').innerHTML,/8\.416 × 11\.960/);assert.match(panel$('#upResult').innerHTML,/100,7 MP/);
+panelDoc.has=false;panelContext.updateUpInfo();assert.equal(panel$('#btnUpscale').disabled,true);
+panelDoc.has=true;panelDoc.w=Infinity;panelContext.updateUpInfo();assert.equal(panel$('#btnUpscale').disabled,true);
+console.log('OK: botão Melhorar habilitado em 12 combinações; caso 4208×5980 → 8416×11960 (100,7 MP) coberto sem alocar imagem gigante.');

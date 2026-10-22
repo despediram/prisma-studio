@@ -1,4 +1,6 @@
-Prisma Studio para **Windows 10/11 de 64 bits**.
+Prisma Studio **0.1.1** para **Windows 10/11 de 64 bits**.
+
+Correção desta versão: o botão **Melhorar → Ampliar imagem** deixa de bloquear saídas acima de 100 MP. Uma imagem de 4208 × 5980 px agora permite selecionar 2× (8416 × 11960 px, cerca de 100,7 MP) e fatores maiores. O aviso de consumo de memória é informativo; a capacidade real continua dependendo do computador. O motor e os cálculos dos pôsteres são preservados.
 
 Baixe o arquivo **Prisma-Studio-…-Windows-x64-Setup.exe**, execute o instalador e abra o atalho Prisma Studio. Não é necessário instalar Node.js ou abrir um terminal.
 
