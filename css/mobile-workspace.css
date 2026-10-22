@@ -21,3 +21,21 @@
 @media(max-width:860px){#inspector.mobile-open,.pside.mobile-open,.design-workspace[data-mobile-panel] .design-library,.design-workspace[data-mobile-panel] .design-inspector{max-height:44dvh}}
 /* Em paisagem o painel fica ao lado, para não consumir toda a altura da arte. */
 @media(max-height:500px) and (max-width:860px){#inspector.mobile-open,.pside.mobile-open,.design-workspace[data-mobile-panel] .design-library,.design-workspace[data-mobile-panel] .design-inspector{left:auto;right:0;width:min(380px,46vw);bottom:64px;max-height:calc(100dvh - 116px);border-radius:16px 0 0 0}body.mobile-panel-visible #view-editor,body.mobile-panel-visible #view-poster{padding-bottom:64px;padding-right:min(380px,46vw)}#view-design{padding-bottom:64px}#view-design:not([data-mobile-panel='']){padding-right:min(380px,46vw)}}
+/* Conferência de pôster no celular: os controles não podem esconder a montagem. */
+@media(max-width:860px){
+ .pstage-bar #pViewMode{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:thin}
+ .pstage-bar #pViewMode button{flex:0 0 auto;min-height:40px}
+ .poster-assembly-controls .assembly-row:first-child{display:grid;grid-template-columns:44px minmax(0,1fr) 44px 38px;gap:4px;margin-bottom:2px}
+ .poster-assembly-controls .assembly-row:first-child label{display:grid;gap:0;font-size:10px;min-width:0}
+ #pAssemblyStep{width:100%;min-width:0;min-height:30px;margin:0}
+ #pAssemblyCount{font-size:10px}
+ .poster-assembly-controls .assembly-row:nth-child(2){display:grid;grid-template-columns:minmax(0,1fr) 86px;gap:2px 6px;margin:0;font-size:10px}
+ .poster-assembly-controls .assembly-row:nth-child(2)>label:first-child{grid-column:1/-1;display:grid;grid-template-columns:96px minmax(0,1fr)}
+ #pAssemblyZoom{width:100%;min-width:0;min-height:30px;margin:0}
+ .poster-assembly-controls .check{font-size:10px;line-height:1.3}
+ #pAssemblyReset{min-height:40px;font-size:10px;padding:4px}
+ #pAssemblyPrev,#pAssemblyNext{min-height:40px;padding:3px;font-size:10px}
+ .pstage:has(#pAssemblyControls:not([hidden])) .pstats{grid-template-columns:1fr 1fr;padding:4px}
+ .pstage:has(#pAssemblyControls:not([hidden])) .pstats .stat:nth-child(n+3){display:none}
+ .poster-assembly-controls #pAssemblyStatus{max-height:28px;overflow:auto;line-height:1.3;margin:2px 0 0}
+}

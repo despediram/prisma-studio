@@ -18,7 +18,8 @@
     },
     draw(ctx,width,height){
       const g=P.geometry;if(!g)return;
-      const base=Math.max(.001,Math.min((width-64)/(g.areaW+2*g.margin),(height-64)/(g.areaH+2*g.margin))),s=base*(+zoom.value/100);
+      const pad=Math.min(24,width*.04,height*.04);
+      const base=Math.max(.001,Math.min((width-2*pad)/(g.areaW+2*g.margin),(height-2*pad)/(g.areaH+2*g.margin))),s=base*(+zoom.value/100);
       const ox=(width-g.areaW*s)/2+pan.x,oy=(height-g.areaH*s)/2+pan.y;layout={s,ox,oy};
       const shown=Math.min(+step.value||0,sheets.length);
       ctx.save();ctx.fillStyle='rgba(128,128,128,.12)';ctx.fillRect(ox-g.margin*s,oy-g.margin*s,(g.areaW+2*g.margin)*s,(g.areaH+2*g.margin)*s);

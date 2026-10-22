@@ -28,7 +28,8 @@ Todos os recortes saem de um raster global com a mesma origem, escala e fase dos
 - `js/poster/poster-page.js`: extensão da borda em toda a sobra da folha, sem pintar branco nem recortar a arte final.
 - `js/poster/poster-raster.js`: aplica o mesmo preenchimento ao raster usado no PDF e nas folhas.
 - `js/poster/poster-marks.js`: modo de imagem sem fundo, texto ou pontilhado sobre os pixels repetidos.
-- `js/poster/poster-assembly.js`: instruções da montagem visual compatíveis com as bordas físicas da impressão.
+- `css/mobile-workspace.css`: controles compactos, abas horizontais e espaço maior para conferir a montagem no celular.
+- `js/poster/poster-assembly.js`: área de desenho com recuo proporcional ao espaço disponível e instruções da montagem visual compatíveis com as bordas físicas da impressão.
 - `testes/poster-phone.cjs`: teste puro das geometrias, margens e escalas, incluindo grades de até 30 × 30.
 - `testes/poster-celular.html`: teste de integração executável no próprio navegador, com exportação dos PDFs reais de 4 e 12 folhas.
 - `testes/poster-phone-pdf.py`: inspeção independente do PDF renderizado e simulação de recorte/montagem.
