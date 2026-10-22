@@ -189,7 +189,7 @@ body{font-size:1rem}
 
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
-<link rel="stylesheet" href="../css/upscaler.css"></head>
+<link rel="stylesheet" href="../css/upscaler.css?v=2"></head>
 <body>
 <header class="top">
   <div class="brand">
@@ -244,8 +244,10 @@ body{font-size:1rem}
         <div class="hint">Cole direto, por exemplo “4843 × 6898 px”. A imagem inteira entra no tamanho, sem cortar.</div>
       </div>
       <div id="mulBox">
-        <div class="seg">
-          <input type="radio" name="scale" id="s2" value="2" checked><label for="s2">2×</label>
+        <div class="seg scale-presets">
+          <input type="radio" name="scale" id="sAuto" value="auto" checked><label for="sAuto">Auto</label>
+          <input type="radio" name="scale" id="s1" value="1"><label for="s1">1× restaurar</label>
+          <input type="radio" name="scale" id="s2" value="2"><label for="s2">2×</label>
           <input type="radio" name="scale" id="s3" value="3"><label for="s3">3×</label>
           <input type="radio" name="scale" id="s4" value="4"><label for="s4">4×</label>
           <input type="radio" name="scale" id="s8" value="8"><label for="s8">8×</label>
@@ -341,9 +343,9 @@ body{font-size:1rem}
       </div>
     </div>
 
-    </fieldset><div class="actions">
+    </fieldset><div class="actions"><div class="hint output-summary" id="outputSummary" aria-live="polite"></div>
       <button class="go" id="go" disabled><i id="prog"></i><span>Melhorar imagem</span></button>
-      <div class="status" id="status">Carregando…</div>
+      <div class="status" id="status">Carregando…</div><button class="ghost" id="useRecommended" type="button" hidden>Usar tamanho recomendado</button>
       <div class="sec">
         <button id="dl" disabled>Baixar</button><button id="applyEditor" disabled>Aplicar no editor</button>
         <button id="cancel" hidden>Cancelar</button>
@@ -357,6 +359,7 @@ body{font-size:1rem}
 <!-- ONNX Runtime Web (WebGPU + WebAssembly), versão fixa -->
 <script src="../vendor/onnxruntime/ort.webgpu.min.js"></script>
 
+<script src="../js/core/upscale-plan.js"></script>
 <script>
 const $ = id => document.getElementById(id);
 const val = name => document.querySelector(`input[name=${name}]:checked`).value;
@@ -637,7 +640,9 @@ function makePlan() {
   const sw = srcImage.naturalWidth, sh = srcImage.naturalHeight;
   let W, H, sx, sy, ox = 0, oy = 0, dw, dh, kind, diff = 0;
   if (val("mode") === "mul") {
-    const s = +val("scale"); W = dw = sw * s; H = dh = sh * s; sx = sy = s; kind = "mul";
+    const choice=val('scale');
+    if(choice==='auto'){const rec=PrismaUpscalePlan.recommend(sw,sh,MAX_MP);W=dw=rec.w;H=dh=rec.h;}else{const s=+choice;W=dw=sw*s;H=dh=sh*s;}
+    sx=W/sw;sy=H/sh;kind='mul';
   } else {
     const size = parseSize(); if (!size) return null;
     ({ W, H } = size);
@@ -667,12 +672,19 @@ function refreshPlan() {
     !pp.ai ? " · só redimensiona" :
     pp.needed <= 4 ? ` · IA 4× e reduz para ${pp.needed.toFixed(2).replace(".", ",")}×` :
     $("twoPass").checked ? ` · IA 4× + IA 4× e reduz para ${pp.needed.toFixed(2).replace(".", ",")}×` : ` · IA 4× + ampliação comum até ${pp.needed.toFixed(2).replace(".", ",")}×`);
+  const valid=p&&PrismaUpscalePlan.valid(p.W,p.H,MAX_MP);
+  $('go').disabled=!srcImage||!valid||!!abort;
+  $('useRecommended').hidden=!srcImage||!!valid||!!abort;
+  if(srcImage){const rec=PrismaUpscalePlan.recommend(srcImage.naturalWidth,srcImage.naturalHeight,MAX_MP);$('useRecommended').textContent=`Usar ${rec.w} × ${rec.h} px · recomendado`;}
+  $('outputSummary').textContent=srcImage&&p?`Original: ${srcImage.naturalWidth} × ${srcImage.naturalHeight} px → saída: ${p.W} × ${p.H} px (${br(p.W*p.H/1e6)} MP). Limite desta tela: ${MAX_MP} MP.`:'';
   if (!srcImage) { el.textContent = ""; return; }
   if (!p) { el.textContent = "Digite largura e altura, ex.: 4843 × 6898."; el.className = "hint warn"; return; }
   let t = `Saída: ${p.W}×${p.H}px (${br(p.W * p.H / 1e6)} MP). `;
   const mp = p.W * p.H / 1e6;
-  if (mp > MAX_MP) { el.textContent = t + `Grande demais para o navegador (limite ≈${MAX_MP} MP). Escolha um multiplicador menor ou um tamanho em pixels.`; el.className = "hint warn"; return; }
+  if (!valid) { el.textContent = t + `Grande demais para o navegador (limite ≈${MAX_MP} MP). Escolha um multiplicador menor ou um tamanho em pixels.`; el.className = "hint warn"; return; }
   if (mp > 120) { t += "Imagem muito grande: pode demorar muito e travar em computadores com pouca memória. "; el.className = "hint warn"; }
+  if(val('mode')==='mul'&&val('scale')==='auto')t+='Automático: tamanho ajustado ao orçamento desta tela, sem cortar a imagem. ';
+  if(p.W<srcImage.naturalWidth||p.H<srcImage.naturalHeight){t+='Atenção: este tamanho reduz a resolução original para caber no aparelho. ';el.className='hint warn';}
   const srcMP = srcImage.naturalWidth * srcImage.naturalHeight / 1e6;
   if (srcMP > 12) { t += `A original já tem ${br(srcMP)} MP; desembaçar e rostos vão demorar bastante. `; el.className = "hint warn"; }
   if (p.kind === "exact") t += `Encaixa certinho (diferença de proporção ${(p.diff * 100).toFixed(1)}%, invisível). `;
@@ -750,7 +762,7 @@ async function updateBefore() {
   const cmp = $("compare");
   cmp.style.aspectRatio = `${p.W} / ${p.H}`;
   cmp.style.width = `min(100%, calc((var(--stageH) - 8.5rem) * ${p.W / p.H}))`;
-  const k = 1 / Math.max(1, p.needed);
+  const k = Math.min(1 / Math.max(1, p.needed),1600/Math.max(p.W,p.H));
   const [c, g] = newCanvas(Math.round(p.W * k), Math.round(p.H * k));
   if (p.kind === "fill") paintBlurBackground(g, c.width, c.height);
   g.imageSmoothingEnabled = false;
@@ -759,7 +771,7 @@ async function updateBefore() {
 }
 function hideAfter() { $("imAfter").hidden = true; $("handle").hidden = true; $("tagR").hidden = true; }
 async function showAfter(full) {
-  const k = Math.min(1, 2400 / Math.max(full.width, full.height));
+  const k = Math.min(1, (matchMedia('(max-width:860px)').matches?1600:2400) / Math.max(full.width, full.height));
   const [c, g] = newCanvas(Math.round(full.width * k), Math.round(full.height * k));
   drawHQ(g, full, 0, 0, full.width, full.height, 0, 0, c.width, c.height);
   setImg($("imAfter"), await canvasToURL(c));
@@ -871,7 +883,7 @@ async function analyze() {
   $("aClar").textContent = analysis.anime ? "Desligada: em desenhos/renders muda o sombreado original" : "Sugerido para fotos";
   syncPhases(); refreshPlan(); renderChips();
   setStatus("Análise pronta. Procurando rostos…");
-  $("go").disabled = false;
+  refreshPlan();
 
   // 3) rostos (modelo pequeno, roda na CPU)
   faces = null; renderChips();
@@ -1384,7 +1396,7 @@ async function pipeline(p) {
 $("go").onclick = async () => {
   const p = makePlan();
   if (!p) { refreshPlan(); return; }
-  if (p.W * p.H / 1e6 > MAX_MP || Math.max(p.W,p.H)>32000) { refreshPlan(); setStatus("Tamanho final grande demais. Diminua o multiplicador.", "err"); return; }
+  if(!PrismaUpscalePlan.valid(p.W,p.H,MAX_MP)){refreshPlan();setStatus('Escolha o tamanho recomendado abaixo para continuar neste aparelho.','err');return;}
   parent.postMessage({type:'prisma-upscale:invalid'},'*');
   $('applyEditor').disabled=true;$('upSettings').disabled=true;
   $("go").disabled = true; $("dl").disabled = true; $("cancel").hidden = false;
@@ -1416,8 +1428,13 @@ $("go").onclick = async () => {
     for (const k of ["Clean", "Blur", "Up", "Face", "Sharp", "Clar", "Color"]) if ($("st" + k).classList.contains("run")) setPhase(k, e.name === "AbortError" ? "cancelada" : "erro", "err");
     setProg(0);
   } finally {
-    $('upSettings').disabled=false;$("go").disabled = false; $("cancel").hidden = true; abort = null;
+    $('upSettings').disabled=false;$("cancel").hidden = true; abort = null;refreshPlan();
   }
+};
+$('useRecommended').onclick=()=>{
+  if(abort)return;const radio=$('sAuto');radio.checked=true;$('mMul').checked=true;$('exactBox').hidden=true;$('mulBox').hidden=false;
+  if(finalCanvas){$('applyEditor').disabled=true;$('dl').disabled=true;hideAfter();}
+  refreshPlan();updateBefore();setStatus('Tamanho recomendado selecionado. Confira a saída acima e toque em Melhorar imagem.');
 };
 $("cancel").onclick = () => abort && abort.abort();
 

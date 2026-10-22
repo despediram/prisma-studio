@@ -15,7 +15,7 @@
   PS.mobile?.close();PS.design.closePanel?.();PS.fx.close();
   const c=doc.composite(1,{live:true});sourceVersion=doc.version;sourceName=doc.name;
   const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob){PS.toast('Não foi possível preparar a imagem.','error');return;}
-  pending={blob,name:doc.name+'.png',theme:document.documentElement.dataset.theme};dlg.showModal();frame.src='upscaler/index.html';
+  pending={blob,name:doc.name+'.png',theme:document.documentElement.dataset.theme};dlg.showModal();frame.src='upscaler/index.html?v=2';
  };
  addEventListener('message',async event=>{
   if(event.source!==frame.contentWindow||!dlg.open)return;const m=event.data;

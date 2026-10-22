@@ -5,7 +5,8 @@ A adaptação parte do arquivo `upscaler-local.html` fornecido pelo autor do pro
 ## Como usar
 
 1. Abra uma imagem no Editor. Use o ícone de ampliar no topo ou **Melhorar → Abrir ampliador de IA e restauração**. No Pôster, o aviso de resolução também abre este painel.
-2. Escolha **IA · Real-ESRGAN** ou **Rápido · sem IA**. O segundo funciona sem modelos e sem internet; utiliza interpolação, não reconstrução neural.
+2. O tamanho inicia em **Auto**, calculado pela resolução original e pelo limite da tela. Há também **1× restaurar**. Ao escolher uma saída maior que o limite, use o botão de tamanho recomendado junto ao botão principal. A resolução original é mostrada ao lado da saída; se for necessário reduzir, a interface avisa explicitamente.
+3. Escolha **IA · Real-ESRGAN** ou **Rápido · sem IA**. O segundo funciona sem modelos e sem internet; utiliza interpolação, não reconstrução neural.
 3. Para IA, permita baixar os modelos ou carregue `.onnx` locais. Escolha o tipo de modelo quando o nome do arquivo for genérico, como `model.onnx`. O modelo de desenho é diferente do modelo de foto.
 4. Ajuste o tamanho e as etapas, clique em Melhorar imagem e compare antes/depois. É possível baixar PNG/JPG ou aplicar ao Editor.
 5. **Aplicar** substitui a imagem visível por uma camada mesclada. **Desfazer** recupera as camadas, máscaras, dimensões e ajustes anteriores. O arquivo PSD/projeto original em disco não é alterado. No Design, envie primeiro uma cópia ao Editor pelo comando próprio da área de Design.
@@ -60,3 +61,11 @@ Limites da validação: não houve telefone físico ou Safari neste ambiente. We
 - `vendor/onnxruntime/chunks/part-000.js` até `part-052.js`: as 53 partes do WASM compactado, na ordem indicada no carregador.
 - `licencas/onnxruntime-web-MIT.txt`: licença oficial da dependência.
 - `docs/ampliador-e-mobile.md`: instruções, alterações e limites dos testes.
+
+### Correção de tamanho em celular
+
+O antigo padrão fixo de 2× podia pedir 96 MP para uma foto de 24 MP e bloquear a execução no limite móvel de 32 MP. O padrão Auto agora calcula um fator fracionário quando necessário; não exige trocar de computador para continuar. Medidas manuais acima do orçamento são bloqueadas antes de executar e oferecem recuperação em um toque. Prévia limitada a 1600 px para reduzir o consumo de memória. O orçamento é uma estimativa de área, não uma garantia de memória livre.
+
+Validação da correção: teste automatizado de 10.000 planos de saída (32 e 100 MP), incluindo limite de lado, redução e ampliação fracionária. Na interface de 390 × 844 px, imagem real de 6000 × 4000 px recebeu saída Auto de 6928 × 4618 px; 2× bloqueou corretamente e o botão recomendado recuperou uma configuração válida. Esse teste de 24 MP valida o planejamento e a interface, não o processamento completo de IA nessa resolução.
+
+Também foi executado o processamento completo no modo Rápido/offline: 24 MP → 31.993.504 pixels (6928 × 4618), com nitidez e cor, PNG gerado e ações Baixar/Aplicar habilitadas. A tela informou conclusão em 4 s no navegador de teste; isso não prevê o tempo num celular físico. O modo IA sem modelo/download apresentou a mensagem esperada de configuração. O evento de download automatizado não foi capturado na ponte do iframe; a interface confirmou Baixado.
