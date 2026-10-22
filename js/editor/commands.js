@@ -60,6 +60,7 @@
   };
   PS.saveProject = async () => {
     const blob = await PS.createProjectBlob(); if (!blob) return false;
+    if (PS.fileHost) return PS.fileHost.saveProject(blob, `${doc.name || 'projeto'}.prisma`);
     if (PS.desktop) return PS.desktop.saveEditor(blob);
     PS.download(blob, `${doc.name || 'projeto'}.prisma`);
     PS.toast(`Projeto salvo (${PS.bytes(blob.size)}). Abra-o depois com Arquivo › Abrir.`, 'success');

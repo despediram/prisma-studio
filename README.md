@@ -57,3 +57,13 @@ A versão desktop usa os arquivos deste projeto, sem substituir o site. O workfl
 Menus nativos, recentes, Salvar/Salvar como, diálogos de exportação e recuperação em disco complementam o Editor, o Design e os Pôsteres. Cada área mantém duas gerações de recuperação; a gravação ocorre a cada minuto de alterações quando a edição está ociosa. Arquivos `.prisma` também preservam os ajustes não destrutivos. O instalador inclui o motor do ampliador, mas os modelos ONNX continuam sendo carregados ou baixados com autorização na interface.
 
 Para desenvolver: `npm ci`, `npm run prepare:desktop`, `npm start`. Validação: `npm run test:desktop` e, no Windows, `npm run test:desktop:smoke`. Compilação: `npm run dist:win`. Consulte [desktop/RELEASE.md](desktop/RELEASE.md) para os recursos e limites desta primeira versão. O motor de pixels continua compartilhado com o navegador; não há ganho automático de precisão, memória ilimitada ou um backend de GPU nativo novo.
+
+## Aplicativo Android
+
+A pasta `android/` empacota o Editor, o Design, os Pôsteres e o ampliador usando os mesmos arquivos do site. O APK inclui os recursos locais e usa uma origem HTTPS virtual; não abre o GitHub Pages para funcionar. O seletor nativo abre imagens e projetos e escolhe o destino de PNG/JPG/PDF/PSD e projetos. Imagens podem ser recebidas por **Compartilhar → Prisma Studio** e exportações podem ser compartilhadas pelo menu do aplicativo.
+
+Requer Android 8 ou superior e Android System WebView atualizado. Os modelos ONNX não acompanham o APK: são carregados ou baixados com autorização no ampliador. O modo rápido funciona offline. O limite efetivo de imagens continua dependendo do aparelho.
+
+A ponte nativa aceita só a origem do APK e o quadro principal. Arquivos usam o seletor do sistema, sem acesso geral ao armazenamento. Transferências usam blocos de 64 KB e a recuperação local mantém duas gerações por área. O botão Voltar fecha primeiro diálogos/painéis; sair tenta concluir uma cópia local.
+
+Compilação: Java 17, Gradle 8.11.1 e SDK Android 35; `gradle -p android assembleRelease`. O workflow Android testa Editor, worker, recuperação, Design, Pôster e ampliador num emulador sem rede. O APK intermediário **unsigned** não é instalável; a assinatura final usa a chave privada preservada fora do repositório. Nunca inclua essa chave no GitHub.

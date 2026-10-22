@@ -1,0 +1,2 @@
+// Prisma Studio Android — plugin fixado para compilações reproduzíveis.
+plugins { id 'com.android.application' version '8.9.2' apply false }

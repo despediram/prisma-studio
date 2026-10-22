@@ -48,3 +48,6 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 - `../desktop/smoke.cjs`: integração no Electron real, executada pelo CI Windows antes de compilar; serialização com máscara/ajustes, salvamento, recuperação, Design, undo/redo e carregamento isolado do ampliador. `npm run test:desktop:smoke`.
 
 - Regressão 0.1.1: `image-size.cjs` cobre o botão da aba Melhorar, inclusive 4208 × 5980 → 8416 × 11960 px (100,7 MP). O teste do Electron confere o botão real e processa uma ampliação pequena com undo; não aloca 100 MP para validar apenas a interface.
+
+- `android.cjs`: blocos de 64 KB, integridade binária, cancelamento, falhas e restrições da ponte Android.
+- `android/app/src/androidTest/.../EditorTest.java`: teste no emulador Android com a rede desligada; Editor, worker, camadas/máscara/ajustes, recuperação em disco, Design, Pôster e ampliador.

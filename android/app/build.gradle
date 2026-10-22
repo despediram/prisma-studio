@@ -1,0 +1,28 @@
+// Prisma Studio Android — APK offline com os mesmos arquivos do editor web.
+plugins { id 'com.android.application' }
+android {
+ namespace 'br.prismastudio.android'
+ compileSdk 35
+ defaultConfig {
+  applicationId 'br.prismastudio.android'
+  minSdk 26
+  targetSdk 35
+  versionCode 1
+  versionName '0.1.0'
+  testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+ }
+ buildTypes { release { minifyEnabled false } }
+ compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
+ sourceSets { main.assets.srcDir layout.buildDirectory.dir('generated/prismaAssets') }
+}
+dependencies {
+ implementation 'androidx.webkit:webkit:1.14.0'
+ androidTestImplementation 'androidx.test:runner:1.6.2'
+ androidTestImplementation 'androidx.test:rules:1.6.1'
+ androidTestImplementation 'androidx.test.ext:junit:1.2.1'
+}
+tasks.register('copyPrismaAssets', Copy) {
+ from(rootProject.file('..')) { include 'index.html', 'js/**', 'css/**', 'assets/**', 'vendor/**', 'licencas/**', 'upscaler/**' }
+ into layout.buildDirectory.dir('generated/prismaAssets/www')
+}
+tasks.named('preBuild').configure { dependsOn 'copyPrismaAssets' }

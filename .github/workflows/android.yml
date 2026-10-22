@@ -1,0 +1,59 @@
+# Prisma Studio — compila Android e testa o APK num emulador antes da assinatura final.
+name: Compilar Prisma Studio Android
+on:
+  push:
+    branches: [main]
+    paths: ['android/**', 'js/**', 'css/**', 'index.html', 'upscaler/**', 'vendor/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+permissions:
+  contents: write
+concurrency:
+  group: android
+  cancel-in-progress: false
+jobs:
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: '8.11.1'
+      - name: Compilar APK e validar fontes compartilhadas
+        run: |
+          node testes/image-size.cjs
+          node testes/android.cjs
+          gradle -p android assembleDebug assembleRelease assembleDebugAndroidTest --stacktrace
+      - name: Habilitar aceleração do emulador
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Testar Editor, Design, Pôster e ponte no Android
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          arch: x86_64
+          profile: pixel_5
+          disable-animations: true
+          script: |
+            adb shell svc wifi disable
+            adb shell svc data disable
+            gradle -p android connectedDebugAndroidTest --stacktrace
+      - uses: actions/upload-artifact@v4
+        with:
+          name: Prisma-Studio-Android-build
+          path: |
+            android/app/build/outputs/apk/release/app-release-unsigned.apk
+            android/app/build/outputs/androidTest-results/
+            android/app/build/reports/androidTests/
+      - name: Disponibilizar compilação intermediária para assinatura privada
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk Prisma-Studio-Android-0.1.0-unsigned.apk
+          gh release create "android-build-${{ github.run_number }}" Prisma-Studio-Android-0.1.0-unsigned.apk --prerelease --latest=false --target '${{ github.sha }}' --title "Android · compilação ${{ github.run_number }} para assinatura" --notes 'Compilação intermediária sem assinatura. O APK instalável é assinado fora do CI com a chave privada do projeto. Não instale este arquivo intermediário.'

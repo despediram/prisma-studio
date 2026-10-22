@@ -1,0 +1,12 @@
+<!-- Prisma Studio Android — editor local; arquivos escolhidos pelo seletor do sistema. -->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+ <uses-permission android:name="android.permission.INTERNET"/>
+ <application android:theme="@style/AppTheme" android:label="Prisma Studio" android:icon="@drawable/prisma_icon" android:allowBackup="false" android:usesCleartextTraffic="false" android:supportsRtl="true" android:hardwareAccelerated="true">
+  <provider android:name="androidx.core.content.FileProvider" android:authorities="${applicationId}.files" android:exported="false" android:grantUriPermissions="true"><meta-data android:name="android.support.FILE_PROVIDER_PATHS" android:resource="@xml/shared_files"/></provider>
+  <activity android:name=".MainActivity" android:exported="true" android:launchMode="singleTop" android:configChanges="orientation|screenSize|screenLayout|keyboardHidden|smallestScreenSize|uiMode" android:windowSoftInputMode="adjustResize">
+   <intent-filter><action android:name="android.intent.action.MAIN"/><category android:name="android.intent.category.LAUNCHER"/></intent-filter>
+   <intent-filter><action android:name="android.intent.action.SEND"/><category android:name="android.intent.category.DEFAULT"/><data android:mimeType="image/*"/></intent-filter>
+   <intent-filter><action android:name="android.intent.action.VIEW"/><category android:name="android.intent.category.DEFAULT"/><category android:name="android.intent.category.BROWSABLE"/><data android:scheme="content" android:mimeType="image/*"/></intent-filter>
+  </activity>
+ </application>
+</manifest>

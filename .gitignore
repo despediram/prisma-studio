@@ -7,3 +7,8 @@ test-results/
 .DS_Store
 dist-desktop/
 desktop/icon.ico
+android/.gradle/
+android/**/build/
+android/local.properties
+*.keystore
+*.p12

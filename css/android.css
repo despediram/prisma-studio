@@ -1,0 +1,17 @@
+/* Prisma Studio Android — alvos de toque e menus próprios do APK.
+ * Barras do sistema e teclado são reservados pela janela nativa.
+ */
+.ps-android .android-edition {display:block;font-size:9px;letter-spacing:1.4px;color:var(--cyan)}
+.ps-android .android-menu-action {min-height:48px!important;text-align:left}
+.ps-android .android-recovery-row {display:flex;align-items:center;gap:12px;padding:14px 8px;margin:8px 0;border:1px solid var(--line);border-radius:10px;overflow-wrap:anywhere}
+.ps-android .android-recovery-row input {width:22px;height:22px;flex:0 0 auto}
+@media(max-width:860px){
+ .ps-android .btn,.ps-android input[type=range],.ps-android select{min-height:44px}
+ .ps-android .mobile-workspace-dock{gap:2px}
+ .ps-android .mobile-workspace-dock button{min-height:52px}
+ .ps-android .dialog-body{max-height:min(65dvh,640px)}
+ .ps-android .top-actions .btn{border-radius:10px}
+ .ps-android .menubar.mobile-menu-open{padding:10px;gap:6px}
+ .ps-android .menubar.mobile-menu-open .android-menu-action{background:var(--chrome-2);border-radius:9px}
+ .ps-android .upscaler-dialog{height:100dvh;max-height:100dvh}
+}

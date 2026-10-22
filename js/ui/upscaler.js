@@ -21,7 +21,7 @@
   if(event.source!==frame.contentWindow||!dlg.open)return;const m=event.data;
   if(m?.type==='prisma-upscale:ready'){ready=true;deliver();return;}
   if(m?.type==='prisma-upscale:close'){close();return;}
-  if(m?.type==='prisma-upscale:download'&&m.blob instanceof Blob){const url=URL.createObjectURL(m.blob),a=document.createElement('a');a.href=url;a.download=String(m.name||'imagem-ampliada.png').replace(/[\\/]/g,'_');a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);return;}
+  if(m?.type==='prisma-upscale:download'&&m.blob instanceof Blob){PS.download(m.blob,String(m.name||'imagem-ampliada.png').replace(/[\\/]/g,'_'));return;}
   if(m?.type!=='prisma-upscale:apply'||!(m.blob instanceof Blob))return;
   try{
    if(doc.version!==sourceVersion||doc.name!==sourceName)throw Error('O documento mudou. Feche e reabra o ampliador para usar a versão atual.');
