@@ -23,19 +23,20 @@
  }
  shade.addEventListener('click',()=>{close();opener?.focus();});mq.addEventListener('change',close);PS.$$('.mode').forEach(b=>b.addEventListener('click',()=>{PS.design.closePanel?.();render();}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();PS.design.closePanel?.();}});render();
  // Reserva a altura real da gaveta para o painel não cobrir a arte.
- let previousPanel=null;
+ let previousPanel=null,reserveFrame=0;
+ function scheduleReserve(){if(reserveFrame)return;reserveFrame=requestAnimationFrame(()=>{reserveFrame=0;reserve();});}
  function reserve(){
   const active=mq.matches?targets.find(t=>t.classList.contains('mobile-open')):null;
   document.body.classList.toggle('mobile-panel-visible',!!active);
-  document.body.style.setProperty('--mobile-sheet-reserve',(active?.getBoundingClientRect().height||0)+'px');
+  const reserveValue=(active?.getBoundingClientRect().height||0)+'px';if(document.body.style.getPropertyValue('--mobile-sheet-reserve')!==reserveValue)document.body.style.setProperty('--mobile-sheet-reserve',reserveValue);
   const design=$('#view-design'),name=design.dataset.mobilePanel;
   const designPanel=mq.matches&&name?design.querySelector(['models','text','elements'].includes(name)?'.design-library':'.design-inspector'):null;
-  design.style.setProperty('--mobile-design-reserve',(designPanel?.getBoundingClientRect().height||0)+'px');
+  const designValue=(designPanel?.getBoundingClientRect().height||0)+'px';if(design.style.getPropertyValue('--mobile-design-reserve')!==designValue)design.style.setProperty('--mobile-design-reserve',designValue);
   if(active&&active!==previousPanel&&mode()==='editor')requestAnimationFrame(()=>PS.view.fit());
   previousPanel=active;
  }
  const panels=[...targets,$('.design-library'),$('.design-inspector')];
- const sizes=new ResizeObserver(reserve),changes=new MutationObserver(reserve);for(const panel of panels){sizes.observe(panel);changes.observe(panel,{attributes:true,attributeFilter:['class','hidden']});}changes.observe($('#view-design'),{attributes:true,attributeFilter:['data-mobile-panel']});mq.addEventListener('change',reserve);
+ const sizes=new ResizeObserver(scheduleReserve),changes=new MutationObserver(scheduleReserve);for(const panel of panels){sizes.observe(panel);changes.observe(panel,{attributes:true,attributeFilter:['class','hidden']});}changes.observe($('#view-design'),{attributes:true,attributeFilter:['data-mobile-panel']});mq.addEventListener('change',scheduleReserve);
  // Também acompanha mudanças de modo programáticas (abrir design no editor).
  new MutationObserver(()=>{if(document.body.dataset.mode!==mode())render();}).observe($('.modes'),{subtree:true,attributes:true,attributeFilter:['class']});
 })();

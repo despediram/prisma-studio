@@ -24,7 +24,7 @@ jobs:
         run: |
           mkdir _site
           cp index.html .nojekyll _site/
-          cp -R css js assets vendor licencas _site/
+          cp -R css js assets vendor licencas upscaler _site/
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

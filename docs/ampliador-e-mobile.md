@@ -38,12 +38,13 @@ A proporção é preservada. Quando a medida em pixels tem outra proporção, a 
 - Aplicação ao Editor e Desfazer: retorno às dimensões anteriores; ensaio adicional com duas camadas e máscara recuperou as duas camadas e a máscara.
 - Ensaio do modo rápido sem modelos; comparação antes/depois, download e aplicação.
 - Telas 360 × 800, 390 × 844 e 844 × 390 em iframes de teste com dimensões reais de viewport CSS; navegação de Design, catálogo, Editor e Pôster. Na tela de 390 px, largura e scrollWidth coincidiram; a área da imagem terminou exatamente onde o painel começou.
-- Painel expansível, fechamento, ampliação em tela cheia e painel lateral em paisagem.
+- Painel expansível, fechamento, ampliação em tela cheia e painel lateral em paisagem. A reserva de espaço é atualizada no próximo quadro, para não alterar a geometria durante o callback de ResizeObserver.
 
 Limites da validação: não houve telefone físico ou Safari neste ambiente. WebGPU, NAFNet e GFPGAN não foram validados integralmente nesta alteração. A abertura `file://` foi preparada no código, mas a validação visual disponível usa HTTP. A suíte completa histórica não foi reexecutada; os motores de pixels, histórico, PSD, projeto, geração geométrica de pôster e templates permanecem sem alterações nesta entrega.
 
 ## Arquivos
 
+- `.github/workflows/pages.yml`: inclui a pasta do ampliador no site publicado.
 - `index.html`: carrega os estilos e o controlador do ampliador; remove duplicação do parâmetro viewport.
 - `js/ui/upscaler.js`: abre o painel, envia a imagem e aplica o resultado como comando desfazível; também recebe downloads do painel.
 - `upscaler/index.html`: adaptação do ampliador enviado, com motor local, escolha de processamento, download consentido e proteção de transparência/proporção.
