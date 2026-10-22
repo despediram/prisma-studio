@@ -32,7 +32,7 @@
         const printed=sheets.map(v=>v.tile),core=P.cfg.glueStyle==='tabs'?PS.posterCoreRect(g,t,printed):{w:g.cw,h:g.ch};
         ctx.save();ctx.beginPath();ctx.rect(ox+t.x0*s,oy+t.y0*s,core.w*s,core.h*s);ctx.clip();ctx.imageSmoothingQuality='high';
         ctx.drawImage(canvas,ox+p.x*s,oy+p.y*s,p.w*s,p.h*s);ctx.restore();
-        if(P.cfg.markGlue)PS.posterDrawGlueCanvas(ctx,g,t,ox+(t.x0-g.margin)*s,oy+(t.y0-g.margin)*s,s,sheets.map(v=>v.tile),P.cfg.glueStyle);
+        // Guias já pertencem ao canvas da folha, como no PDF/PNG.
       }
       if($('#pAssemblyGuides').checked){
         ctx.strokeStyle='#00a7e1';ctx.lineWidth=1.5;ctx.strokeRect(ox+g.finalRect.x*s,oy+g.finalRect.y*s,g.finalRect.w*s,g.finalRect.h*s);
@@ -53,13 +53,13 @@
   };
   async function prepare(){
     if(!P.geometry||P.cfg.view!=='assembly'||$('#view-poster').hidden||working)return;
-    const token=revision,renderer=P.getRaster(),g=JSON.parse(JSON.stringify(P.geometry)),tiles=g.printed;
+    const token=revision,renderer=P.createSheetRenderer(),g=renderer.geometry,tiles=g.printed;
     const dpi=P.cfg.dpi;working=true;ready=false;count=tiles.length;step.max=String(count);step.value=String(count);
     try{
       for(let i=0;i<tiles.length;i++){
         if(token!==revision)return;
         status.textContent=`Preparando ${tiles[i].code} · ${i+1}/${count} · ${dpi} DPI. As folhas usam a mesma imagem e a mesma escala.`;
-        const t=tiles[i],out=await renderer.render({x:t.x0,y:t.y0,w:g.cw,h:g.ch},dpi);
+        const t=tiles[i],out=await renderer.render(t,dpi);
         if(token!==revision)return;
         const scale=Math.min(1,1100/Math.max(out.c.width,out.c.height));
         const canvas=scale<1?PS.downscale(out.c,out.c.width*scale,out.c.height*scale):out.c;

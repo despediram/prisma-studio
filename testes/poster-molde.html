@@ -1,0 +1,42 @@
+<!doctype html><html lang="pt-BR"><meta charset="utf-8"><title>Prisma — conferência do molde A4</title><style>body{margin:20px;background:#181c22;color:#eee;font:14px system-ui;padding-right:430px}a{color:#52c6ed;display:block;margin:10px 0}iframe{position:fixed;right:20px;top:15px;width:390px;height:844px;border:1px solid #888}pre{white-space:pre-wrap}</style>
+<h1>Molde A4: arte + colagem dentro da página</h1><p>Teste com arte sintética ou escolha uma imagem local. A imagem não é enviada à internet.</p><input id="fixture" type="file" accept="image/*"><button id="run" disabled>Executar conferência</button><pre id="status">Carregando editor…</pre><div id="files"></div><details><summary>Exportação em blocos para conferência automatizada</summary><select id="pdfPick"></select><button id="nextPiece">Próximo bloco</button><output id="pieceCount"></output><pre id="piece"></pre></details><iframe src="../index.html" title="Prisma no celular"></iframe>
+<script>
+/* Prisma Studio — teste de integração do molde A4 e das opções fixadas na exportação.
+ * Usa as APIs reais do editor. Abra por servidor local para permitir o iframe;
+ * o aplicativo principal continua sem dependências externas e compatível com file://.
+ */
+const chunks=new Map();let pieceIndex=0;
+function showPiece(){const raw=chunks.get(document.querySelector('#pdfPick').value)||'',n=Math.ceil(raw.length/60000);document.querySelector('#piece').textContent=raw.slice(pieceIndex*60000,(pieceIndex+1)*60000);document.querySelector('#pieceCount').textContent=`${pieceIndex+1}/${n}`;}
+document.querySelector('#nextPiece').onclick=()=>{pieceIndex++;showPiece();};document.querySelector('#pdfPick').onchange=()=>{pieceIndex=0;showPiece();};
+const frame=document.querySelector('iframe'),button=document.querySelector('#run'),status=document.querySelector('#status');
+frame.onload=()=>{button.disabled=false;status.textContent='Pronto para conferir.';};
+button.onclick=async()=>{
+ if(button.disabled)return;button.disabled=true;document.querySelector('#files').replaceChildren();
+ const PS=frame.contentWindow.PS,P=PS.poster,ok=(v,m)=>{if(!v)throw Error(m)},results=[];
+ try{
+  const c=PS.canvas(790,1138),x=PS.ctx(c);x.fillStyle='#65b3cb';x.fillRect(0,0,c.width,c.height);
+  for(let yy=0;yy<c.height;yy+=47)for(let xx=0;xx<c.width;xx+=47)if((Math.floor(xx/47)+Math.floor(yy/47))%2){x.fillStyle='#ed829c';x.fillRect(xx,yy,47,47);}
+  x.strokeStyle='#192e4d';x.lineWidth=7;x.beginPath();x.moveTo(0,0);x.lineTo(c.width,c.height);x.moveTo(c.width,0);x.lineTo(0,c.height);x.stroke();
+  const local=document.querySelector('#fixture').files[0];if(local){const im=await createImageBitmap(local);c.width=im.width;c.height=im.height;PS.ctx(c).drawImage(im,0,0);im.close();}
+  PS.doc.load(c,'Conferência do molde');P.cfg.view='plan';await PS.setMode('poster');
+  for(const[cols,rows,margin,dpi,style]of[[2,2,0,300,'image'],[3,4,5,72,'tabs']]){
+   status.textContent=`Conferindo ${cols} × ${rows} em ${dpi} DPI…`;
+   Object.assign(P.cfg,{mode:'grid',paper:'A4',paperW:210,paperH:297,cols,rows,orient:'portrait',margin,safePrint:margin>0,overlap:15,bleed:true,glueStyle:style,fit:'contain',zoom:1,panX:0,panY:0,border:0,dpi,enhance:0,lift:0,skipBlank:false,guidePage:false,markGlue:style==='tabs',markCut:margin>0,markLabels:margin>0,calX:100,calY:100,pdfOrient:'auto',format:'png',view:'plan'});P.update();
+   const g=P.geometry,renderer=P.createSheetRenderer(),settings={...P.cfg},tile=g.tiles[0];
+   const first=await renderer.render(tile,dpi);ok(first.c.width===Math.round(210*dpi/25.4)&&first.c.height===Math.round(297*dpi/25.4),'PNG não é A4');
+   ok(first.placement.w===210&&first.placement.h===297,'Caixa física incorreta');
+   const expected=PS.getImg(first.c),before=expected.d;first.c.width=first.c.height=1;
+   // Mudar controles durante o PDF não pode mudar cortes, número de páginas ou DPI.
+   const job=P.buildPdf(()=>{});Object.assign(P.cfg,{cols:1,rows:1,margin:12,overlap:0,dpi:50});P.update();
+   const repeated=await renderer.render(tile,dpi);const after=PS.getImg(repeated.c).d;
+   ok(before.length===after.length,'Molde mudou durante a exportação');for(let n=0;n<before.length;n++)ok(before[n]===after[n],'Pixels mudaram ao alterar os controles');repeated.c.width=repeated.c.height=1;
+   const blob=await job;Object.assign(P.cfg,settings);P.update();
+   const read=new FileReader();await new Promise((resolve,reject)=>{read.onload=resolve;read.onerror=reject;read.readAsDataURL(blob)});
+   const a=document.createElement('a');a.id='pdf'+cols;a.download=`molde-${cols}x${rows}-${dpi}dpi.pdf`;a.href=URL.createObjectURL(blob);chunks.set(String(cols),read.result.split(',')[1]);const option=document.createElement('option');option.value=String(cols);option.textContent=cols+' colunas';document.querySelector('#pdfPick').append(option);if(cols===2){pieceIndex=0;showPiece();}a.textContent=`PDF real ${cols} × ${rows}, ${dpi} DPI`;document.querySelector('#files').append(a);
+   results.push({grade:[cols,rows],dpi,margem:margin,estilo:style,pixels:[expected.w,expected.h],molde_mm:[210,297],mutacao_durante_exportacao:'sem divergência'});
+  }
+  Object.assign(P.cfg,{cols:2,rows:2,margin:0,safePrint:false,overlap:15,glueStyle:'image',dpi:100,markGlue:false,markCut:false,markLabels:false,view:'assembly'});P.update();
+  status.textContent='PASSOU\n'+JSON.stringify(results,null,2);
+ }catch(e){status.textContent='FALHOU: '+e.stack;console.error(e);}finally{button.disabled=false;}
+};
+</script></html>

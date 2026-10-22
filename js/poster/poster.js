@@ -157,6 +157,7 @@
     g = PS.posterGeometry(currentCfg(), src.canvas.width, src.canvas.height);
     $('#pMargin').value=g.margin;$('#pMargin').parentElement.querySelector('output').textContent=PS.fmt(g.margin,1)+' mm';$('#pOverlap').value=g.ov;$('#pOverlap').parentElement.querySelector('output').textContent=PS.fmt(g.ov,1)+' mm';zoomCtl.set(cfg.zoom*100);
     $('#pPrintLayoutInfo').textContent=cfg.glueStyle==='image'?`Celular: ${PS.fmt(g.ov,1)} mm de imagem repetida, sem abas brancas ou linhas no arquivo. Proteção externa de 12 mm com extensão da imagem (aparar no acabamento). Corte a borda branca esquerda/superior da folha que vai por cima e alinhe pelos detalhes da imagem. Tamanho nominal: ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm; o ajuste automático da impressão pode reduzi-lo.`:`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de corte a partir da borda do papel · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
+    $('#pPrintLayoutInfo').textContent+=` Papel lado a lado, antes de sobrepor: ${PS.fmt(g.cols*g.pageW/10,2)} × ${PS.fmt(g.rows*g.pageH/10,2)} cm. A arte final já desconta a sobreposição, as margens e o enquadramento; essas reservas não aumentam a folha.`;
     $('#pZoomRow').querySelector('input').disabled = false;
     $('#pCanvas').classList.toggle('draggable', g.canPan);
     // estatísticas
@@ -409,6 +410,7 @@
     g = PS.posterGeometry(currentCfg(), src.canvas.width, src.canvas.height);
     $('#pMargin').value=g.margin;$('#pMargin').parentElement.querySelector('output').textContent=PS.fmt(g.margin,1)+' mm';$('#pOverlap').value=g.ov;$('#pOverlap').parentElement.querySelector('output').textContent=PS.fmt(g.ov,1)+' mm';zoomCtl.set(cfg.zoom*100);
     $('#pPrintLayoutInfo').textContent=cfg.glueStyle==='image'?`Celular: ${PS.fmt(g.ov,1)} mm de imagem repetida, sem abas brancas ou linhas no arquivo. Proteção externa de 12 mm com extensão da imagem (aparar no acabamento). Corte a borda branca esquerda/superior da folha que vai por cima e alinhe pelos detalhes da imagem. Tamanho nominal: ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm; o ajuste automático da impressão pode reduzi-lo.`:`${cfg.glueStyle==='tabs'?'Abas brancas separadas da arte':'Sobreposição com imagem repetida'} · ${PS.fmt(g.margin,1)} mm de corte a partir da borda do papel · ${PS.fmt(g.ov,1)} mm de cola. A arte montada mede ${PS.fmt(g.finalW/10,2)} × ${PS.fmt(g.finalH/10,2)} cm.`;
+    $('#pPrintLayoutInfo').textContent+=` Papel lado a lado, antes de sobrepor: ${PS.fmt(g.cols*g.pageW/10,2)} × ${PS.fmt(g.rows*g.pageH/10,2)} cm. A arte final já desconta a sobreposição, as margens e o enquadramento; essas reservas não aumentam a folha.`;
     drawPreview();
   });
   const endDrag = () => { if (pdrag) { pdrag = null; pc.classList.remove('dragging'); save(); update(); } };
@@ -501,24 +503,26 @@
   // Desenha a célula imprimível da folha t.
   async function renderTile(t,dpi,onProgress) {
     const result=await renderRegion({x:t.x0,y:t.y0,w:g.cw,h:g.ch},dpi,{onProgress});
-    // Raster limpo. As guias do PDF são vetoriais e ficam na faixa coberta.
+    // Recorte bruto mantido por compatibilidade; as saídas usam renderSheet.
     return result.c;
   }
   P.renderTile = renderTile;
   P.getRaster = currentRaster;
+  P.createSheetRenderer = () => PS.createPosterSheetRenderer(src.canvas,g,cfg);
+  P.renderSheet = (t,dpi,opts) => P.createSheetRenderer().render(t,dpi,opts);
   function rotateCW(c) {
     const r = PS.canvas(c.height, c.width), x = PS.ctx(r);
     x.translate(r.width, 0); x.rotate(Math.PI / 2); x.drawImage(c, 0, 0); return r;
   }
-  async function encodeTile(c) {
-    if (cfg.format === 'png') return { type: 'png', blob: await PS.canvasToBlob(c, 'image/png') };
-    return { type: 'jpg', blob: await PS.canvasToBlob(c, 'image/jpeg', cfg.format === 'jpeg85' ? 0.85 : 0.95) };
+  async function encodeTile(c,settings=cfg) {
+    if (settings.format === 'png') return { type: 'png', blob: await PS.canvasToBlob(c, 'image/png') };
+    return { type: 'jpg', blob: await PS.canvasToBlob(c, 'image/jpeg', settings.format === 'jpeg85' ? 0.85 : 0.95) };
   }
 
   /* ---------- PDF ---------- */
   // calibração: compensa impressoras que imprimem ligeiramente maior/menor (escala em torno do centro da página)
-  function calibStart(page) {
-    const fx = 100 / (cfg.calX || 100), fy = 100 / (cfg.calY || 100);
+  function calibStart(page,settings=cfg) {
+    const fx = 100 / (settings.calX || 100), fy = 100 / (settings.calY || 100);
     if (Math.abs(fx - 1) < 1e-5 && Math.abs(fy - 1) < 1e-5) return false;
     const { pushGraphicsState, concatTransformationMatrix } = window.PDFLib, cx = page.getWidth() / 2, cy = page.getHeight() / 2;
     page.pushOperators(pushGraphicsState(), concatTransformationMatrix(fx, 0, 0, fy, cx * (1 - fx), cy * (1 - fy)));
@@ -529,6 +533,7 @@
   async function buildPdf(prog) {
     if (!window.PDFLib) throw new Error('A biblioteca de PDF não carregou. Confira se a pasta “vendor” está junto do index.html.');
     const { PDFDocument, StandardFonts, rgb, degrees } = window.PDFLib;
+    const sheets=P.createSheetRenderer(),g=sheets.geometry,cfg=sheets.settings,guideSource=src.preview;
     const pdf = await PDFDocument.create();
     pdf.setTitle(`Pôster ${PS.fmt(g.finalW / 10, 2)} × ${PS.fmt(g.finalH / 10, 2)} cm`);
     pdf.setSubject(`Montagem ${cfg.glueStyle||'overlap'}; margem ${g.margin} mm; sobreposição ${g.ov} mm; seguranca da emenda ${PS.posterSeamBleed(g)} mm; escala nominal 100%; arte ${g.finalW} x ${g.finalH} mm.`);
@@ -539,51 +544,20 @@
     const PW = rotate ? g.pageH : g.pageW, PH = rotate ? g.pageW : g.pageH; // página no PDF (mm)
     const gray = rgb(0.45, 0.45, 0.45);
 
-    if (cfg.guidePage) await guidePage(pdf, font, bold, rgb);
+    if (cfg.guidePage) await guidePage(pdf, font, bold, rgb,g,cfg,guideSource);
 
     for (let i = 0; i < tiles.length; i++) {
       const t = tiles[i];
       PS.busy.detail(`Folha ${t.code} (${i + 1} de ${tiles.length}) — ${cfg.dpi} DPI${srActive() ? ' com nitidez consistente' : ''}`);
-      let c = cfg.bleed?(await renderRegion({x:t.x0-g.margin,y:t.y0-g.margin,w:g.pageW,h:g.pageH},cfg.dpi)).c:await renderTile(t,cfg.dpi);
-      const placement=c.posterPlacement;
-      const physical=PS.posterPrintPlacement(g,t,placement,rotate);
-      if (rotate) c = rotateCW(c);
-      const enc = await encodeTile(c);
-      const bytes = new Uint8Array(await enc.blob.arrayBuffer());
-      const im = enc.type === 'png' ? await pdf.embedPng(bytes) : await pdf.embedJpg(bytes);
-      const page = pdf.addPage([PW * K, PH * K]);
-      const cal = calibStart(page);
-      // mapeia coordenadas da folha (mm, origem no topo-esquerdo) para a página do PDF
-      const map = (x, y) => rotate ? [g.pageH - y, x] : [x, y];
-      const P2 = (x, y) => { const [a, b] = map(x, y); return { x: a * K, y: (PH - b) * K }; };
-      const m = g.margin;
-      // O raster tem pixels extras de cobertura. Recorta no PDF sem esticá-lo:
-      // cada pixel repetido cai na MESMA coordenada física nas duas folhas.
-      const {pushGraphicsState,popGraphicsState,rectangle,clip,endPath}=window.PDFLib;
-      const I=physical.image;let C=physical.clip;
-      {const core=PS.posterPageArtRect(g,t,cfg,tiles);C=rotate?{x:g.pageH-core.y-core.h,y:core.x,w:core.h,h:core.w}:core;}
-      page.pushOperators(pushGraphicsState(),rectangle(C.x*K,(PH-C.y-C.h)*K,C.w*K,C.h*K),clip(),endPath());
-      page.drawImage(im,{x:I.x*K,y:(PH-I.y-I.h)*K,width:I.w*K,height:I.h*K});
-      page.pushOperators(popGraphicsState());
-      // Guias na área repetida, totalmente coberta pela próxima folha.
-      if(cfg.markGlue)PS.posterDrawGluePdf(page,g,t,{P2,font:bold,rotate,tiles,style:cfg.glueStyle});
-      // marcas de corte (vetoriais, na margem)
-      if (cfg.markCut && m >= 1.5) {
-        const L = Math.min(m - 0.6, 5), gap = 0.6, th = 0.35;
-        const corners = [[m, m], [m + g.cw, m], [m, m + g.ch], [m + g.cw, m + g.ch]];
-        corners.forEach(([cx, cy]) => {
-          const sxn = cx === m ? -1 : 1, syn = cy === m ? -1 : 1;
-          page.drawLine({ start: P2(cx + sxn * gap, cy), end: P2(cx + sxn * (gap + L), cy), thickness: th, color: gray });
-          page.drawLine({ start: P2(cx, cy + syn * gap), end: P2(cx, cy + syn * (gap + L)), thickness: th, color: gray });
-        });
-      }
-      // identificação na margem superior
-      if (cfg.markLabels && m >= 3) {
-        const txt = `${t.code}  ·  linha ${t.r + 1}, coluna ${t.c + 1}  ·  folha ${i + 1} de ${tiles.length}  ·  pôster ${g.cols}×${g.rows}`;
-        const size = Math.min(6.5, m * K * 0.45), p = P2(m + 6, m * 0.62);
-        page.drawText(txt, { x: p.x, y: p.y, size, font, color: gray, rotate: degrees(rotate ? -90 : 0) });
-      }
-      calibEnd(page, cal);
+      // Mesmo molde usado pelo PNG e pela montagem: A4 completo, sem caixa
+      // de imagem negativa nem pixels de cobertura além da página no PDF.
+      let c=(await sheets.render(t,cfg.dpi)).c;
+      if(rotate)c=rotateCW(c);
+      const enc=await encodeTile(c,cfg),bytes=new Uint8Array(await enc.blob.arrayBuffer());
+      const im=enc.type==='png'?await pdf.embedPng(bytes):await pdf.embedJpg(bytes);
+      const page=pdf.addPage([PW*K,PH*K]);
+      page.drawImage(im,{x:0,y:0,width:PW*K,height:PH*K});
+      c.width=c.height=1;
       prog?.((i + 1) / tiles.length * 0.9);
       await PS.nextFrame();
     }
@@ -596,10 +570,10 @@
 
   P.buildPdf = buildPdf;
 
-  async function guidePage(pdf, font, bold, rgb) {
+  async function guidePage(pdf, font, bold, rgb,g,cfg,guideSource) {
     const W = Math.min(g.pageW, g.pageH), H = Math.max(g.pageW, g.pageH);
     const page = pdf.addPage([W * K, H * K]);
-    const cal = calibStart(page);
+    const cal = calibStart(page,cfg);
     const m = Math.max(12, g.margin + 6), dark = rgb(0.1, 0.11, 0.12), mid = rgb(0.4, 0.42, 0.45), mag = rgb(0.9, 0, 0.49), cyan = rgb(0, 0.65, 0.88);
     const T = (txt, x, y, size, f = font, color = dark) => page.drawText(txt, { x: x * K, y: (H - y) * K, size, font: f, color });
     T(`Pôster de ${PS.fmt(g.finalW / 10, 2)} × ${PS.fmt(g.finalH / 10, 2)} cm`, m, m + 6, 17, bold);
@@ -613,7 +587,7 @@
     const thumb = PS.canvas(vis.w * tpx, vis.h * tpx), tx = PS.ctx(thumb);
     tx.fillStyle = '#fff'; tx.fillRect(0, 0, thumb.width, thumb.height);
     tx.imageSmoothingQuality = 'high';
-    tx.drawImage(src.preview, (g.img.x - vis.x) * tpx, (g.img.y - vis.y) * tpx, g.img.w * tpx, g.img.h * tpx);
+    tx.drawImage(guideSource, (g.img.x - vis.x) * tpx, (g.img.y - vis.y) * tpx, g.img.w * tpx, g.img.h * tpx);
     const jb = new Uint8Array(await (await PS.canvasToBlob(thumb, 'image/jpeg', 0.85)).arrayBuffer());
     const ji = await pdf.embedJpg(jb);
     page.drawRectangle({ x: ox * K, y: (H - oy - g.areaH * s) * K, width: g.areaW * s * K, height: g.areaH * s * K, color: rgb(1, 1, 1), borderColor: mid, borderWidth: 0.5 });
@@ -685,8 +659,9 @@
     if (!(await guard())) return;
     try {
       let blob;
+      const name=`poster_${Math.round(g.finalW / 10)}x${Math.round(g.finalH / 10)}cm_${g.cols}x${g.rows}_${cfg.paper}.pdf`;
       await PS.withBusy('Gerando o PDF', 'Renderizando as folhas em alta resolução…', async prog => { blob = await buildPdf(prog); });
-      PS.download(blob, `poster_${Math.round(g.finalW / 10)}x${Math.round(g.finalH / 10)}cm_${g.cols}x${g.rows}_${cfg.paper}.pdf`);
+      PS.download(blob,name);
       PS.toast(`PDF pronto (${PS.bytes(blob.size)}). ${cfg.glueStyle==='image'?'Todas as folhas usam A4 com imagem repetida.':'Imprima em tamanho real (100%).'}`, 'success', 5000);
     } catch (e) { console.error(e); PS.toast('Não foi possível gerar o PDF: ' + e.message, 'error', 6000); }
   });
@@ -707,12 +682,15 @@
     if (!window.JSZip) { PS.toast('A biblioteca ZIP não carregou.', 'error'); return; }
     try {
       let blob;
+      const name=`poster_folhas_${g.cols}x${g.rows}_${cfg.dpi}dpi.zip`;
       await PS.withBusy('Gerando as folhas em PNG', '', async prog => {
+        const sheets=P.createSheetRenderer(),g=sheets.geometry,cfg=sheets.settings,guideSource=src.preview,steps=PS.$$('#pSteps li').map(li=>li.textContent);
         const zip = new window.JSZip(), folder = zip.folder('folhas');
         const tiles = g.tiles.filter(t => !(t.blank && cfg.skipBlank));
         for (let i = 0; i < tiles.length; i++) {
           const t = tiles[i]; PS.busy.detail(`Folha ${t.code} (${i + 1} de ${tiles.length})`);
-          const b = await PS.setPngDpi(await PS.canvasToBlob(await renderTile(t, cfg.dpi), 'image/png'), cfg.dpi);
+          const sheet=await sheets.render(t,cfg.dpi);
+          const b = await PS.setPngDpi(await PS.canvasToBlob(sheet.c, 'image/png'), cfg.dpi);sheet.c.width=sheet.c.height=1;
           folder.file(`${t.code}_linha${t.r + 1}_coluna${t.c + 1}.png`, b);
           prog((i + 1) / tiles.length * 0.8); await PS.nextFrame();
         }
@@ -720,23 +698,23 @@
         const mapC = PS.canvas(1600, 1600 * g.areaH / g.areaW), mx = PS.ctx(mapC), ms = mapC.width / g.areaW;
         mx.fillStyle = '#fff'; mx.fillRect(0, 0, mapC.width, mapC.height);
         mx.save();mx.beginPath();mx.rect(g.visible.x*ms,g.visible.y*ms,g.visible.w*ms,g.visible.h*ms);mx.clip();
-        mx.drawImage(src.preview, g.img.x * ms, g.img.y * ms, g.img.w * ms, g.img.h * ms);mx.restore();
+        mx.drawImage(guideSource, g.img.x * ms, g.img.y * ms, g.img.w * ms, g.img.h * ms);mx.restore();
         mx.strokeStyle = '#e6007e'; mx.lineWidth = 2;
         g.tiles.forEach(t => { mx.strokeRect(t.x0 * ms, t.y0 * ms, g.cw * ms, g.ch * ms); });
         mx.font = `700 ${Math.max(14, g.cw * ms * 0.12)}px Arial`; mx.textAlign = 'center'; mx.textBaseline = 'middle';
         g.tiles.forEach(t => { const cx = (t.x0 + g.cw / 2) * ms, cy = (t.y0 + g.ch / 2) * ms; mx.fillStyle = 'rgba(255,255,255,.85)'; mx.fillRect(cx - 40, cy - 20, 80, 40); mx.fillStyle = '#111'; mx.fillText(t.code, cx, cy); });
         zip.file('00_mapa_de_montagem.png', await PS.canvasToBlob(mapC, 'image/png'));
-        zip.file('medidas_e_encaixes.json',JSON.stringify({unidade:'mm',dpi:cfg.dpi,tamanhoFinal:g.finalRect,sobreposicao:g.ov,papel:{largura:g.pageW,altura:g.pageH,margem:g.margin},folhas:tiles.map(t=>({codigo:t.code,x:t.x0,y:t.y0,largura:g.cw,altura:g.ch,pixels:PS.posterPixelRect({x:t.x0,y:t.y0,w:g.cw,h:g.ch},cfg.dpi)}))},null,2));
+        zip.file('medidas_e_encaixes.json',JSON.stringify({unidade:'mm',dpi:cfg.dpi,tamanhoFinal:g.finalRect,sobreposicao:g.ov,papel:{largura:g.pageW,altura:g.pageH,margem:g.margin},folhas:tiles.map(t=>({codigo:t.code,x:t.x0,y:t.y0,largura:g.pageW,altura:g.pageH,molde:PS.posterSheetPlan(g,t,cfg,cfg.dpi)}))},null,2));
         zip.file('LEIA-ME.txt', [
           `Pôster ${PS.fmt(g.finalW / 10, 1)} x ${PS.fmt(g.finalH / 10, 1)} cm — ${tiles.length} folhas ${PS.PAPER_NAMES[cfg.paper]}`,
-          '', `Cada PNG cobre a ÁREA IMPRIMÍVEL da folha (${PS.fmt(g.cw, 1)} x ${PS.fmt(g.ch, 1)} mm a ${cfg.dpi} DPI),`,
-          `Há até 1 pixel extra por borda para preservar a fase da imagem. Consulte medidas_e_encaixes.json. Não ajuste cada PNG à página.`,
+          '', `Cada PNG ocupa a folha COMPLETA (${PS.fmt(g.pageW, 1)} x ${PS.fmt(g.pageH, 1)} mm a ${cfg.dpi} DPI),`,
+          `Todas as folhas têm o mesmo molde físico; arte, guias e abas ficam dentro dele. Consulte medidas_e_encaixes.json.`,
           'Para imprimir na medida exata, USE O PDF: ele posiciona e recorta o raster sem mudar sua escala.', '',
-          ...PS.$$('#pSteps li').map((li, i) => `${i + 1}. ${li.textContent}`)
+          ...steps.map((text,i)=>`${i+1}. ${text}`)
         ].join('\r\n'));
         blob = await zip.generateAsync({ type: 'blob', compression: 'STORE' }, md => prog(0.8 + md.percent / 100 * 0.2));
       });
-      PS.download(blob, `poster_folhas_${g.cols}x${g.rows}_${cfg.dpi}dpi.zip`);
+      PS.download(blob,name);
       PS.toast(`ZIP pronto (${PS.bytes(blob.size)}).`, 'success');
     } catch (e) { console.error(e); PS.toast('Não foi possível gerar o ZIP: ' + e.message, 'error'); }
   });
@@ -745,7 +723,10 @@
   function updatePrompt() {
     if (!g) { $('#pIdealPx').value = ''; $('#pPrompt').value = 'Abra uma imagem ou configure o pôster para gerar o texto.'; return; }
     const tw = g.artRect.w, th = g.artRect.h, pw = Math.round(tw / 25.4 * 300), ph = Math.round(th / 25.4 * 300);
-    const r = tw >= th ? `${PS.fmt(tw / th, 3)}:1` : `1:${PS.fmt(th / tw, 3)}`;
+    const r = `${pw}:${ph}`;
+    const seams=PS.posterJoints(g).map(j=>{const a=j.rect,vertical=j.axis==='vertical',lo=((vertical?a.x:a.y)-(vertical?g.artRect.x:g.artRect.y))/(vertical?tw:th)*100,hi=lo+(vertical?a.w/tw:a.h/th)*100;return{vertical,lo:Math.max(0,lo),hi:Math.min(100,hi)};}).filter(a=>a.hi>a.lo&&a.hi>0&&a.lo<100);
+    const unique=[...new Map(seams.map(a=>[`${a.vertical}:${a.lo.toFixed(2)}:${a.hi.toFixed(2)}`,a])).values()];
+    const seamText=unique.slice(0,8).map(a=>`${a.vertical?'largura':'altura'}: ${PS.fmt(a.lo,1)}% a ${PS.fmt(a.hi,1)}%`).join('; ');
     $('#pIdealPx').value = `${pw} × ${ph} px`;
     const theme = (cfg.theme || '').trim();
     $('#pPrompt').value = [
@@ -753,9 +734,12 @@
       `Formato: ${tw >= th ? 'horizontal' : 'vertical'}, proporção largura:altura de ${r}. Tamanho ideal: ${pw} × ${ph} pixels (nunca esticar ou distorcer).`,
       `O pôster será impresso com ${PS.fmt(tw / 10, 1)} × ${PS.fmt(th / 10, 1)} cm, então use muitos detalhes finos e nítidos.`,
       'Preencha toda a área até as bordas. Não inclua moldura, margens brancas, marcas de corte, linhas de grade, texto técnico nem foto de um pôster na parede.',
-      'Mantenha elementos importantes (rostos, textos, logotipos) afastados das bordas externas, pois a montagem pode aparar alguns milímetros.',
+      'Gere somente a arte contínua inteira. Não divida em folhas e não desenhe abas: o editor fará os recortes e calculará a colagem dentro de cada folha A4 de 210 × 297 mm.',
+      `A medida e proporção acima já consideram a área reservada pelo editor (${PS.fmt(g.border,1)} mm de moldura e ${PS.fmt(g.edgeGuard||0,1)} mm de proteção externa). Não desconte essas reservas novamente na imagem.`,
+      'Mantenha rostos, textos e logotipos afastados das bordas externas. Preserve uma composição contínua, sem distorcer a proporção.',
+      seamText?`Se possível, evite colocar olhos e textos nas faixas de montagem (${seamText}). São referências de composição: NÃO desenhe essas faixas ou qualquer linha na imagem.`:'',
       'Se não for possível gerar exatamente esse tamanho, gere na mesma proporção, na maior resolução disponível.'
-    ].join('\n');
+    ].filter(Boolean).join('\n');
   }
   $('#pCopyPx').addEventListener('click', async () => { const ok = await PS.copyText($('#pIdealPx').value); PS.toast(ok ? 'Tamanho copiado.' : 'Não foi possível copiar.', ok ? 'success' : 'warning'); });
   $('#pCopyPrompt').addEventListener('click', async () => { const ok = await PS.copyText($('#pPrompt').value); PS.toast(ok ? 'Texto copiado — cole na sua IA de imagens.' : 'Não foi possível copiar.', ok ? 'success' : 'warning'); });
