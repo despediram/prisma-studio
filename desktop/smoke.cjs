@@ -8,6 +8,7 @@ module.exports=async function(win,store){
   const errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
   const check=(v,m)=>{if(!v)throw Error(m)},P=PS,d=P.doc;
   check(typeof require==='undefined'&&typeof process==='undefined','Node exposto ao documento');check(!!PrismaDesktop&&document.body.classList.contains('ps-desktop'),'Ponte desktop ausente');
+  for(const [id,value] of Object.entries({pMargin:'0',pOverlap:'10',pBorder:'0',pGlueStyle:'tabs',pFormat:'png',pPdfOrient:'auto'}))check(document.getElementById(id).value===value,'Padrão incorreto: '+id);for(const [id,value] of Object.entries({pBleed:true,pMarkGlue:true,pMarkCut:false,pMarkLabels:true,pGuidePage:false,pSkipBlank:true,pSafePrint:false}))check(document.getElementById(id).checked===value,'Padrão incorreto: '+id);
   d.newDocument(800,600,'transparent','Teste Windows');
   // Confere o botão real com as medidas relatadas, sem alocar 100 MP no CI.
   const priorSize=d.size;try{

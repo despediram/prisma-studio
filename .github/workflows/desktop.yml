@@ -36,6 +36,7 @@ jobs:
           npm run test:desktop
           node testes/image-size.cjs
           node testes/upscale-plan.cjs
+          node testes/poster-defaults.cjs
           npm run prepare:desktop
       - name: Testar o aplicativo real no Windows
         run: npm run test:desktop:smoke

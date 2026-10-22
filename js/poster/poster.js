@@ -5,20 +5,29 @@
   const K = PS.PT_PER_MM;
 
   const DEFAULTS = {
-    paper: 'A4', paperW: 210, paperH: 297, orient: 'portrait', margin: 0, overlap: 25,
+    paper: 'A4', paperW: 210, paperH: 297, orient: 'portrait', margin: 0, overlap: 10,
     mode: 'grid', cols: 2, rows: 2, targetW: 600, targetH: 0, lock: true, lockFrom: 'w', scaleDpi: 100,
-    fit: 'contain', safePrint: false, bleed: true, glueStyle: 'image', zoom: 1, panX: 0, panY: 0,
-    markGlue: false, markCut: false, markLabels: false, guidePage: false, skipBlank: true,
+    fit: 'contain', safePrint: false, bleed: true, glueStyle: 'tabs', zoom: 1, panX: 0, panY: 0,
+    markGlue: true, markCut: false, markLabels: true, guidePage: false, skipBlank: true,
     dpi: 300, format: 'png', pdfOrient: 'auto', view: 'plan', theme: '',
     enhance: 45, lift: 0, border: 0, calX: 100, calY: 100, loupe: null
   };
   let cfg = Object.assign({}, DEFAULTS);
-  try { const saved=JSON.parse(localStorage.getItem('prisma.poster') || '{}'); Object.assign(cfg,saved,{panX:0,panY:0,zoom:1,format:saved.precisionGrid===1?saved.format||'png':'png'}); if(![2,3].includes(saved.mountingVersion)){cfg.safePrint=true;cfg.glueStyle='tabs';cfg.margin=Math.max(5,cfg.margin);cfg.fit='contain';cfg.markGlue=true;} } catch (_) { /* sem armazenamento */ }
-  // Migra a antiga aba branca: celular usa imagem repetida, sem tinta branca ou guia sobre a arte.
-  const phoneSettings={safePrint:false,margin:0,overlap:25,bleed:true,border:0,glueStyle:'image',fit:'contain',zoom:1,panX:0,panY:0,markGlue:false,markCut:false,markLabels:false,guidePage:false,calX:100,calY:100};
-  if(cfg.mountingVersion!==4)Object.assign(cfg,phoneSettings);
-  cfg.precisionGrid=1;cfg.mountingVersion=4;
+  try {
+    const saved = JSON.parse(localStorage.getItem('prisma.poster') || '{}');
+    if (saved && typeof saved === 'object' && !Array.isArray(saved)) Object.assign(cfg, saved);
+  } catch (_) { /* Preferências ausentes ou armazenamento indisponível: usa os padrões. */ }
+  // Aplica uma única vez as opções de impressão aprovadas; preserva tamanho, DPI e calibração.
+  // Depois da atualização, alterações manuais continuam salvas, inclusive ao reabrir o aplicativo.
+  if (cfg.mountingVersion !== 5) {
+    for (const key of ['safePrint', 'margin', 'overlap', 'bleed', 'border', 'glueStyle',
+      'markGlue', 'markCut', 'markLabels', 'guidePage', 'skipBlank', 'format', 'pdfOrient']) cfg[key] = DEFAULTS[key];
+  }
+  Object.assign(cfg, { precisionGrid: 1, mountingVersion: 5, panX: 0, panY: 0, zoom: 1 });
   const save = () => { try { localStorage.setItem('prisma.poster', JSON.stringify(cfg)); } catch (_) { /* ignora */ } };
+  save(); // Persiste a migração mesmo quando o usuário apenas abre e fecha o programa.
+  // Predefinição alternativa: escolhida explicitamente pelo botão A4 para celular.
+  const phoneSettings={safePrint:false,margin:0,overlap:25,bleed:true,border:0,glueStyle:'image',fit:'contain',zoom:1,panX:0,panY:0,markGlue:false,markCut:false,markLabels:false,guidePage:false,calX:100,calY:100};
 
   const src = { canvas: null, preview: null, key: '' };
   let g = null;
