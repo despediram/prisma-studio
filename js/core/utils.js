@@ -155,6 +155,8 @@
 
   /* ---------- Canvas ---------- */
   PS.canvas = (w, h) => { const c = document.createElement('canvas'); c.width = Math.max(1, Math.round(w)); c.height = Math.max(1, Math.round(h)); return c; };
+  PS.imageSize = window.PrismaImageSize;
+  PS.checkedCanvas = (w, h) => PS.imageSize.create(w, h);
   PS.ctx = (c, opts) => c.getContext('2d', Object.assign({ willReadFrequently: false }, opts || {}));
   PS.cloneCanvas = src => { const c = PS.canvas(src.width, src.height); PS.ctx(c).drawImage(src, 0, 0); return c; };
   PS.getImg = (c, x = 0, y = 0, w = c.width, h = c.height) => {

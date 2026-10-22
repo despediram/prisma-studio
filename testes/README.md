@@ -40,3 +40,6 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 - `poster-bleed.cjs`: sangria sem moldura, abas fora do núcleo, zero mm sem imposição de 5 mm, três margens/orientações e PDFs A4 reais para inspeção. Use `PRISMA_BLEED_OUTPUT` para salvar os PDFs/referências em um diretório de QA. A montagem em coordenadas inteiras compara todos os bytes; a variante fracionária verifica exportação e escala física sem arredondar as emendas.
 
 - `poster-seam.cjs`: exporta PDFs reais com/sem marcas sobre uma imagem uniforme, com faixa de segurança de 1 mm. `PRISMA_SEAM_OUTPUT` controla o diretório para renderização externa e comparação das emendas.
+
+- `image-size.cjs`: valida dimensões acima dos antigos tetos, Auto sem redução, falha real de Canvas simulada e painel móvel com saídas de 192 MP/8×. Execute com `node testes/image-size.cjs`. As superfícies enormes são simuladas, não medem a memória do aparelho.
+- `image-size.html`: teste manual de abertura real em 24 MP, seleção móvel de 96 MP, processamento clássico, aplicação e desfazer/refazer. Abra em um navegador e execute os dois botões.

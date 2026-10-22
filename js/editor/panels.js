@@ -263,9 +263,8 @@
   PS.$('#rsApply').addEventListener('click', async () => {
     const w = Math.round(+rsW.value), h = Math.round(+rsH.value);
     if (!doc.has || !w || !h) return;
-    if (w * h > 100e6 || w > 32000 || h > 32000) { PS.toast('Tamanho acima do limite seguro do navegador (100 MP).', 'error'); return; }
     if (w === doc.w && h === doc.h) return;
-    await PS.scaleAll(w, h, 'lanczos');
+    try { await PS.scaleAll(w, h, 'lanczos'); } catch (e) { PS.toast(e.message, 'error', 7000); }
   });
   PS.$('#btnTrim').addEventListener('click', () => PS.trim());
   PS.$('#btnFlatten').addEventListener('click', () => doc.has && doc.flatten());
@@ -347,11 +346,11 @@
     const name = (PS.$('#exName', res).value || 'imagem').replace(/[\\/:*?"<>|]/g, '_');
     const W = Math.round(+PS.$('#exW', res).value), H = Math.round(+PS.$('#exH', res).value), q = +PS.$('#exQ', res).value / 100, dpi = +PS.$('#exDpi', res).value;
     try {
+      if (!PS.imageSize.valid(W, H)) throw new Error('Informe dimensões válidas em pixels inteiros.');
       let blob;
       await PS.withBusy('Exportando imagem', `${PS.fmtInt(W)} × ${PS.fmtInt(H)} px`, async prog => {
         let c = await doc.finalCanvas();
         if (W !== c.width || H !== c.height) {
-          if (W * H > 100e6) throw new Error('tamanho acima de 100 MP');
           c = PS.putImg(await PS.run('resize', { img: PS.getImg(c), w: W, h: H }, prog));
         }
         if (fmt === 'image/jpeg') { const f = PS.canvas(c.width, c.height), x = PS.ctx(f); x.fillStyle = '#fff'; x.fillRect(0, 0, f.width, f.height); x.drawImage(c, 0, 0); c = f; }

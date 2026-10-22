@@ -359,6 +359,7 @@ body{font-size:1rem}
 <!-- ONNX Runtime Web (WebGPU + WebAssembly), versão fixa -->
 <script src="../vendor/onnxruntime/ort.webgpu.min.js"></script>
 
+<script src="../js/core/image-size.js"></script>
 <script src="../js/core/upscale-plan.js"></script>
 <script>
 const $ = id => document.getElementById(id);
@@ -382,7 +383,8 @@ const MODELS = {
 };
 const TILE = 192, OV = 16, S = TILE + 2 * OV;   // pedaços de tamanho fixo com sobreposição
 const RATIO_TOL = 0.000001;
-const MAX_MP = matchMedia('(max-width:860px)').matches ? 32 : 100;   // acima disso o navegador não consegue criar a imagem
+// Referência para a sugestão automática; nunca bloqueia o tamanho escolhido.
+const RECOMMENDED_MP = matchMedia('(max-width:860px)').matches ? 32 : 100;
 
 // sem internet no primeiro acesso o motor de IA não carrega; a página continua funcionando para o resto
 if (typeof ort === "undefined") {
@@ -641,7 +643,7 @@ function makePlan() {
   let W, H, sx, sy, ox = 0, oy = 0, dw, dh, kind, diff = 0;
   if (val("mode") === "mul") {
     const choice=val('scale');
-    if(choice==='auto'){const rec=PrismaUpscalePlan.recommend(sw,sh,MAX_MP);W=dw=rec.w;H=dh=rec.h;}else{const s=+choice;W=dw=sw*s;H=dh=sh*s;}
+    if(choice==='auto'){const rec=PrismaUpscalePlan.automatic(sw,sh,RECOMMENDED_MP);W=dw=rec.w;H=dh=rec.h;}else{const s=+choice;W=dw=sw*s;H=dh=sh*s;}
     sx=W/sw;sy=H/sh;kind='mul';
   } else {
     const size = parseSize(); if (!size) return null;
@@ -672,19 +674,19 @@ function refreshPlan() {
     !pp.ai ? " · só redimensiona" :
     pp.needed <= 4 ? ` · IA 4× e reduz para ${pp.needed.toFixed(2).replace(".", ",")}×` :
     $("twoPass").checked ? ` · IA 4× + IA 4× e reduz para ${pp.needed.toFixed(2).replace(".", ",")}×` : ` · IA 4× + ampliação comum até ${pp.needed.toFixed(2).replace(".", ",")}×`);
-  const valid=p&&PrismaUpscalePlan.valid(p.W,p.H,MAX_MP);
+  const valid=p&&PrismaImageSize.valid(p.W,p.H);
   $('go').disabled=!srcImage||!valid||!!abort;
-  $('useRecommended').hidden=!srcImage||!!valid||!!abort;
-  if(srcImage){const rec=PrismaUpscalePlan.recommend(srcImage.naturalWidth,srcImage.naturalHeight,MAX_MP);$('useRecommended').textContent=`Usar ${rec.w} × ${rec.h} px · recomendado`;}
-  $('outputSummary').textContent=srcImage&&p?`Original: ${srcImage.naturalWidth} × ${srcImage.naturalHeight} px → saída: ${p.W} × ${p.H} px (${br(p.W*p.H/1e6)} MP). Limite desta tela: ${MAX_MP} MP.`:'';
+  $('useRecommended').hidden=!srcImage||!p||p.W*p.H<=RECOMMENDED_MP*1e6||!!abort;
+  if(srcImage){const rec=PrismaUpscalePlan.recommend(srcImage.naturalWidth,srcImage.naturalHeight,RECOMMENDED_MP);$('useRecommended').textContent=`Usar ${rec.w} × ${rec.h} px · recomendado`;}
+  $('outputSummary').textContent=srcImage&&p?`Original: ${srcImage.naturalWidth} × ${srcImage.naturalHeight} px → saída: ${p.W} × ${p.H} px (${br(p.W*p.H/1e6)} MP). Sem limite fixo de megapixels.`:'';
   if (!srcImage) { el.textContent = ""; return; }
   if (!p) { el.textContent = "Digite largura e altura, ex.: 4843 × 6898."; el.className = "hint warn"; return; }
   let t = `Saída: ${p.W}×${p.H}px (${br(p.W * p.H / 1e6)} MP). `;
   const mp = p.W * p.H / 1e6;
-  if (!valid) { el.textContent = t + `Grande demais para o navegador (limite ≈${MAX_MP} MP). Escolha um multiplicador menor ou um tamanho em pixels.`; el.className = "hint warn"; return; }
-  if (mp > 120) { t += "Imagem muito grande: pode demorar muito e travar em computadores com pouca memória. "; el.className = "hint warn"; }
-  if(val('mode')==='mul'&&val('scale')==='auto')t+='Automático: tamanho ajustado ao orçamento desta tela, sem cortar a imagem. ';
-  if(p.W<srcImage.naturalWidth||p.H<srcImage.naturalHeight){t+='Atenção: este tamanho reduz a resolução original para caber no aparelho. ';el.className='hint warn';}
+  if (!valid) { el.textContent = t + 'Informe dimensões válidas em pixels inteiros.'; el.className = "hint warn"; return; }
+  if (mp > RECOMMENDED_MP) { t += "Imagem muito grande: pode demorar muito e travar em computadores com pouca memória. "; el.className = "hint warn"; }
+  if(val('mode')==='mul'&&val('scale')==='auto')t+='Automático: sugere uma ampliação sem reduzir a resolução original. ';
+  if(p.W<srcImage.naturalWidth||p.H<srcImage.naturalHeight){t+='Este tamanho escolhido reduz a resolução original. ';el.className='hint warn';}
   const srcMP = srcImage.naturalWidth * srcImage.naturalHeight / 1e6;
   if (srcMP > 12) { t += `A original já tem ${br(srcMP)} MP; desembaçar e rostos vão demorar bastante. `; el.className = "hint warn"; }
   if (p.kind === "exact") t += `Encaixa certinho (diferença de proporção ${(p.diff * 100).toFixed(1)}%, invisível). `;
@@ -730,7 +732,7 @@ function loadFile(file) {
 
 /* ================= canvas utilitários ================= */
 function newCanvas(w, h) {
-  const c = document.createElement("canvas"); c.width = Math.max(1, w); c.height = Math.max(1, h);
+  const c = PrismaImageSize.create(Math.max(1, Math.round(w)), Math.max(1, Math.round(h)), { willReadFrequently: true });
   const g = c.getContext("2d", { willReadFrequently: true });
   g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
   return [c, g];
@@ -1396,7 +1398,7 @@ async function pipeline(p) {
 $("go").onclick = async () => {
   const p = makePlan();
   if (!p) { refreshPlan(); return; }
-  if(!PrismaUpscalePlan.valid(p.W,p.H,MAX_MP)){refreshPlan();setStatus('Escolha o tamanho recomendado abaixo para continuar neste aparelho.','err');return;}
+  if(!PrismaImageSize.valid(p.W,p.H)){refreshPlan();setStatus('Informe dimensões válidas em pixels inteiros.','err');return;}
   parent.postMessage({type:'prisma-upscale:invalid'},'*');
   $('applyEditor').disabled=true;$('upSettings').disabled=true;
   $("go").disabled = true; $("dl").disabled = true; $("cancel").hidden = false;
@@ -1407,7 +1409,7 @@ $("go").onclick = async () => {
     let result;
     try { result = await pipeline(p); }
     catch (e) {
-      if (e.name === 'AbortError' || forceWasm || /Carregue o modelo|não consegui baixar|Arquivos locais/.test(e.message)) throw e;
+      if (e.code === 'CANVAS_CAPACITY' || e.name === 'AbortError' || forceWasm || /Carregue o modelo|não consegui baixar|Arquivos locais/.test(e.message)) throw e;
       console.warn("GPU falhou, tentando pela CPU", e);
       forceWasm = true; await dropGpuSessions();
       setStatus("A placa de vídeo recusou. Recomeçando pela CPU…"); setProg(0);
@@ -1432,7 +1434,8 @@ $("go").onclick = async () => {
   }
 };
 $('useRecommended').onclick=()=>{
-  if(abort)return;const radio=$('sAuto');radio.checked=true;$('mMul').checked=true;$('exactBox').hidden=true;$('mulBox').hidden=false;
+  if(abort||!srcImage)return;const rec=PrismaUpscalePlan.recommend(srcImage.naturalWidth,srcImage.naturalHeight,RECOMMENDED_MP);
+  $('mExact').checked=true;$('exactBox').hidden=false;$('mulBox').hidden=true;$('size').value=rec.w+' × '+rec.h;
   if(finalCanvas){$('applyEditor').disabled=true;$('dl').disabled=true;hideAfter();}
   refreshPlan();updateBefore();setStatus('Tamanho recomendado selecionado. Confira a saída acima e toque em Melhorar imagem.');
 };

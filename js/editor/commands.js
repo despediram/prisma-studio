@@ -19,15 +19,17 @@
       <label class="fld"><span>Fundo</span><select class="input" id="ndBg"><option value="#ffffff">Branco</option><option value="#000000">Preto</option><option value="transparent">Transparente</option><option value="fg">Cor principal</option></select></label>
       <label class="fld"><span>Nome</span><input class="input" id="ndName" value="sem-titulo"></label><p class="hint" id="ndInfo"></p>`;
     const res = await PS.dialog({ title: 'Novo documento', body, okText: 'Criar', onOpen: b => {
-      const info = () => { const px = toPx(b); $('#ndInfo', b).textContent = `${PS.fmtInt(px.w)} × ${PS.fmtInt(px.h)} px · ${PS.fmt(px.w * px.h / 1e6, 1)} MP` + (px.w * px.h > 120e6 ? ' — grande demais' : ''); };
+      const info = () => { const px = toPx(b); $('#ndInfo', b).textContent = `${PS.fmtInt(px.w)} × ${PS.fmtInt(px.h)} px · ${PS.fmt(px.w * px.h / 1e6, 1)} MP`; };
       $('#ndPreset', b).addEventListener('change', e => { const p = NEW_PRESETS[e.target.value]; if (!p) return; $('#ndU', b).value = 'px'; $('#ndW', b).value = p[1]; $('#ndH', b).value = p[2]; $('#ndDpi', b).value = p[3]; info(); });
       ['ndW', 'ndH', 'ndU', 'ndDpi'].forEach(id => $('#' + id, b).addEventListener('input', info)); info();
     } });
     if (!res) return;
-    const px = toPx(res); if (px.w * px.h > 120e6 || px.w < 1 || px.h < 1) { PS.toast('Tamanho inválido ou grande demais para o navegador.', 'error'); return; }
+    const px = toPx(res); if (!PS.imageSize.valid(px.w, px.h)) { PS.toast('Informe dimensões válidas em pixels inteiros.', 'error'); return; }
     let bg = $('#ndBg', res).value; if (bg === 'fg') bg = doc.fg;
-    doc.newDocument(px.w, px.h, bg, $('#ndName', res).value || 'sem-titulo');
-    PS.afterOpen && PS.afterOpen();
+    try {
+      doc.newDocument(px.w, px.h, bg, $('#ndName', res).value || 'sem-titulo');
+      PS.afterOpen && PS.afterOpen();
+    } catch (e) { PS.toast(e.message, 'error', 7000); }
   };
   function toPx(b) {
     const u = $('#ndU', b).value, dpi = +$('#ndDpi', b).value || 300, k = u === 'px' ? 1 : u === 'cm' ? dpi / 2.54 : u === 'mm' ? dpi / 25.4 : dpi;
@@ -218,7 +220,7 @@
   // redimensiona todas as camadas (posições escaladas junto)
   PS.scaleAll = async (newW, newH, method = 'lanczos', strength = 60) => {
     newW = Math.round(newW); newH = Math.round(newH);
-    if (newW * newH > 100e6 || newW > 32000 || newH > 32000) { PS.toast('Tamanho acima do limite seguro do navegador (100 MP).', 'error'); return false; }
+    if (!PS.imageSize.valid(newW, newH)) { PS.toast('Informe dimensões válidas em pixels inteiros.', 'error'); return false; }
     await doc.ensureFlat();
     const kx = newW / doc.w, ky = newH / doc.h, results = new Map();
     await PS.withBusy(method === 'sr' ? 'Super-resolução' : 'Redimensionando', `${PS.fmtInt(newW)} × ${PS.fmtInt(newH)} px`, async prog => {

@@ -3,7 +3,6 @@
   'use strict';
   const PS = window.PS, IP = window.PrismaImgProc;
   const PROXY_MAX = 1600;
-  const MAX_PIXELS = 120e6;
   const HISTORY_BYTES = 900e6;
 
   const listeners = new Set();
@@ -187,24 +186,19 @@
     doc.version++; rebuildProxy();
     doc.emit('load'); doc.emit('layers'); doc.emit('selection');
   }
-  function fitSize(w, h) {
-    let s = 1;
-    if (w * h > MAX_PIXELS) { s = Math.sqrt(MAX_PIXELS / (w * h)); PS.toast(`Imagem muito grande (${PS.fmtInt(w)} × ${PS.fmtInt(h)} px). Reduzida para caber na memória do navegador.`, 'warning', 6000); }
-    if (Math.max(w, h) * s > 32000) s = 32000 / Math.max(w, h);
-    return s;
-  }
   doc.load = (source, name) => {
     const w = source.naturalWidth || source.width, h = source.naturalHeight || source.height;
-    if (!w || !h) throw new Error('A imagem não tem dimensões válidas.');
-    const s = fitSize(w, h), c = PS.canvas(w * s, h * s), x = PS.ctx(c);
+    // Preserva todos os pixels; a capacidade real é verificada antes de trocar o documento.
+    const c = PS.checkedCanvas(w, h), x = PS.ctx(c);
     x.imageSmoothingQuality = 'high'; x.drawImage(source, 0, 0, c.width, c.height);
     reset(c.width, c.height, (name || 'imagem').replace(/\.[a-z0-9]+$/i, ''));
     doc.layers = [doc.makeLayer(c, 'Fundo')];
     finishLoad();
   };
   doc.newDocument = (w, h, fill, name) => {
-    reset(Math.round(w), Math.round(h), name || 'sem-titulo');
-    const c = PS.canvas(w, h);
+    w = Math.round(w); h = Math.round(h);
+    const c = PS.checkedCanvas(w, h);
+    reset(w, h, name || 'sem-titulo');
     if (fill && fill !== 'transparent') { const x = PS.ctx(c); x.fillStyle = fill; x.fillRect(0, 0, w, h); }
     doc.layers = [doc.makeLayer(c, fill === 'transparent' ? 'Camada 1' : 'Fundo')];
     finishLoad();

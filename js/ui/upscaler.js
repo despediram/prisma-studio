@@ -15,7 +15,7 @@
   PS.mobile?.close();PS.design.closePanel?.();PS.fx.close();
   const c=doc.composite(1,{live:true});sourceVersion=doc.version;sourceName=doc.name;
   const blob=await new Promise(r=>c.toBlob(r,'image/png'));if(!blob){PS.toast('Não foi possível preparar a imagem.','error');return;}
-  pending={blob,name:doc.name+'.png',theme:document.documentElement.dataset.theme};dlg.showModal();frame.src='upscaler/index.html?v=2';
+  pending={blob,name:doc.name+'.png',theme:document.documentElement.dataset.theme};dlg.showModal();frame.src='upscaler/index.html?v=3';
  };
  addEventListener('message',async event=>{
   if(event.source!==frame.contentWindow||!dlg.open)return;const m=event.data;
@@ -26,8 +26,7 @@
   try{
    if(doc.version!==sourceVersion||doc.name!==sourceName)throw Error('O documento mudou. Feche e reabra o ampliador para usar a versão atual.');
    const img=await PS.loadImageFile(new File([m.blob],'ampliada.png',{type:'image/png'}));const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
-   if(!w||!h||w*h>100e6||Math.max(w,h)>32000)throw Error('O resultado excede o tamanho suportado pelo editor.');
-   const c=PS.canvas(w,h);PS.ctx(c).drawImage(img,0,0);
+   const c=PS.checkedCanvas(w,h);PS.ctx(c).drawImage(img,0,0);
    doc.layers=[doc.makeLayer(c,'Imagem ampliada')];doc.size={w,h};doc.active=0;doc.editMask=false;doc.sel=null;
    doc.commit('Ampliar e restaurar imagem','fa-up-right-and-down-left-from-center','all');
    close();PS.afterOpen();PS.view.fit();if(document.body.dataset.mode==='poster')await PS.poster.refreshSource();PS.toast('Imagem aplicada. Desfazer restaura as camadas anteriores.','success');

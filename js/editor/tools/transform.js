@@ -102,12 +102,8 @@
       y1 = Math.ceil(Math.max(...ys));
     const W = Math.max(1, x1 - x0),
       H = Math.max(1, y1 - y0);
-    if (W * H > 150e6) {
-      PS.toast('A camada transformada ficaria grande demais.', 'error');
-      return;
-    }
     const render = src => {
-      const c = PS.canvas(W, H),
+      const c = PS.checkedCanvas(W, H),
         x = PS.ctx(c);
       x.imageSmoothingQuality = 'high';
       x.translate(C.xf.cx - x0, C.xf.cy - y0);
@@ -116,8 +112,10 @@
       x.drawImage(src, -C.xf.w / 2, -C.xf.h / 2);
       return c;
     };
-    L.canvas = render(C.xf.orig);
-    if (C.xf.mask) L.mask = render(C.xf.mask);
+    try {
+      const canvas = render(C.xf.orig), mask = C.xf.mask ? render(C.xf.mask) : null;
+      L.canvas = canvas; if (mask) L.mask = mask;
+    } catch (e) { PS.toast(e.message, 'error', 7000); return; }
     L.x = x0;
     L.y = y0;
     L.visible = C.xf.prevVisible;

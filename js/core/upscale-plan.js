@@ -1,5 +1,5 @@
 /* Prisma Studio — cálculo puro dos tamanhos de ampliação.
- * O orçamento limita a área e cada lado; não mede a memória livre do aparelho.
+ * O orçamento orienta sugestões; a saída manual não tem teto fixo de megapixels.
  * Medidas recomendadas sempre arredondam para baixo, preservando a proporção.
  */
 (function(root){
@@ -11,6 +11,8 @@
   const W=Math.max(1,Math.floor(w*k)),H=Math.max(1,Math.floor(h*k));
   return {w:W,h:H,factor:Math.min(W/w,H/h),reduced:W<w||H<h};
  }
- const api={valid,fit,recommend:(w,h,mp,side=32000)=>fit(w,h,mp,side,2)};
+ // Automático sugere uma ampliação, mas jamais reduz a resolução original.
+ function automatic(w,h,mp){const r=fit(w,h,mp,32000,2);return r.reduced?{w,h,factor:1,reduced:false}:r;}
+ const api={valid,fit,automatic,recommend:(w,h,mp,side=32000)=>fit(w,h,mp,side,2)};
  if(typeof module!=='undefined'&&module.exports)module.exports=api;else root.PrismaUpscalePlan=api;
 })(typeof window==='undefined'?globalThis:window);
