@@ -43,3 +43,9 @@ Para repetir os testes em navegador real, consulte [testes/README.md](testes/REA
 
 
 Atualização de impressão sem moldura extra: [sangria, compensação e corte medido](POSTER-SANGRIA.md). Esta revisão substitui a reserva branca e o mínimo obrigatório de 5 mm descritos nas etapas anteriores.
+
+## Ampliador integrado e telas móveis
+
+Use o ícone de ampliar no topo do Editor ou a aba Melhorar. O painel inclui IA Real-ESRGAN, restauração e comparação antes/depois; há também um modo rápido sem IA. Os modelos podem ser baixados com autorização na interface ou carregados em ONNX do computador. O motor acompanha o projeto, sem CDN. A aplicação cria uma imagem mesclada, recuperável com Desfazer.
+
+No celular, ferramentas deslizam horizontalmente e painéis reservam espaço para a arte. Em paisagem, as opções abrem na lateral. Instruções, arquivos e validação: [docs/ampliador-e-mobile.md](docs/ampliador-e-mobile.md).

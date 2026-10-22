@@ -3,16 +3,39 @@
  */
 (function(){
  'use strict';const PS=window.PS,$=PS.$,mq=matchMedia('(max-width:860px)');
+ let opener=null;
+ const menuButton=document.createElement('button');menuButton.id='btnMobileMenu';menuButton.className='btn icon ghost mobile-menu-toggle';menuButton.setAttribute('aria-label','Menu do aplicativo');menuButton.setAttribute('aria-expanded','false');menuButton.innerHTML='<i class="fa-solid fa-bars"></i>';$('.top-actions').prepend(menuButton);
+ const menu=$('#menubar');menuButton.onclick=()=>{const on=menu.classList.toggle('mobile-menu-open');menuButton.setAttribute('aria-expanded',String(on));};
+ const theme=document.createElement('button');theme.className='menu-btn mobile-menu-theme';theme.textContent='Alternar tema';theme.onclick=()=>$('#btnTheme').click();menu.append(theme);
+ document.addEventListener('pointerdown',e=>{if(!menu.contains(e.target)&&!menuButton.contains(e.target)){menu.classList.remove('mobile-menu-open');menuButton.setAttribute('aria-expanded','false');}});
+ function viewport(){document.documentElement.style.setProperty('--prisma-viewport-height',(visualViewport?.height||innerHeight)+'px');}
+ visualViewport?.addEventListener('resize',viewport);viewport();
  const dock=document.createElement('nav');dock.className='mobile-workspace-dock';dock.setAttribute('aria-label','Painéis do estúdio');document.body.append(dock);
  const shade=document.createElement('div');shade.className='mobile-panel-backdrop';shade.hidden=true;document.body.append(shade);
  const targets=[$('#inspector'),$('.pside.left'),$('.pside.right')];
- targets.forEach(el=>{const head=document.createElement('div');head.className='mobile-sheet-title';const span=document.createElement('span');span.textContent=el.id==='inspector'?'Painel do editor':el.classList.contains('left')?'Configurar pôster':'Imprimir e montar';const b=document.createElement('button');b.className='btn ghost sm';b.textContent='Fechar';b.addEventListener('click',close);head.append(span,b);el.prepend(head);});
- function close(){targets.forEach(t=>t.classList.remove('mobile-open'));shade.hidden=true;dock.querySelectorAll('button').forEach(b=>b.setAttribute('aria-expanded','false'));}
+ targets.forEach(el=>{const head=document.createElement('div');head.className='mobile-sheet-title';const span=document.createElement('span');span.textContent=el.id==='inspector'?'Painel do editor':el.classList.contains('left')?'Configurar pôster':'Imprimir e montar';const b=document.createElement('button');b.className='btn ghost sm';b.textContent='Fechar';b.addEventListener('click',close);const expand=document.createElement('button');expand.className='btn ghost sm mobile-expand';expand.type='button';expand.textContent='Expandir';expand.setAttribute('aria-expanded','false');expand.onclick=()=>{const open=el.classList.toggle('sheet-expanded');expand.textContent=open?'Reduzir':'Expandir';expand.setAttribute('aria-expanded',String(open));};head.append(span,expand,b);el.prepend(head);
+ let start=null;head.addEventListener('pointerdown',e=>{if(e.target.closest('button'))return;start=e.clientY;head.setPointerCapture(e.pointerId);});head.addEventListener('pointerup',e=>{if(start===null)return;const dy=e.clientY-start;start=null;if(dy>60)close();else if(dy< -45&&!el.classList.contains('sheet-expanded'))expand.click();});});
+ function close(){targets.forEach(t=>t.classList.remove('mobile-open','sheet-expanded'));shade.hidden=true;dock.querySelectorAll('button').forEach(b=>b.setAttribute('aria-expanded','false'));}
+ PS.mobile={close};
  function mode(){return document.querySelector('.mode.active')?.dataset.mode||'editor';}
- function render(){close();document.body.dataset.mode=mode();dock.replaceChildren();const entries=mode()==='poster'?[['settings','Papel e tamanho'],['export','Imprimir / salvar'],['fit','Ajustar vista']]:[['options','Ferramenta'],['adjust','Ajustes'],['layers','Camadas'],['fit','Ajustar vista']];
-  for(const [key,label]of entries){const b=document.createElement('button');b.textContent=label;b.dataset.mobileAction=key;b.setAttribute('aria-expanded','false');b.addEventListener('click',()=>{if(key==='fit'){if(mode()==='editor')PS.view.fit();else PS.poster.drawPreview();return;}const panel=mode()==='poster'?targets[key==='settings'?1:2]:targets[0],was=panel.classList.contains('mobile-open')&&panel.dataset.mobileSection===key;close();if(was)return;panel.dataset.mobileSection=key;panel.classList.add('mobile-open');shade.hidden=false;b.setAttribute('aria-expanded','true');if(key==='layers')$('#layersDock').classList.remove('collapsed');});dock.append(b);}
+ function render(){close();document.body.dataset.mode=mode();dock.replaceChildren();const entries=mode()==='poster'?[['settings','Papel e tamanho'],['export','Imprimir / salvar'],['fit','Ajustar vista']]:[['tools','Ferramentas'],['options','Opções'],['adjust','Ajustes'],['layers','Camadas'],['fit','Enquadrar']];
+  for(const [key,label]of entries){const b=document.createElement('button');const icon={tools:'fa-paintbrush',options:'fa-sliders',adjust:'fa-sun',layers:'fa-layer-group',fit:'fa-expand',settings:'fa-ruler-combined',export:'fa-print'}[key];b.innerHTML='<i class="fa-solid '+icon+'" aria-hidden="true"></i><span></span>';b.querySelector('span').textContent=label;b.dataset.mobileAction=key;b.setAttribute('aria-expanded','false');b.addEventListener('click',()=>{if(key==='tools'){close();const rail=$('.toolrail');rail.scrollTo({left:0,behavior:'smooth'});rail.querySelector('.tool.active')?.focus();PS.toast('Deslize a faixa de ferramentas para ver todas as opções.','info');return;}if(key==='fit'){if(mode()==='editor')PS.view.fit();else PS.poster.drawPreview();return;}const panel=mode()==='poster'?targets[key==='settings'?1:2]:targets[0],was=panel.classList.contains('mobile-open')&&panel.dataset.mobileSection===key;close();if(was)return;opener=b;panel.dataset.mobileSection=key;panel.classList.add('mobile-open');panel.querySelector('.mobile-expand')?.setAttribute('aria-expanded','false');const eb=panel.querySelector('.mobile-expand');if(eb)eb.textContent='Expandir';panel.querySelector('.mobile-sheet-title button:last-child')?.focus();shade.hidden=false;b.setAttribute('aria-expanded','true');if(key==='layers')$('#layersDock').classList.remove('collapsed');});dock.append(b);}
  }
- shade.addEventListener('click',close);mq.addEventListener('change',close);PS.$$('.mode').forEach(b=>b.addEventListener('click',()=>{PS.design.closePanel?.();render();}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();PS.design.closePanel?.();}});render();
+ shade.addEventListener('click',()=>{close();opener?.focus();});mq.addEventListener('change',close);PS.$$('.mode').forEach(b=>b.addEventListener('click',()=>{PS.design.closePanel?.();render();}));document.addEventListener('keydown',e=>{if(e.key==='Escape'){close();PS.design.closePanel?.();}});render();
+ // Reserva a altura real da gaveta para o painel não cobrir a arte.
+ let previousPanel=null;
+ function reserve(){
+  const active=mq.matches?targets.find(t=>t.classList.contains('mobile-open')):null;
+  document.body.classList.toggle('mobile-panel-visible',!!active);
+  document.body.style.setProperty('--mobile-sheet-reserve',(active?.getBoundingClientRect().height||0)+'px');
+  const design=$('#view-design'),name=design.dataset.mobilePanel;
+  const designPanel=mq.matches&&name?design.querySelector(['models','text','elements'].includes(name)?'.design-library':'.design-inspector'):null;
+  design.style.setProperty('--mobile-design-reserve',(designPanel?.getBoundingClientRect().height||0)+'px');
+  if(active&&active!==previousPanel&&mode()==='editor')requestAnimationFrame(()=>PS.view.fit());
+  previousPanel=active;
+ }
+ const panels=[...targets,$('.design-library'),$('.design-inspector')];
+ const sizes=new ResizeObserver(reserve),changes=new MutationObserver(reserve);for(const panel of panels){sizes.observe(panel);changes.observe(panel,{attributes:true,attributeFilter:['class','hidden']});}changes.observe($('#view-design'),{attributes:true,attributeFilter:['data-mobile-panel']});mq.addEventListener('change',reserve);
  // Também acompanha mudanças de modo programáticas (abrir design no editor).
  new MutationObserver(()=>{if(document.body.dataset.mode!==mode())render();}).observe($('.modes'),{subtree:true,attributes:true,attributeFilter:['class']});
 })();

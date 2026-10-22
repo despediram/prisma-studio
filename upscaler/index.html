@@ -1,0 +1,1484 @@
+<!-- Prisma Studio — adaptação do ampliador enviado pelo usuário; preserva as sete etapas de processamento. -->
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ampliador de Imagens IA</title>
+
+
+
+<style>
+/* Mesa de luz: a imagem ocupa o palco; à direita, as etapas como uma tira de filme (a ordem é real) */
+:root{
+  --bg:#e9ecf1;          /* mesa de luz */
+  --panel:#ffffff;
+  --ink:#14161b;
+  --muted:#5b6270;
+  --line:#d6dbe3;
+  --soft:#f3f5f8;
+  --accent:#3d3fe0;      /* azul de seleção */
+  --accent-ink:#ffffff;
+  --accent-soft:#e6e7fd;
+  --ok:#17804c; --warn:#9a6200; --err:#c0342a;
+  --film:#1b1d23;        /* faixa da tira de filme */
+  --stage:#dfe3ea;
+  --font:"Archivo", "Helvetica Neue", Arial, sans-serif;
+  --r-sm:0.375rem; --r:0.625rem; --r-lg:1rem;
+  --stageH:calc(100vh - 9.375rem);
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#101217; --panel:#181b21; --ink:#e8eaf0; --muted:#98a0ae; --line:#2a2f39; --soft:#1f232a;
+    --accent:#8a8cff; --accent-ink:#0e0f1d; --accent-soft:#25264a;
+    --ok:#46c483; --warn:#e2ad4d; --err:#f2786d; --film:#07080a; --stage:#0b0d11;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#101217; --panel:#181b21; --ink:#e8eaf0; --muted:#98a0ae; --line:#2a2f39; --soft:#1f232a;
+  --accent:#8a8cff; --accent-ink:#0e0f1d; --accent-soft:#25264a;
+  --ok:#46c483; --warn:#e2ad4d; --err:#f2786d; --film:#07080a; --stage:#0b0d11;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--ink);font:400 0.9375rem/1.5 var(--font);font-variation-settings:"wdth" 100;-webkit-font-smoothing:antialiased}
+button,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+/* ---------- topo ---------- */
+.top{display:flex;align-items:center;gap:1rem;flex-wrap:wrap;padding:1.125rem max(1.25rem,env(safe-area-inset-right,0px)) 0.875rem max(1.25rem,env(safe-area-inset-left,0px))}
+.brand{display:flex;align-items:baseline;gap:0.75rem;min-width:0}
+.brand h1{margin:0;font-size:1.625rem;line-height:1;font-weight:800;font-variation-settings:"wdth" 125;letter-spacing:-.02em}
+.brand p{margin:0;color:var(--muted);font-size:0.8438rem}
+.engine{margin-left:auto;display:flex;align-items:center;gap:0.5rem;font-size:0.8125rem;color:var(--muted);background:var(--panel);border:1px solid var(--line);border-radius:62.44rem;padding:0.3125rem 0.75rem 0.3125rem 0.625rem}
+.engine::before{content:"";width:0.5rem;height:0.5rem;border-radius:50%;background:var(--ok)}
+.engine.cpu::before{background:var(--warn)}
+
+/* ---------- área principal ---------- */
+.app{display:grid;grid-template-columns:minmax(0,1fr) 24.38rem;gap:1.125rem;align-items:start;padding:0 max(1.25rem,env(safe-area-inset-right,0px)) 1.5rem max(1.25rem,env(safe-area-inset-left,0px))}
+@media (max-width:980px){.app{grid-template-columns:1fr} :root{--stageH:62vh}}
+
+/* palco */
+.stage{position:relative;background:var(--stage);border-radius:var(--r-lg);min-height:min(var(--stageH),47.5rem);display:flex;flex-direction:column;overflow:hidden}
+.stage-bar{display:flex;align-items:center;gap:0.625rem;flex-wrap:wrap;padding:0.75rem 0.875rem;min-height:3.5rem}
+.chips{display:flex;flex-wrap:wrap;gap:0.375rem;min-width:0}
+.chip{font-size:0.7812rem;padding:0.25rem 0.625rem;border-radius:62.44rem;background:var(--panel);color:var(--muted);white-space:nowrap;border:1px solid var(--line)}
+.chip b{color:var(--ink);font-weight:600}
+.stage-actions{margin-left:auto;display:flex;gap:0.5rem}
+.ghost{background:var(--panel);border:1px solid var(--line);border-radius:62.44rem;padding:0.4375rem 0.875rem;font-size:0.8438rem;font-weight:500;cursor:pointer}
+.ghost:hover{border-color:var(--muted)}
+.view{flex:1;display:grid;place-items:center;padding:0.25rem 0.875rem 0.875rem;min-height:0}
+
+/* área para soltar a imagem (estado vazio) */
+.empty{width:min(35rem,100%)}
+.drop{width:100%;aspect-ratio:4/3;border:2px dashed color-mix(in srgb,var(--muted) 45%,transparent);border-radius:var(--r-lg);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:0.625rem;text-align:center;padding:1.5rem;cursor:pointer;transition:border-color .15s,background .15s}
+.drop:hover,.drop.over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,transparent)}
+.drop svg{width:3rem;height:3rem;color:var(--accent)}
+.drop strong{font-size:1.25rem;font-weight:700;font-variation-settings:"wdth" 112}
+.drop span{color:var(--muted);font-size:0.875rem}
+.stage.over{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* comparação antes/depois */
+.compare{position:relative;max-width:100%;border-radius:var(--r);overflow:hidden;user-select:none;touch-action:none;cursor:ew-resize;
+  background:repeating-conic-gradient(color-mix(in srgb,var(--muted) 18%,transparent) 0 25%,transparent 0 50%) 0 0/16px 16px;box-shadow:0 1px 2px rgba(0,0,0,.08),0 12px 40px -12px rgba(0,0,0,.25)}
+.compare img{position:absolute;inset:0;width:100%;height:100%;display:block;-webkit-user-drag:none}
+#imBefore{image-rendering:pixelated}
+#imAfter{clip-path:inset(0 0 0 50%)}
+.handle{position:absolute;top:0;bottom:0;left:50%;width:2px;margin-left:-1px;background:#fff;box-shadow:0 0 0 1px rgba(0,0,0,.25);pointer-events:none}
+.handle::after{content:"";position:absolute;top:50%;left:50%;width:34px;height:34px;transform:translate(-50%,-50%);border-radius:50%;background:#fff;box-shadow:0 2px 10px rgba(0,0,0,.35);
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2314161b' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 6l-6 6 6 6M15 6l6 6-6 6'/%3E%3C/svg%3E");background-size:1.125rem;background-position:center;background-repeat:no-repeat}
+.tag{position:absolute;top:.75rem;font-size:.75rem;font-weight:600;color:#fff;background:rgba(10,12,16,.62);backdrop-filter:blur(6px);padding:.25rem .625rem;border-radius:999px}
+.tag.l{left:0.75rem} .tag.r{right:0.75rem}
+.meta{padding:0 1rem 0.875rem;font-size:0.8125rem;color:var(--muted);font-variant-numeric:tabular-nums}
+
+/* ---------- painel lateral ---------- */
+.side{display:flex;flex-direction:column;gap:0.875rem;min-width:0}
+@media (min-width:981px){.side{position:sticky;top:12px;max-height:calc(100vh - 24px);overflow:auto;padding-right:2px;scrollbar-width:thin}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--r-lg);padding:1rem}
+.card h2{margin:0 0 0.75rem;font-size:0.9375rem;font-weight:700;font-variation-settings:"wdth" 112}
+.sub-h{font-size:0.8125rem;color:var(--muted);margin:0 0 0.375rem}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;background:var(--soft);border-radius:var(--r);padding:0.1875rem;gap:0.1875rem}
+.seg input{position:absolute;opacity:0;pointer-events:none}
+.seg label{padding:0.5rem 0.375rem;text-align:center;cursor:pointer;font-size:0.8438rem;font-weight:500;border-radius:0.4375rem;color:var(--muted);transition:background .12s,color .12s;font-variant-numeric:tabular-nums}
+.seg label:hover{color:var(--ink)}
+.seg input:checked + label{background:var(--panel);color:var(--ink);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.seg input:focus-visible + label{outline:2px solid var(--accent);outline-offset:1px}
+.seg.sm label{padding:0.375rem 0.25rem;font-size:0.7812rem}
+.stack{display:flex;flex-direction:column;gap:0.75rem}
+.field{width:100%;padding:0.625rem 0.75rem;border:1px solid var(--line);border-radius:var(--r);background:var(--soft);font-size:1rem;font-weight:600;font-variant-numeric:tabular-nums}
+.field:focus{outline:2px solid var(--accent);outline-offset:-1px;border-color:transparent}
+.row{display:flex;gap:0.5rem;align-items:center}
+.row > *{min-width:0}
+.dpi{width:6rem;flex:none}
+.unit{font-size:0.8125rem;color:var(--muted);white-space:nowrap}
+.hint{font-size:0.7812rem;color:var(--muted);line-height:1.45}
+.hint.warn{color:var(--warn)}
+
+/* tira de filme: as etapas, em ordem */
+.film{position:relative;background:var(--film);border-radius:var(--r-lg);padding:0.625rem 0.625rem 0.625rem 1.875rem;display:flex;flex-direction:column;gap:0.5rem}
+.film::before,.film::after{content:"";position:absolute;top:0.75rem;bottom:0.75rem;width:0.5625rem;
+  background:repeating-linear-gradient(to bottom,rgba(255,255,255,.82) 0 0.4375rem,transparent 0.4375rem 1rem);border-radius:2px;opacity:.85}
+.film::before{left:0.625rem}
+.film::after{display:none}
+.film-head{display:flex;align-items:baseline;justify-content:space-between;color:#d9dce4;padding:0.25rem 0.25rem 2px}
+.film-head h2{margin:0;font-size:0.9375rem;font-weight:700;font-variation-settings:"wdth" 112;color:#fff}
+.film-head span{font-size:0.75rem;color:#9ea4b2}
+.phase{background:var(--panel);border-radius:var(--r);padding:0.6875rem 0.75rem;display:flex;flex-direction:column;gap:0.5rem;transition:opacity .15s}
+.phase.off{background:color-mix(in srgb,var(--panel) 88%,var(--film))}
+.ph-head{display:flex;align-items:center;gap:0.625rem;cursor:pointer}
+.ph-num{font-size:0.75rem;font-weight:700;color:var(--muted);width:1rem;text-align:center;font-variant-numeric:tabular-nums;flex:none}
+.ph-name{font-weight:600;font-size:0.9062rem}
+.ph-state{margin-left:auto;font-size:0.75rem;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:46%}
+.ph-state.run{color:var(--accent);font-weight:600} .ph-state.done{color:var(--ok)} .ph-state.err{color:var(--err)}
+.switch{appearance:none;-webkit-appearance:none;width:2.125rem;height:1.25rem;border-radius:62.44rem;background:var(--line);position:relative;cursor:pointer;flex:none;margin:0;transition:background .15s}
+.switch::after{content:"";position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.3);transition:transform .15s}
+.switch:checked{background:var(--accent)}
+.switch:checked::after{transform:translateX(0.875rem)}
+.switch:disabled{opacity:.6;cursor:default}
+.ph-body{display:flex;flex-direction:column;gap:0.5rem;padding-left:1.625rem}
+.ph-desc{font-size:0.7812rem;color:var(--muted);line-height:1.45}
+.ph-ctrl{display:flex;flex-direction:column;gap:0.5rem}
+.phase.off .ph-ctrl{display:none}
+.ph-auto{font-size:0.75rem;color:var(--accent)}
+.ph-auto:empty{display:none}
+.slider{display:flex;align-items:center;gap:0.625rem}
+.slider input{flex:1;accent-color:var(--accent);min-width:0}
+.slider output{font-size:0.7812rem;font-weight:600;width:1.75rem;text-align:right;font-variant-numeric:tabular-nums}
+.check{display:flex;gap:0.5rem;align-items:flex-start;font-size:0.7812rem;color:var(--muted);cursor:pointer;line-height:1.4}
+.check input{accent-color:var(--accent);margin:2px 0 0}
+
+/* ação principal: a barra de progresso é o próprio botão */
+.actions{position:sticky;bottom:0;background:linear-gradient(to bottom,transparent,var(--bg) 1.125rem);padding-top:1.125rem;display:flex;flex-direction:column;gap:0.625rem}
+.go{position:relative;overflow:hidden;width:100%;border:0;border-radius:var(--r);background:var(--accent);color:var(--accent-ink);font-size:1rem;font-weight:700;font-variation-settings:"wdth" 110;padding:0.9375rem 1.125rem;cursor:pointer}
+.go i{position:absolute;inset:0 auto 0 0;width:0;background:rgba(255,255,255,.22);transition:width .25s}
+.go span{position:relative}
+.go:disabled{cursor:not-allowed;opacity:.55}
+.go:not(:disabled):hover{filter:brightness(1.06)}
+.bar{display:none}
+.status{font-size:0.8125rem;color:var(--muted);min-height:1.45em;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.status.err{color:var(--err)} .status.ok{color:var(--ok);font-weight:600}
+.sec{display:flex;gap:0.5rem}
+.sec button{flex:1;border:1px solid var(--line);background:var(--panel);border-radius:var(--r);padding:0.6875rem 0.75rem;font-weight:600;cursor:pointer}
+.sec button:disabled{opacity:.45;cursor:not-allowed}
+#dl:not(:disabled){border-color:var(--ok);color:var(--ok)}
+.linkbtn{background:none;border:0;padding:0;color:var(--accent);font-size:0.7812rem;cursor:pointer;text-decoration:underline;text-underline-offset:2px}
+.foot{font-size:0.7812rem;color:var(--muted);padding:0 2px}
+
+
+/* tamanho de tudo acompanha a tela: 15px em notebooks, até 20px em monitores grandes */
+html{font-size:clamp(15px, 0.36vw + 10px, 20px)}
+body{font-size:1rem}
+@media (min-width:981px){
+  :root{--stageH:calc(100dvh - 5.2rem)}
+  body{height:100dvh;overflow:hidden;display:flex;flex-direction:column}
+  .app{flex:1;min-height:0;grid-template-columns:minmax(0,1fr) clamp(22rem, 25vw, 32rem);align-items:stretch}
+  .stage{min-height:0;height:100%}
+  .side{position:static;max-height:none;height:100%;overflow:auto;padding-bottom:0}
+}
+@media (min-width:1700px){
+  .app{grid-template-columns:minmax(0,1fr) clamp(24rem, 24vw, 34rem)}
+}
+@media (max-width:980px){
+  .stage{min-height:auto}
+  .view{min-height:16rem}
+}
+
+@media (prefers-reduced-motion: reduce){*{transition:none!important}}
+</style>
+<link rel="stylesheet" href="../css/upscaler.css"></head>
+<body>
+<header class="top">
+  <div class="brand">
+    <h1>Ampliador</h1>
+    <p>Amplie, restaure e compare antes de aplicar.</p>
+  </div>
+  <div class="engine" id="engine">Verificando o motor…</div>
+</header>
+
+<main class="app">
+  <section class="stage" id="stage" aria-label="Imagem">
+    <div class="stage-bar">
+      <div class="chips" id="chips"></div>
+      <div class="stage-actions">
+        <button class="ghost" id="swap" type="button" hidden>Trocar imagem</button>
+      </div>
+    </div>
+    <div class="view">
+      <div class="empty" id="empty">
+        <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher imagem">
+          <svg viewBox="0 0 48 48" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="6" y="9" width="36" height="30" rx="5"/><circle cx="17" cy="20" r="3.5"/><path d="M6 33l10-9 8 7 6-5 12 10"/></svg>
+          <strong>Solte uma imagem aqui</strong>
+          <span>ou clique para escolher, ou cole com Ctrl+V · PNG, JPG ou WEBP</span>
+        </div>
+      </div>
+      <input type="file" id="file" accept="image/*" hidden>
+      <div class="compare" id="compare" hidden>
+        <img id="imBefore" alt="Original">
+        <img id="imAfter" alt="Melhorada" hidden>
+        <div class="handle" id="handle" hidden></div>
+        <span class="tag l">Original</span><span class="tag r" id="tagR" hidden>Melhorada</span>
+      </div>
+    </div>
+    <div class="meta" id="meta"></div>
+  </section>
+
+  <aside class="side"><fieldset id="upSettings" style="border:0;padding:0;margin:0;min-width:0;display:contents">
+<div class="card stack"><h2>Motor de ampliação</h2><label>Processamento<select class="field" id="upEngine"><option value="ia">IA · Real-ESRGAN</option><option value="classic">Rápido · sem IA, funciona offline</option></select></label><label class="check"><input type="checkbox" id="allowDownloads"> Permitir download de modelos de IA</label><p class="hint">A imagem fica neste dispositivo. Modelos exigem download inicial ou arquivos .onnx locais. GFPGAN pode ocupar cerca de 340 MB.</p></div>
+    <div class="card stack">
+      <h2 style="margin:0">Tamanho final</h2>
+      <div class="seg">
+        <input type="radio" name="mode" id="mMul" value="mul" checked><label for="mMul">Multiplicar</label>
+        <input type="radio" name="mode" id="mExact" value="exact"><label for="mExact">Em pixels</label>
+      </div>
+      <div class="stack" id="exactBox" hidden>
+        <input type="text" id="size" class="field" value="4843 × 6898" autocomplete="off" spellcheck="false" aria-label="Largura × altura em pixels">
+        <div class="row">
+          <input type="number" id="dpi" class="field dpi" value="300" min="1" max="2400" aria-label="DPI">
+          <span class="unit">DPI</span>
+          <span class="unit" id="cm" style="margin-left:auto"></span>
+        </div>
+        <div class="hint">Cole direto, por exemplo “4843 × 6898 px”. A imagem inteira entra no tamanho, sem cortar.</div>
+      </div>
+      <div id="mulBox">
+        <div class="seg">
+          <input type="radio" name="scale" id="s2" value="2" checked><label for="s2">2×</label>
+          <input type="radio" name="scale" id="s3" value="3"><label for="s3">3×</label>
+          <input type="radio" name="scale" id="s4" value="4"><label for="s4">4×</label>
+          <input type="radio" name="scale" id="s8" value="8"><label for="s8">8×</label>
+        </div>
+      </div>
+      <div class="hint" id="plan"></div>
+    </div>
+
+    <div class="film" aria-label="Etapas">
+      <div class="film-head"><h2>Etapas</h2><span>sugeridas pela análise</span></div>
+
+      <div class="phase" id="phClean">
+        <label class="ph-head"><span class="ph-num">1</span><span class="ph-name">Limpeza</span><span class="ph-state" id="stClean"></span><input type="checkbox" class="switch" id="onClean"></label>
+        <div class="ph-body">
+          <div class="ph-desc">Tira manchas de cor da compressão e suaviza o ruído.</div>
+          <div class="ph-ctrl"><div class="slider"><input type="range" id="kClean" min="0" max="100" value="35" aria-label="Força da limpeza"><output id="oClean">35</output></div></div>
+          <div class="ph-auto" id="aClean"></div>
+        </div>
+      </div>
+
+      <div class="phase" id="phBlur">
+        <label class="ph-head"><span class="ph-num">2</span><span class="ph-name">Desembaçar</span><span class="ph-state" id="stBlur"></span><input type="checkbox" class="switch" id="onBlur"></label>
+        <div class="ph-body">
+          <div class="ph-desc">Tira o borrado de foco e de tremida.</div>
+          <div class="ph-ctrl">
+            <div class="seg sm">
+              <input type="radio" name="blurMode" id="bmAI" value="ai" checked><label for="bmAI">IA · 92 MB</label>
+              <input type="radio" name="blurMode" id="bmFast" value="fast"><label for="bmFast">Rápido</label>
+            </div>
+            <div class="slider"><input type="range" id="kBlur" min="0" max="100" value="60" aria-label="Força do desembaçar"><output id="oBlur">60</output></div>
+          </div>
+          <div class="ph-auto" id="aBlur"></div>
+        </div>
+      </div>
+
+      <div class="phase" id="phUp">
+        <label class="ph-head"><span class="ph-num">3</span><span class="ph-name">Ampliação</span><span class="ph-state" id="stUp"></span><input type="checkbox" class="switch" id="onUp" checked disabled></label>
+        <div class="ph-body">
+          <div class="ph-desc">No modo IA, Real-ESRGAN trabalha em 4× e ajusta ao tamanho pedido; em 2× ou 3× ela amplia 4× e reduz, o que fica mais nítido.</div>
+          <div class="ph-ctrl">
+            <div class="seg sm">
+              <input type="radio" name="model" id="mdAuto" value="auto" checked><label for="mdAuto">Automático</label>
+              <input type="radio" name="model" id="mdPhoto" value="photo"><label for="mdPhoto">Foto</label>
+              <input type="radio" name="model" id="mdAnime" value="anime"><label for="mdAnime">Desenho</label>
+            </div>
+            <label class="check"><input type="checkbox" id="twoPass" checked> Acima de 4×, passar pela IA duas vezes</label>
+          </div>
+          <div class="ph-auto" id="aUp"></div>
+        </div>
+      </div>
+
+      <div class="phase" id="phFace">
+        <label class="ph-head"><span class="ph-num">4</span><span class="ph-name">Rostos</span><span class="ph-state" id="stFace"></span><input type="checkbox" class="switch" id="onFace"></label>
+        <div class="ph-body">
+          <div class="ph-desc">Reconstrói rostos de pessoas reais com GFPGAN. Baixa 340 MB na primeira vez.</div>
+          <div class="ph-ctrl"><div class="slider"><input type="range" id="kFace" min="0" max="100" value="80" aria-label="Força nos rostos"><output id="oFace">80</output></div></div>
+          <div class="ph-auto" id="aFace"></div>
+        </div>
+      </div>
+
+      <div class="phase" id="phSharp">
+        <label class="ph-head"><span class="ph-num">5</span><span class="ph-name">Nitidez</span><span class="ph-state" id="stSharp"></span><input type="checkbox" class="switch" id="onSharp" checked></label>
+        <div class="ph-body">
+          <div class="ph-desc">Realça bordas e detalhes finos sem realçar o ruído.</div>
+          <div class="ph-ctrl"><div class="slider"><input type="range" id="kSharp" min="0" max="100" value="30" aria-label="Força da nitidez"><output id="oSharp">30</output></div></div>
+        </div>
+      </div>
+
+      <div class="phase" id="phClar">
+        <label class="ph-head"><span class="ph-num">6</span><span class="ph-name">Clareza</span><span class="ph-state" id="stClar"></span><input type="checkbox" class="switch" id="onClar"></label>
+        <div class="ph-body">
+          <div class="ph-desc">Contraste local: dá profundidade e volume.</div>
+          <div class="ph-ctrl"><div class="slider"><input type="range" id="kClar" min="0" max="100" value="30" aria-label="Força da clareza"><output id="oClar">30</output></div></div>
+          <div class="ph-auto" id="aClar"></div>
+        </div>
+      </div>
+
+      <div class="phase" id="phColor">
+        <label class="ph-head"><span class="ph-num">7</span><span class="ph-name">Cor e contraste</span><span class="ph-state" id="stColor"></span><input type="checkbox" class="switch" id="onColor"></label>
+        <div class="ph-body">
+          <div class="ph-desc">Corrige tom amarelado ou azulado em fotos e aviva cores apagadas.</div>
+          <div class="ph-ctrl"><div class="slider"><input type="range" id="kColor" min="0" max="100" value="50" aria-label="Força da cor"><output id="oColor">50</output></div></div>
+          <div class="ph-auto" id="aColor"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card stack">
+      <h2 style="margin:0">Arquivo</h2>
+      <div class="seg">
+        <input type="radio" name="fmt" id="fPng" value="png" checked><label for="fPng">PNG · sem perda</label>
+        <input type="radio" name="fmt" id="fJpg" value="jpg"><label for="fJpg">JPG · menor</label>
+      </div>
+    </div>
+
+    </fieldset><div class="actions">
+      <button class="go" id="go" disabled><i id="prog"></i><span>Melhorar imagem</span></button>
+      <div class="status" id="status">Carregando…</div>
+      <div class="sec">
+        <button id="dl" disabled>Baixar</button><button id="applyEditor" disabled>Aplicar no editor</button>
+        <button id="cancel" hidden>Cancelar</button>
+      </div>
+    </div>
+    <div class="foot">Download dos modelos bloqueado? <button class="linkbtn" id="pickModel" type="button">Carregar arquivos .onnx do computador</button></div>
+    <label class="hint">Tipo do arquivo ONNX <select class="field" id="modelKind"><option value="auto">Identificar pelo nome</option><option value="photo">Real-ESRGAN · Foto</option><option value="anime">Real-ESRGAN · Desenho</option><option value="deblur">NAFNet · Desembaçar</option><option value="det">YuNet · Detectar rostos</option><option value="face">GFPGAN · Restaurar rostos</option></select></label><input type="file" id="modelFile" accept=".onnx" multiple hidden>
+  </aside>
+</main>
+
+<!-- ONNX Runtime Web (WebGPU + WebAssembly), versão fixa -->
+<script src="../vendor/onnxruntime/ort.webgpu.min.js"></script>
+
+<script>
+const $ = id => document.getElementById(id);
+const val = name => document.querySelector(`input[name=${name}]:checked`).value;
+const sleep0 = () => new Promise(r => setTimeout(r, 0));
+
+/* ================= modelos ================= */
+const MODELS = {
+  photo: { name: "Real-ESRGAN general x4v3", size: "5 MB", match: /general|realesr-general/i, urls: [
+    "https://huggingface.co/CoderViking/realesr-general-x4v3-onnx/resolve/main/realesr-general-x4v3.onnx",
+    "https://huggingface.co/Heliosoph/realesrgan-onnx/resolve/main/realesr-general-x4v3.onnx" ] },
+  anime: { name: "Real-ESRGAN anime v3", size: "2,4 MB", match: /anime/i, urls: [
+    "https://huggingface.co/skillsafe-ai/realesr-animevideov3/resolve/main/model.onnx" ] },
+  face:  { name: "GFPGAN v1.4", size: "340 MB", match: /gfpgan/i, urls: [
+    "https://huggingface.co/Neus/GFPGANv1.4/resolve/main/GFPGANv1.4.onnx" ] },
+  deblur:{ name: "NAFNet (desembaçar)", size: "92 MB", match: /nafnet|deblur/i, urls: [
+    "https://huggingface.co/opencv/deblurring_nafnet/resolve/main/deblurring_nafnet_2025may.onnx" ] },
+  det:   { name: "YuNet (detector de rostos)", size: "0,2 MB", match: /yunet/i, urls: [
+    "https://huggingface.co/pollen-robotics/face_detection_yunet_2023mar/resolve/main/face_detection_yunet_2023mar.onnx",
+    "https://huggingface.co/opencv/face_detection_yunet/resolve/main/face_detection_yunet_2023mar.onnx" ] },
+};
+const TILE = 192, OV = 16, S = TILE + 2 * OV;   // pedaços de tamanho fixo com sobreposição
+const RATIO_TOL = 0.000001;
+const MAX_MP = matchMedia('(max-width:860px)').matches ? 32 : 100;   // acima disso o navegador não consegue criar a imagem
+
+// sem internet no primeiro acesso o motor de IA não carrega; a página continua funcionando para o resto
+if (typeof ort === "undefined") {
+  window.ort = { env: { wasm: {} }, Tensor: function () {}, InferenceSession: { create: () => Promise.reject(new Error("o motor de IA não carregou (sem internet?). Recarregue a página conectado.")) } };
+}
+// Arquivos do próprio projeto; nenhum motor é buscado em CDN.
+let runtimeReady;
+function prepareRuntime(){return runtimeReady ||= new Promise((resolve,reject)=>{
+ const script=document.createElement('script');script.src='../vendor/onnxruntime/offline-runtime.js';
+ script.onload=async()=>{try{const decode=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));const assets=await window.PrismaORTLoad();
+ const wasm=await new Response(new Blob([decode(assets.wasm)]).stream().pipeThrough(new DecompressionStream('gzip'))).arrayBuffer();
+ ort.env.wasm.wasmPaths={mjs:URL.createObjectURL(new Blob([decode(assets.mjs)],{type:'text/javascript'})),wasm:URL.createObjectURL(new Blob([wasm],{type:'application/wasm'}))};delete window.PrismaORTAssets;resolve();}catch(e){reject(e);}};
+ script.onerror=()=>{runtimeReady=null;reject(Error('Arquivos locais do motor ausentes. Extraia o projeto completo.'));};document.head.append(script);
+});}
+ort.env.wasm.numThreads = self.crossOriginIsolated ? Math.min(8, navigator.hardwareConcurrency || 4) : 1;
+
+const modelBytes = {};      // bytes baixados ou escolhidos
+const sessions = {};        // sessões prontas
+let forceWasm = !navigator.gpu;
+
+async function cachedFetch(url, onProgress) {
+  let cache = null;
+  try { cache = await caches.open("ampliador-modelos-v1"); const hit = await cache.match(url); if (hit) return new Uint8Array(await hit.arrayBuffer()); } catch { cache = null; }
+  const res = await fetch(url, {signal:abort?.signal});
+  if (!res.ok) throw new Error("HTTP " + res.status);
+  const total = +res.headers.get("content-length") || 0;
+  const reader = res.body.getReader(); const parts = []; let got = 0;
+  for (;;) { const { done, value } = await reader.read(); if (done) break; parts.push(value); got += value.length; onProgress?.(got, total); }
+  const buf = new Uint8Array(got); let o = 0; for (const p of parts) { buf.set(p, o); o += p.length; }
+  try { await cache?.put(url, new Response(buf)); } catch {}
+  return buf;
+}
+async function getModelBytes(key) {
+  if (modelBytes[key]) return modelBytes[key];
+  if (!$('allowDownloads').checked) {
+    try { const cache=await caches.open('ampliador-modelos-v1');for(const url of MODELS[key].urls){const hit=await cache.match(url);if(hit)return modelBytes[key]=await prepareBytes(key,new Uint8Array(await hit.arrayBuffer()));}} catch(e) { /* Sem armazenamento: aceita arquivos locais. */ }
+    throw Error('Carregue o modelo .onnx ou ative o download dos modelos.');
+  }
+  const m = MODELS[key]; let lastErr;
+  for (const url of m.urls) {
+    try {
+      const raw = await cachedFetch(url, (g, t) =>
+        setStatus(`Baixando ${m.name}… ${t ? Math.round(g / t * 100) + "%" : (g / 1e6).toFixed(0) + " MB"}`));
+      return modelBytes[key] = await prepareBytes(key, raw);
+    } catch (e) { if(e.name==='AbortError')throw e;lastErr = e; console.warn("Falha ao baixar", url, e); }
+  }
+  throw new Error(`não consegui baixar ${m.name} (${lastErr?.message || "sem internet?"}). Use “Carregar arquivos .onnx do computador”.`);
+}
+// O NAFNet vem com pesos int8 em blocos, que o motor do navegador calcula errado: converte para float16
+async function prepareBytes(key, raw) {
+  if (key !== "deblur") return raw;
+  setStatus("Preparando o modelo de desembaçar…"); await sleep0();
+  const r = dequantizeModel(raw);
+  console.info("NAFNet: convertidos", r.count, "pesos;", (r.bytes.length / 1e6).toFixed(0), "MB");
+  return r.bytes;
+}
+function setEngine(ep, initial) {
+  const el = $("engine");
+  el.textContent = ep === "webgpu" ? (initial ? "Placa de vídeo disponível" : "Usando a placa de vídeo") : "Usando o processador (mais lento)";
+  el.classList.toggle("cpu", ep !== "webgpu");
+  el.title = ep === "webgpu" ? "WebGPU" : "WebAssembly: o navegador não liberou a placa de vídeo";
+}
+const EP_NAMES = { webgpu: "GPU (WebGPU)", wasm: "CPU (WebAssembly)" };
+async function getSession(key, cpuOnly = false, opt = "all") {
+  const want = (cpuOnly || forceWasm) ? "wasm" : "webgpu";
+  const sk = key + ":" + want + (opt === "all" ? "" : ":" + opt);
+  if (sessions[sk]) return sessions[sk];
+  if(abort?.signal.aborted)throw new DOMException('Cancelado','AbortError');
+  await prepareRuntime();
+  if(abort?.signal.aborted)throw new DOMException('Cancelado','AbortError');
+  const bytes = await getModelBytes(key);
+  const eps = want === "webgpu" ? ["webgpu", "wasm"] : ["wasm"];
+  let lastErr;
+  for (const ep of eps) {
+    try {
+      if (!cpuOnly) setStatus(`Preparando ${MODELS[key].name}…`);
+      const s = await ort.InferenceSession.create(bytes, { executionProviders: [ep], graphOptimizationLevel: opt });
+      s.ep = ep;
+      if (!cpuOnly) setEngine(ep);
+      sessions[sk] = s;
+      return s;
+    } catch (e) { lastErr = e; console.warn("Falhou com", ep, e); }
+  }
+  throw lastErr;
+}
+async function dropGpuSessions() {
+  for (const k of Object.keys(sessions)) if (k.includes(":webgpu")) { try { await sessions[k].release(); } catch {} delete sessions[k]; }
+}
+$("pickModel").onclick = () => $("modelFile").click();
+$("modelFile").onchange = async e => {
+  const names = [];
+  for (const f of e.target.files) {
+    if(abort){setStatus('Aguarde ou cancele o processamento antes de trocar modelos.','err');return;}
+    const explicit=$('modelKind').value;const key=explicit!=='auto'?explicit:Object.keys(MODELS).find(k=>MODELS[k].match.test(f.name));
+    if(!key){setStatus('Nome genérico. Escolha o tipo de modelo antes de carregar o ONNX.','err');continue;}
+    modelBytes[key] = await prepareBytes(key, new Uint8Array(await f.arrayBuffer()));
+    for (const k of Object.keys(sessions)) if (k.startsWith(key + ":")) delete sessions[k];
+    names.push(`${f.name} → ${MODELS[key].name}`);
+  }
+  setStatus("Usando do computador: " + names.join(", "));
+  if (srcImage) analyze();
+};
+
+/* ====== converte pesos int8 "em blocos" (DequantizeLinear com block_size) para float16 ======
+   O motor do navegador calcula errado esse tipo de quantização; com os pesos já convertidos
+   o modelo usa só operações comuns. Feito uma vez, no próprio navegador. */
+function pbVarint(b, i) { let r = 0, m = 1, c; do { c = b[i++]; r += (c & 0x7f) * m; m *= 128; } while (c & 0x80); return [r, i]; }
+function pbFields(b) {
+  const out = []; let i = 0;
+  while (i < b.length) {
+    const s = i; let k; [k, i] = pbVarint(b, i); const f = Math.floor(k / 8), t = k & 7; let v;
+    if (t === 0) { const st = i; [v, i] = pbVarint(b, i); v = { num: v, raw: b.subarray(st, i) }; }
+    else if (t === 1) { v = b.subarray(i, i + 8); i += 8; }
+    else if (t === 2) { let l; [l, i] = pbVarint(b, i); v = b.subarray(i, i + l); i += l; }
+    else if (t === 5) { v = b.subarray(i, i + 4); i += 4; }
+    else throw new Error("protobuf inválido");
+    out.push({ f, t, v, whole: b.subarray(s, i) });
+  }
+  return out;
+}
+function pbVarintBytes(n) { const a = []; do { let c = n % 128; n = Math.floor(n / 128); if (n) c |= 0x80; a.push(c); } while (n); return a; }
+function pbLen(f, bytes) { return [Uint8Array.from([...pbVarintBytes(f * 8 + 2), ...pbVarintBytes(bytes.length)]), bytes]; }
+function pbInt(f, n) { return [Uint8Array.from([...pbVarintBytes(f * 8), ...pbVarintBytes(n)])]; }
+function pbConcat(parts) { let n = 0; for (const p of parts) n += p.length; const o = new Uint8Array(n); let i = 0; for (const p of parts) { o.set(p, i); i += p.length; } return o; }
+const td = new TextDecoder(), te = new TextEncoder();
+const _fv = new Float32Array(1), _iv = new Uint32Array(_fv.buffer);
+function f32ToF16(v) {
+  _fv[0] = v; const x = _iv[0];
+  const s = (x >>> 16) & 0x8000; let e = ((x >>> 23) & 0xff) - 127 + 15, m = x & 0x7fffff;
+  if (e <= 0) { if (e < -10) return s; m |= 0x800000; const sh = 14 - e; let r = m >> sh; if ((m >> (sh - 1)) & 1) r++; return s | r; }
+  if (e >= 31) return s | 0x7c00;
+  let r = s | (e << 10) | (m >> 13); if (m & 0x1000) r++; return r;
+}
+function readTensor(b) {
+  const t = { dims: [], dt: 0, name: "", raw: null, i32: null, f32: null };
+  for (const x of pbFields(b)) {
+    if (x.f === 1) { if (x.t === 2) { let i = 0; while (i < x.v.length) { let d; [d, i] = pbVarint(x.v, i); t.dims.push(d); } } else t.dims.push(x.v.num); }
+    else if (x.f === 2) t.dt = x.v.num;
+    else if (x.f === 8) t.name = td.decode(x.v);
+    else if (x.f === 9) t.raw = x.v;
+    else if (x.f === 4) { t.f32 = new Float32Array(x.v.slice().buffer); }
+    else if (x.f === 5) { const a = []; let i = 0; while (i < x.v.length) { let d; [d, i] = pbVarint(x.v, i); a.push(d); } t.i32 = a; }
+  }
+  return t;
+}
+function tensorValues(t) {
+  const n = t.dims.reduce((a, b) => a * b, 1);
+  if (t.dt === 1) return t.raw ? new Float32Array(t.raw.slice().buffer) : t.f32;
+  if (t.dt === 3) { const r = t.raw ? new Int8Array(t.raw.slice().buffer) : Int8Array.from(t.i32 || [], v => v > 127 ? v - 256 : v); return r.length ? r : new Int8Array(n); }
+  if (t.dt === 2) { const r = t.raw ? new Uint8Array(t.raw.slice()) : Uint8Array.from(t.i32 || []); return r.length ? r : new Uint8Array(n); }
+  throw new Error("tipo de peso não suportado: " + t.dt);
+}
+function readNode(b) {
+  const n = { inp: [], out: [], op: "", name: "", axis: 1, block: 0 };
+  for (const x of pbFields(b)) {
+    if (x.f === 1) n.inp.push(td.decode(x.v));
+    else if (x.f === 2) n.out.push(td.decode(x.v));
+    else if (x.f === 3) n.name = td.decode(x.v);
+    else if (x.f === 4) n.op = td.decode(x.v);
+    else if (x.f === 5) {
+      let an = "", ai = 0;
+      for (const a of pbFields(x.v)) { if (a.f === 1) an = td.decode(a.v); if (a.f === 3) ai = a.v.num > 2 ** 52 ? a.v.num - 2 ** 64 : a.v.num; }
+      if (an === "axis") n.axis = ai; if (an === "block_size") n.block = ai;
+    }
+  }
+  return n;
+}
+function dequantizeModel(bytes) {
+  const top = pbFields(bytes), gField = top.find(x => x.f === 7);
+  const gf = pbFields(gField.v);
+  const inits = new Map();
+  for (const x of gf) if (x.f === 5) { const t = readTensor(x.v); inits.set(t.name, t); }
+  const drop = new Set(), dropNodes = new Set(), newInits = [], newNodes = [];
+  let count = 0;
+  for (const x of gf) {
+    if (x.f !== 1) continue;
+    const n = readNode(x.v);
+    if (n.op !== "DequantizeLinear" || !n.inp.every(nm => !nm || inits.has(nm))) continue;
+    const q = inits.get(n.inp[0]), sc = inits.get(n.inp[1]), zp = n.inp[2] ? inits.get(n.inp[2]) : null;
+    const qv = tensorValues(q), sv = tensorValues(sc), zv = zp ? tensorValues(zp) : null;
+    const dims = q.dims, rank = dims.length, ax = n.axis < 0 ? n.axis + rank : n.axis;
+    const N = qv.length, out = new Uint16Array(N);
+    const strides = new Array(rank); let s = 1; for (let d = rank - 1; d >= 0; d--) { strides[d] = s; s *= dims[d]; }
+    if (rank === 0 || sv.length === 1) { const z = zv ? zv[0] : 0; for (let i = 0; i < N; i++) out[i] = f32ToF16((qv[i] - z) * sv[0]); }
+    else {
+      const bs = n.block || 1, sdims = sc.dims;
+      const perAxis = sdims.length === 1 && rank > 1;   // quantização por canal (sem blocos)
+      const inner = strides[ax], A = dims[ax], SA = perAxis ? A : sdims[ax], b = perAxis ? 1 : bs;
+      let i = 0;
+      for (let o = 0; i < N; o++) for (let c = 0; c < A; c++) {
+        const base = perAxis ? c : o * SA * inner + Math.floor(c / b) * inner;
+        for (let k = 0; k < inner; k++, i++) {
+          const si = perAxis ? base : base + k;
+          out[i] = f32ToF16((qv[i] - (zv ? zv[si] : 0)) * sv[si]);
+        }
+      }
+    }
+    const h = n.out[0] + "__f16";
+    newInits.push(pbConcat([
+      ...dims.flatMap(d => pbInt(1, d)), ...pbInt(2, 10), ...pbLen(8, te.encode(h)), ...pbLen(9, new Uint8Array(out.buffer))
+    ]));
+    const attr = pbConcat([...pbLen(1, te.encode("to")), ...pbInt(3, 1), ...pbInt(20, 2)]);
+    newNodes.push(pbConcat([...pbLen(1, te.encode(h)), ...pbLen(2, te.encode(n.out[0])), ...pbLen(3, te.encode(n.name + "_cast")), ...pbLen(4, te.encode("Cast")), ...pbLen(5, attr)]));
+    dropNodes.add(x); n.inp.forEach(nm => nm && drop.add(nm)); count++;
+  }
+  const parts = [];
+  for (const x of gf) {
+    if (x.f === 1 && dropNodes.has(x)) continue;
+    if (x.f === 5) { const t = readTensor(x.v); if (drop.has(t.name)) continue; }
+    if (x.f === 1 && parts.nodesAdded !== true) { for (const nn of newNodes) parts.push(...pbLen(1, nn)); parts.nodesAdded = true; }
+    parts.push(x.whole);
+  }
+  for (const ti of newInits) parts.push(...pbLen(5, ti));
+  const graph = pbConcat(parts);
+  const tparts = [];
+  for (const x of top) tparts.push(...(x.f === 7 ? pbLen(7, graph) : [x.whole]));
+  return { bytes: pbConcat(tparts), count };
+}
+
+/* ================= interface ================= */
+let srcImage = null, srcName = "imagem", analysis = null, faces = null;
+let finalCanvas = null, finalDPI = 0, finalBlob = null, finalFmt = null, abort = null;
+
+function setStatus(t, cls = "") { const s = $("status"); s.textContent = t; s.className = "status " + cls; }
+function setProg(p) { $("prog").style.width = Math.round(Math.min(1, p) * 100) + "%"; }
+function setPhase(id, text, cls = "") { const el = $("st" + id); el.textContent = text; el.className = "ph-state " + cls; }
+
+for (const k of ["Clean", "Blur", "Face", "Sharp", "Clar", "Color"]) {
+  $("k" + k).addEventListener("input", () => $("o" + k).textContent = $("k" + k).value);
+  $("on" + k).addEventListener("change", syncPhases);
+}
+function syncPhases() {
+  for (const k of ["Clean", "Blur", "Face", "Sharp", "Clar", "Color"]) $("ph" + k).classList.toggle("off", !$("on" + k).checked);
+}
+function setSlider(k, v) { $("k" + k).value = v; $("o" + k).textContent = v; }
+
+function parseSize() {
+  const n = ($("size").value.match(/\d[\d.]*/g) || []).map(s => parseInt(s.replace(/\./g, ""), 10));
+  return (n.length >= 2 && n[0] > 0 && n[1] > 0) ? { W: n[0], H: n[1] } : null;
+}
+document.querySelectorAll("input[name=mode]").forEach(r => r.addEventListener("change", () => {
+  $("exactBox").hidden = val("mode") !== "exact";
+  $("mulBox").hidden = val("mode") !== "mul";
+  refreshPlan(); updateBefore();
+}));
+document.querySelectorAll("input[name=scale]").forEach(r => r.addEventListener("change", () => { refreshPlan(); updateBefore(); }));
+document.querySelectorAll("input[name=model]").forEach(r => r.addEventListener("change", refreshPlan));
+$("size").addEventListener("input", () => { refreshPlan(); updateBefore(); });
+$("dpi").addEventListener("input", refreshPlan);
+$("twoPass").addEventListener("change", refreshPlan);
+
+/* Encaixe sem cortar: proporção quase igual → tamanho exato; diferente → imagem inteira + fundo desfocado */
+function makePlan() {
+  if (!srcImage) return null;
+  const sw = srcImage.naturalWidth, sh = srcImage.naturalHeight;
+  let W, H, sx, sy, ox = 0, oy = 0, dw, dh, kind, diff = 0;
+  if (val("mode") === "mul") {
+    const s = +val("scale"); W = dw = sw * s; H = dh = sh * s; sx = sy = s; kind = "mul";
+  } else {
+    const size = parseSize(); if (!size) return null;
+    ({ W, H } = size);
+    diff = Math.abs((sw / sh) / (W / H) - 1);
+    if (diff <= RATIO_TOL) { sx = W / sw; sy = H / sh; dw = W; dh = H; kind = "exact"; }
+    else {
+      const k = Math.min(W / sw, H / sh);
+      sx = sy = k; dw = Math.round(sw * k); dh = Math.round(sh * k);
+      ox = Math.round((W - dw) / 2); oy = Math.round((H - dh) / 2); kind = "fill";
+    }
+  }
+  const needed = Math.max(sx, sy);
+  return { W, H, sx, sy, ox, oy, dw, dh, needed, kind, diff, ai: needed > 1 };
+}
+function chosenModel() {
+  const m = val("model");
+  return m === "auto" ? (analysis?.anime ? "anime" : "photo") : m;
+}
+function refreshPlan() {
+  const dpi = +$("dpi").value || 300, s = parseSize();
+  const br = v => v.toFixed(1).replace(".", ",");
+  $("cm").textContent = s ? `${br(s.W / dpi * 2.54)} × ${br(s.H / dpi * 2.54)} cm` : "";
+  const p = makePlan(), el = $("plan");
+  el.className = "hint";
+  const pp = makePlan();
+  $("aUp").textContent = $('upEngine').value==='classic'?'Interpolação de alta qualidade, sem reconstrução por IA.':!srcImage ? "" : `Vai usar: ${MODELS[chosenModel()].name}` + (!pp ? "" :
+    !pp.ai ? " · só redimensiona" :
+    pp.needed <= 4 ? ` · IA 4× e reduz para ${pp.needed.toFixed(2).replace(".", ",")}×` :
+    $("twoPass").checked ? ` · IA 4× + IA 4× e reduz para ${pp.needed.toFixed(2).replace(".", ",")}×` : ` · IA 4× + ampliação comum até ${pp.needed.toFixed(2).replace(".", ",")}×`);
+  if (!srcImage) { el.textContent = ""; return; }
+  if (!p) { el.textContent = "Digite largura e altura, ex.: 4843 × 6898."; el.className = "hint warn"; return; }
+  let t = `Saída: ${p.W}×${p.H}px (${br(p.W * p.H / 1e6)} MP). `;
+  const mp = p.W * p.H / 1e6;
+  if (mp > MAX_MP) { el.textContent = t + `Grande demais para o navegador (limite ≈${MAX_MP} MP). Escolha um multiplicador menor ou um tamanho em pixels.`; el.className = "hint warn"; return; }
+  if (mp > 120) { t += "Imagem muito grande: pode demorar muito e travar em computadores com pouca memória. "; el.className = "hint warn"; }
+  const srcMP = srcImage.naturalWidth * srcImage.naturalHeight / 1e6;
+  if (srcMP > 12) { t += `A original já tem ${br(srcMP)} MP; desembaçar e rostos vão demorar bastante. `; el.className = "hint warn"; }
+  if (p.kind === "exact") t += `Encaixa certinho (diferença de proporção ${(p.diff * 100).toFixed(1)}%, invisível). `;
+  if (p.kind === "fill") { t += `Proporção diferente: imagem inteira em ${p.dw}×${p.dh}px e fundo desfocado nas sobras. `; el.className = "hint warn"; }
+  if (!p.ai) t += "A imagem já é grande o bastante: a ampliação só redimensiona.";
+  else if (p.needed > 4 && !$("twoPass").checked) t += `Precisa de ${p.needed.toFixed(1)}×: a IA faz 4× e o resto é ampliação comum.`;
+  el.textContent = t;
+}
+
+/* ================= arquivo ================= */
+const drop = $("drop");
+drop.onclick = () => $("file").click();
+drop.onkeydown = e => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); $("file").click(); } };
+$("file").onchange = e => e.target.files[0] && loadFile(e.target.files[0]);
+["dragenter","dragover"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove("over"); }));
+drop.addEventListener("drop", e => { e.stopPropagation(); stageEl?.classList.remove("over"); e.dataTransfer.files[0] && loadFile(e.dataTransfer.files[0]); });
+$("swap").onclick = () => $("file").click();
+const stageEl = $("stage");
+["dragenter","dragover"].forEach(ev => stageEl.addEventListener(ev, e => { e.preventDefault(); stageEl.classList.add("over"); }));
+["dragleave","drop"].forEach(ev => stageEl.addEventListener(ev, e => { e.preventDefault(); if (ev === "drop" || e.target === stageEl) stageEl.classList.remove("over"); }));
+stageEl.addEventListener("drop", e => { stageEl.classList.remove("over"); const f = e.dataTransfer.files[0]; if (f && f.type.startsWith("image/")) loadFile(f); });
+window.addEventListener("paste", e => {
+  if (e.target === $("size")) return;
+  const f = [...(e.clipboardData?.files || [])].find(f => f.type.startsWith("image/"));
+  if (f) { e.preventDefault(); loadFile(f); }
+});
+function loadFile(file) {
+  if(abort){setStatus('Cancele o processamento antes de trocar a imagem.','err');return;}
+  srcName = file.name.replace(/\.[^.]+$/, "");
+  parent.postMessage({type:'prisma-upscale:invalid'},'*');const img = new Image();
+  img.onload = () => {
+    URL.revokeObjectURL(img.src);srcImage = img; finalCanvas = null; finalBlob = null; analysis = null; faces = null;
+    $("compare").hidden = false; $("empty").hidden = true; $("swap").hidden = false;
+    $("dl").disabled = true; setProg(0);
+    $("meta").textContent = `Original: ${img.naturalWidth}×${img.naturalHeight}px`;
+    for (const k of ["Clean", "Blur", "Up", "Face", "Sharp", "Clar", "Color"]) setPhase(k, "");
+    hideAfter(); refreshPlan(); updateBefore();
+    analyze();
+  };
+  img.onerror=()=>{URL.revokeObjectURL(img.src);setStatus('Não foi possível abrir esta imagem.','err');};img.src = URL.createObjectURL(file);
+}
+
+/* ================= canvas utilitários ================= */
+function newCanvas(w, h) {
+  const c = document.createElement("canvas"); c.width = Math.max(1, w); c.height = Math.max(1, h);
+  const g = c.getContext("2d", { willReadFrequently: true });
+  g.imageSmoothingEnabled = true; g.imageSmoothingQuality = "high";
+  return [c, g];
+}
+function drawHQ(g, src, sx, sy, sw, sh, dx, dy, dw, dh) {
+  let cur = src, cx = sx, cy = sy, cw = sw, ch = sh;
+  while (cw / 2 > dw && ch / 2 > dh) {
+    const [t, tg] = newCanvas(Math.round(cw / 2), Math.round(ch / 2));
+    tg.drawImage(cur, cx, cy, cw, ch, 0, 0, t.width, t.height);
+    cur = t; cx = 0; cy = 0; cw = t.width; ch = t.height;
+  }
+  g.drawImage(cur, cx, cy, cw, ch, dx, dy, dw, dh);
+}
+function paintBlurBackground(g, W, H) {
+  const sw = srcImage.naturalWidth, sh = srcImage.naturalHeight;
+  const k = Math.max(W / sw, H / sh), small = 64 / Math.max(W, H);
+  const [c, cg] = newCanvas(Math.round(W * small), Math.round(H * small));
+  cg.filter = "blur(3px)";
+  cg.drawImage(srcImage, (c.width - sw * k * small) / 2, (c.height - sh * k * small) / 2, sw * k * small, sh * k * small);
+  g.drawImage(c, 0, 0, W, H);
+  g.fillStyle = "rgba(0,0,0,.12)"; g.fillRect(0, 0, W, H);
+}
+function canvasToURL(c) { return new Promise(r => c.toBlob(b => r(URL.createObjectURL(b)), "image/png")); }
+function setImg(el, url) { const old = el.src; el.src = url; if (old.startsWith("blob:")) URL.revokeObjectURL(old); }
+
+async function updateBefore() {
+  if (!srcImage) return;
+  const p = makePlan(); if (!p) return;
+  const cmp = $("compare");
+  cmp.style.aspectRatio = `${p.W} / ${p.H}`;
+  cmp.style.width = `min(100%, calc((var(--stageH) - 8.5rem) * ${p.W / p.H}))`;
+  const k = 1 / Math.max(1, p.needed);
+  const [c, g] = newCanvas(Math.round(p.W * k), Math.round(p.H * k));
+  if (p.kind === "fill") paintBlurBackground(g, c.width, c.height);
+  g.imageSmoothingEnabled = false;
+  g.drawImage(srcImage, p.ox * k, p.oy * k, p.dw * k, p.dh * k);
+  setImg($("imBefore"), await canvasToURL(c));
+}
+function hideAfter() { $("imAfter").hidden = true; $("handle").hidden = true; $("tagR").hidden = true; }
+async function showAfter(full) {
+  const k = Math.min(1, 2400 / Math.max(full.width, full.height));
+  const [c, g] = newCanvas(Math.round(full.width * k), Math.round(full.height * k));
+  drawHQ(g, full, 0, 0, full.width, full.height, 0, 0, c.width, c.height);
+  setImg($("imAfter"), await canvasToURL(c));
+  $("imAfter").hidden = false; $("handle").hidden = false; $("tagR").hidden = false;
+}
+
+/* ================= análise automática ================= */
+function chip(label, value) { return `<span class="chip">${label} <b>${value}</b></span>`; }
+function renderChips() {
+  if (!analysis) { $("chips").innerHTML = chip("analisando", "…"); return; }
+  const a = analysis;
+  $("chips").innerHTML =
+    chip("", a.anime ? "Desenho ou render" : "Foto") +
+    chip("Ruído", a.noiseLabel) +
+    chip("Foco", a.blurLabel) +
+    chip("Rostos", faces === null ? "procurando…" : faces === false ? "?" : faces.length) +
+    chip("Contraste", a.flat ? "baixo" : "bom") +
+    chip("Cores", a.dull ? "apagadas" : "boas");
+}
+
+async function analyze() {
+  renderChips();
+  const img = srcImage, sw = img.naturalWidth, sh = img.naturalHeight;
+
+  // 1) versão pequena: tipo de imagem, contraste e saturação
+  const k = Math.min(1, 256 / Math.max(sw, sh));
+  const [c, g] = newCanvas(Math.round(sw * k), Math.round(sh * k));
+  g.drawImage(img, 0, 0, c.width, c.height);
+  const d = g.getImageData(0, 0, c.width, c.height).data, w = c.width, h = c.height;
+  let flat = 0, cnt = 0, satSum = 0;
+  const hist = new Uint32Array(256);
+  for (let y = 1; y < h - 1; y++) for (let x = 1; x < w - 1; x++) {
+    const i = (y * w + x) * 4;
+    let mx = 0;
+    for (const o of [-4, 4, -w * 4, w * 4]) {
+      const dd = Math.abs(d[i] - d[i + o]) + Math.abs(d[i + 1] - d[i + 1 + o]) + Math.abs(d[i + 2] - d[i + 2 + o]);
+      if (dd > mx) mx = dd;
+    }
+    if (mx < 9) flat++;
+    const r = d[i], gg = d[i + 1], b = d[i + 2], M = Math.max(r, gg, b), m = Math.min(r, gg, b);
+    satSum += M ? (M - m) / M : 0;
+    hist[Math.round(0.299 * r + 0.587 * gg + 0.114 * b)]++;
+    cnt++;
+  }
+  const flatFrac = flat / cnt, sat = satSum / cnt;
+  const pct = q => { let acc = 0; for (let v = 0; v < 256; v++) { acc += hist[v]; if (acc >= q * cnt) return v; } return 255; };
+  const lo = pct(0.005), hi = pct(0.995);
+
+  // 2) recorte em tamanho real: ruído e blocos de JPEG
+  const cw = Math.min(sw, 512), ch = Math.min(sh, 512);
+  const [c2, g2] = newCanvas(cw, ch);
+  g2.drawImage(img, (sw - cw) >> 1, (sh - ch) >> 1, cw, ch, 0, 0, cw, ch);
+  const d2 = g2.getImageData(0, 0, cw, ch).data;
+  const Y = new Float32Array(cw * ch);
+  for (let i = 0; i < cw * ch; i++) Y[i] = 0.299 * d2[i * 4] + 0.587 * d2[i * 4 + 1] + 0.114 * d2[i * 4 + 2];
+  let lap = 0, nL = 0, bEdge = 0, nE = 0, bIn = 0, nI = 0;
+  for (let y = 1; y < ch - 1; y++) for (let x = 1; x < cw - 1; x++) {
+    const i = y * cw + x;
+    const L = Y[i - cw - 1] - 2 * Y[i - cw] + Y[i - cw + 1] - 2 * Y[i - 1] + 4 * Y[i] - 2 * Y[i + 1] + Y[i + cw - 1] - 2 * Y[i + cw] + Y[i + cw + 1];
+    lap += Math.abs(L); nL++;
+    const dx = Math.abs(Y[i + 1] - Y[i]);
+    if ((x & 7) === 7) { bEdge += dx; nE++; } else { bIn += dx; nI++; }
+  }
+  const sigma = Math.sqrt(Math.PI / 2) * lap / (6 * nL);
+  const blocky = nE && bIn ? (bEdge / nE) / (bIn / nI) : 1;
+  const noiseScore = Math.min(100, Math.max(0, (sigma - 1.5) * 12 + (blocky - 1) * 120));
+
+  // 3) foco: quão "íngremes" são as bordas mais fortes, em relação ao contraste da imagem
+  const kb = Math.min(1, 768 / Math.max(sw, sh));
+  const [c3, g3] = newCanvas(Math.round(sw * kb), Math.round(sh * kb));
+  g3.drawImage(img, 0, 0, c3.width, c3.height);
+  const d3 = g3.getImageData(0, 0, c3.width, c3.height).data, w3 = c3.width, h3 = c3.height;
+  const Y3 = new Float32Array(w3 * h3);
+  for (let i = 0; i < w3 * h3; i++) Y3[i] = 0.299 * d3[i * 4] + 0.587 * d3[i * 4 + 1] + 0.114 * d3[i * 4 + 2];
+  const gh = new Uint32Array(256), yh = new Uint32Array(256);
+  for (let y = 0; y < h3 - 1; y++) for (let x = 0; x < w3 - 1; x++) {
+    const i = y * w3 + x;
+    gh[Math.min(255, Math.round(Math.max(Math.abs(Y3[i + 1] - Y3[i]), Math.abs(Y3[i + w3] - Y3[i]))))]++;
+    yh[Math.round(Y3[i])]++;
+  }
+  const hp = (h, q) => { const n = h.reduce((a, b) => a + b, 0); let acc = 0; for (let v = 0; v < 256; v++) { acc += h[v]; if (acc >= q * n) return v; } return 255; };
+  const steep = hp(gh, 0.995) / Math.max(16, hp(yh, 0.99) - hp(yh, 0.01));
+
+  analysis = {
+    steep,
+    blurLabel: steep < 0.12 ? "muito borrada" : steep < 0.3 ? "um pouco borrada" : "nítida",
+    anime: flatFrac > 0.45 && sat > 0.18,
+    flatFrac, sat, lo, hi, sigma, blocky,
+    noiseLabel: noiseScore < 20 ? "baixo" : noiseScore < 50 ? "médio" : "alto",
+    flat: (hi - lo) < 200,
+    dull: sat < 0.18,
+  };
+
+  // sugestões
+  const blurry = steep < 0.3;
+  $("onBlur").checked = blurry;
+  setSlider("Blur", steep < 0.12 ? 80 : 55);
+  $("aBlur").textContent = blurry ? `Sugerido: imagem ${analysis.blurLabel}` : "A imagem já está nítida";
+  // com desembaçar ligado, a limpeza fica mais leve (as duas puxam em sentidos opostos)
+  const cleanV = Math.round(Math.min(80, noiseScore * 0.9) * (blurry ? 0.5 : 1));
+  $("onClean").checked = cleanV >= 15; setSlider("Clean", Math.max(15, cleanV));
+  $("aClean").textContent = `Sugerido: ruído/compressão ${analysis.noiseLabel}`;
+  $("onColor").checked = analysis.flat || analysis.dull;
+  setSlider("Color", analysis.flat || analysis.dull ? 50 : 30);
+  $("aColor").textContent = analysis.flat || analysis.dull ? "Sugerido: imagem apagada" : "Cores já estão boas";
+  setSlider("Sharp", analysis.anime ? 15 : 30);
+  analysis.gains = whiteBalanceGains(d, w * h);
+  $("onClar").checked = !analysis.anime; setSlider("Clar", analysis.anime ? 15 : 30);
+  $("aClar").textContent = analysis.anime ? "Desligada: em desenhos/renders muda o sombreado original" : "Sugerido para fotos";
+  syncPhases(); refreshPlan(); renderChips();
+  setStatus("Análise pronta. Procurando rostos…");
+  $("go").disabled = false;
+
+  // 3) rostos (modelo pequeno, roda na CPU)
+  faces = null; renderChips();
+  if (analysis.anime || (!$('allowDownloads').checked&&!modelBytes.det)) {
+    faces = []; $("onFace").checked = false;
+    $("aFace").textContent = "Restauração opcional: carregue YuNet e GFPGAN ou permita os downloads para detectar rostos reais.";
+  } else {
+    try {
+      const detected=await detectFaces(img);if(srcImage!==img)return;faces=detected;
+      $("onFace").checked = faces.length > 0;
+      $("aFace").textContent = faces.length ? `${faces.length} rosto(s) encontrado(s)` : "Nenhum rosto encontrado";
+    } catch (e) {
+      console.warn(e); faces = false;
+      $("aFace").textContent = "Não consegui procurar rostos: " + e.message;
+    }
+  }
+  syncPhases(); renderChips();
+  if (srcImage === img) setStatus("Pronto. Confira as fases e clique em Melhorar imagem.");
+}
+
+/* ================= detecção de rostos (YuNet) ================= */
+async function detectFaces(img) {
+  const sess = await getSession("det", true);
+  const sw = img.naturalWidth, sh = img.naturalHeight, N = 640;
+  const k = Math.min(N / sw, N / sh);
+  const [c, g] = newCanvas(N, N);
+  g.fillStyle = "#000"; g.fillRect(0, 0, N, N);
+  g.drawImage(img, 0, 0, sw * k, sh * k);
+  const d = g.getImageData(0, 0, N, N).data, n = N * N;
+  const data = new Float32Array(3 * n);
+  for (let i = 0, j = 0; i < n; i++, j += 4) { data[i] = d[j + 2]; data[i + n] = d[j + 1]; data[i + 2 * n] = d[j]; } // BGR, 0–255
+  const out = await sess.run({ [sess.inputNames[0]]: new ort.Tensor("float32", data, [1, 3, N, N]) });
+  return decodeYuNet(out, N, 0.55).map(f => ({
+    score: f.score,
+    box: f.box.map(v => v / k),
+    pts: f.pts.map(([x, y]) => [x / k, y / k]),
+  }));
+}
+function decodeYuNet(out, N, thr) {
+  const found = [];
+  for (const s of [8, 16, 32]) {
+    const cls = out["cls_" + s].data, obj = out["obj_" + s].data, bb = out["bbox_" + s].data, kp = out["kps_" + s].data;
+    const cols = N / s, rows = N / s;
+    for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+      const i = r * cols + c;
+      const score = Math.sqrt(Math.min(1, Math.max(0, cls[i])) * Math.min(1, Math.max(0, obj[i])));
+      if (score < thr) continue;
+      const cx = (c + bb[i * 4]) * s, cy = (r + bb[i * 4 + 1]) * s;
+      const w = Math.exp(bb[i * 4 + 2]) * s, h = Math.exp(bb[i * 4 + 3]) * s;
+      const pts = [];
+      for (let p = 0; p < 5; p++) pts.push([(kp[i * 10 + 2 * p] + c) * s, (kp[i * 10 + 2 * p + 1] + r) * s]);
+      found.push({ score, box: [cx - w / 2, cy - h / 2, w, h], pts });
+    }
+  }
+  found.sort((a, b) => b.score - a.score);
+  const keep = [];
+  const iou = (a, b) => {
+    const x1 = Math.max(a[0], b[0]), y1 = Math.max(a[1], b[1]);
+    const x2 = Math.min(a[0] + a[2], b[0] + b[2]), y2 = Math.min(a[1] + a[3], b[1] + b[3]);
+    const inter = Math.max(0, x2 - x1) * Math.max(0, y2 - y1);
+    return inter / (a[2] * a[3] + b[2] * b[3] - inter);
+  };
+  for (const f of found) if (keep.every(k => iou(k.box, f.box) < 0.3)) keep.push(f);
+  return keep;
+}
+
+/* ================= fases 1–3: limpeza, desembaçar e ampliação ================= */
+// Cópia com borda extra (repete os pixels da beirada) para todo pedaço ter o mesmo tamanho
+function padded(work, tile, ov) {
+  const sw = work.width, sh = work.height;
+  const PW = Math.ceil(sw / tile) * tile + 2 * ov, PH = Math.ceil(sh / tile) * tile + 2 * ov;
+  const [c, g] = newCanvas(PW, PH);
+  g.imageSmoothingEnabled = false;
+  g.drawImage(work, ov, ov);
+  g.drawImage(work, 0, 0, 1, sh, 0, ov, ov, sh);
+  g.drawImage(work, sw - 1, 0, 1, sh, ov + sw, ov, PW - ov - sw, sh);
+  g.drawImage(c, 0, ov, PW, 1, 0, 0, PW, ov);
+  g.drawImage(c, 0, ov + sh - 1, PW, 1, 0, ov + sh, PW, PH - ov - sh);
+  return g;
+}
+// Roda um modelo imagem→imagem (RGB 0–1) num pedaço size×size
+async function runImg(sess, rgba, size) {
+  const n = size * size, data = new Float32Array(3 * n);
+  for (let i = 0, j = 0; i < n; i++, j += 4) { data[i] = rgba[j] / 255; data[i + n] = rgba[j + 1] / 255; data[i + 2 * n] = rgba[j + 2] / 255; }
+  const input = new ort.Tensor("float32", data, [1, 3, size, size]);
+  const res = await sess.run({ [sess.inputNames[0]]: input });
+  const out = res[sess.outputNames[0]];
+  const oh = out.dims[2], ow = out.dims[3], od = out.data, m = oh * ow;
+  const [c, g] = newCanvas(ow, oh);
+  const id = g.createImageData(ow, oh), px = id.data;
+  for (let i = 0, j = 0; i < m; i++, j += 4) { px[j] = od[i] * 255; px[j + 1] = od[i + m] * 255; px[j + 2] = od[i + 2 * m] * 255; px[j + 3] = 255; }
+  g.putImageData(id, 0, 0);
+  input.dispose?.(); out.dispose?.();
+  return c;
+}
+
+// Fase 1 — limpeza: tira o ruído de cor (manchas coloridas de compressão) e suaviza o brilho de leve;
+// a IA depois reconstrói as bordas
+function phaseClean(work, cleanK) {
+  const w = work.width, h = work.height;
+  const [c, g] = newCanvas(w, h);
+  g.drawImage(work, 0, 0);
+  const img = g.getImageData(0, 0, w, h);
+  chromaDenoise(img.data, w, h, 0.8 + cleanK / 100 * 1.5);
+  g.putImageData(img, 0, 0);
+  const [c2, g2] = newCanvas(w, h);
+  g2.drawImage(c, 0, 0);
+  g2.filter = `blur(${(cleanK / 100 * 1.1).toFixed(2)}px)`;
+  g2.drawImage(c, 0, 0);
+  return c2;
+}
+
+// Fase 2 — desembaçar com IA (NAFNet), em pedaços de 384 px na resolução original.
+// O modelo fica instável com cores muito saturadas (ex.: fundo verde), então ele trabalha só no brilho
+// (imagem em tons de cinza) e a diferença de brilho é aplicada na foto colorida.
+const DB_S = 384, DB_OV = 32, DB_TILE = DB_S - 2 * DB_OV;
+function grayTile(rgba) {
+  const n = rgba.length / 4, g = new Uint8ClampedArray(rgba.length), Y = new Float32Array(n);
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    const y = 0.299 * rgba[j] + 0.587 * rgba[j + 1] + 0.114 * rgba[j + 2];
+    Y[i] = y; g[j] = g[j + 1] = g[j + 2] = y; g[j + 3] = 255;
+  }
+  return [g, Y];
+}
+// soma na cor a mudança de brilho que a IA fez (limitada, para nunca "inventar" demais)
+function applyLumaDelta(dst, dstW, dx, dy, w, h, Y, out, S, ov, strength) {
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) {
+    const i = (y + ov) * S + (x + ov), o = i * 4;
+    let dl = (out[o] + out[o + 1] + out[o + 2]) / 3 - Y[i];
+    dl = (dl > 64 ? 64 : dl < -64 ? -64 : dl) * strength;
+    const j = ((dy + y) * dstW + dx + x) * 4;
+    dst[j] += dl; dst[j + 1] += dl; dst[j + 2] += dl;
+  }
+}
+async function deblurSession() {
+  for (const opt of ["all", "disabled"]) {   // 2ª tentativa sem otimizações, caso o motor do navegador erre
+    const sess = await getSession("deblur", false, opt);
+    const [g, Y] = grayTile(deblurSample);
+    setStatus("Conferindo o modelo de desembaçar…");
+    const o = (await runImg(sess, g, DB_S)).getContext("2d").getImageData(0, 0, DB_S, DB_S).data;
+    let s = 0; for (let i = 0; i < Y.length; i += 4) s += Math.abs((o[i * 4] + o[i * 4 + 1] + o[i * 4 + 2]) / 3 - Y[i]);
+    const diff = s / (Y.length / 4) / 255;
+    console.info("NAFNet", opt, sess.ep, "diferença média", diff.toFixed(4));
+    if (diff < 0.06) return sess;
+  }
+  const e = new Error("o desembaçar com IA não funciona no motor deste navegador"); e.badModel = true; throw e;
+}
+let deblurSample = null;
+async function phaseDeblurAI(work, strength, prog) {
+  const sw = work.width, sh = work.height, pad = padded(work, DB_TILE, DB_OV);
+  deblurSample = pad.getImageData(0, 0, DB_S, DB_S).data;
+  const sess = await deblurSession();
+  const [c, g] = newCanvas(sw, sh);
+  g.drawImage(work, 0, 0);
+  const res = g.getImageData(0, 0, sw, sh);
+  const cols = Math.ceil(sw / DB_TILE), rows = Math.ceil(sh / DB_TILE), total = cols * rows;
+  const t0 = performance.now(); let done = 0;
+  for (let r = 0; r < rows; r++) for (let col = 0; col < cols; col++) {
+    if (abort?.signal.aborted) throw new DOMException("Cancelado", "AbortError");
+    const x = col * DB_TILE, y = r * DB_TILE, w = Math.min(DB_TILE, sw - x), h = Math.min(DB_TILE, sh - y);
+    const [gt, Y] = grayTile(pad.getImageData(x, y, DB_S, DB_S).data);
+    const out = (await runImg(sess, gt, DB_S)).getContext("2d").getImageData(0, 0, DB_S, DB_S).data;
+    applyLumaDelta(res.data, sw, x, y, w, h, Y, out, DB_S, DB_OV, strength);
+    done++; prog(done / total);
+    const eta = (performance.now() - t0) / 1000 / done * (total - done);
+    setStatus(`Desembaçando… ${Math.round(done / total * 100)}% (${done}/${total})` + (done > 1 ? ` · falta ~${fmtTime(eta)}` : ""));
+    await sleep0();
+  }
+  g.putImageData(res, 0, 0);
+  return c;
+}
+
+// Fase 2 — desembaçar rápido, sem IA: deconvolução Richardson–Lucy no brilho
+function gaussKernel(sigma) {
+  const r = Math.max(1, Math.ceil(sigma * 3)), k = new Float32Array(2 * r + 1);
+  let s = 0; for (let i = -r; i <= r; i++) { k[i + r] = Math.exp(-(i * i) / (2 * sigma * sigma)); s += k[i + r]; }
+  for (let i = 0; i < k.length; i++) k[i] /= s;
+  return k;
+}
+function blurSep(src, w, h, k, tmp, dst) {
+  const r = (k.length - 1) >> 1;
+  for (let y = 0; y < h; y++) { const row = y * w;
+    for (let x = 0; x < w; x++) { let acc = 0;
+      for (let i = -r; i <= r; i++) { const xx = x + i < 0 ? 0 : x + i >= w ? w - 1 : x + i; acc += src[row + xx] * k[i + r]; }
+      tmp[row + x] = acc; } }
+  for (let y = 0; y < h; y++) for (let x = 0; x < w; x++) { let acc = 0;
+    for (let i = -r; i <= r; i++) { const yy = y + i < 0 ? 0 : y + i >= h ? h - 1 : y + i; acc += tmp[yy * w + x] * k[i + r]; }
+    dst[y * w + x] = acc; }
+}
+function richardsonLucy(Y, w, h, sigma, iters) {
+  const k = gaussKernel(sigma), n = w * h;
+  const est = Float32Array.from(Y), conv = new Float32Array(n), tmp = new Float32Array(n), ratio = new Float32Array(n), corr = new Float32Array(n);
+  for (let it = 0; it < iters; it++) {
+    blurSep(est, w, h, k, tmp, conv);
+    for (let i = 0; i < n; i++) { const q = (Y[i] + 1) / (conv[i] + 1); ratio[i] = q < 0.6 ? 0.6 : q > 1.6 ? 1.6 : q; }  // limitado: evita halos
+    blurSep(ratio, w, h, k, tmp, corr);
+    for (let i = 0; i < n; i++) { const v = est[i] * corr[i]; est[i] = v < 0 ? 0 : v > 255 ? 255 : v; }
+  }
+  return est;
+}
+async function phaseDeblurFast(work, strength, prog) {
+  const w = work.width, h = work.height;
+  const g0 = work.getContext("2d", { willReadFrequently: true });
+  const img = g0.getImageData(0, 0, w, h), d = img.data, n = w * h;
+  const Y = new Float32Array(n);
+  for (let i = 0; i < n; i++) Y[i] = 0.299 * d[i * 4] + 0.587 * d[i * 4 + 1] + 0.114 * d[i * 4 + 2];
+  setStatus("Desembaçando (rápido)…"); await sleep0();
+  const sigma = 0.6 + strength * 2.0;
+  const est = richardsonLucy(Y, w, h, sigma, 14);
+  prog(1);
+  const [c, g] = newCanvas(w, h);
+  for (let i = 0; i < n; i++) {           // aplica a diferença de brilho nos três canais (sem mexer na cor)
+    const dl = est[i] - Y[i];
+    d[i * 4] += dl; d[i * 4 + 1] += dl; d[i * 4 + 2] += dl;
+  }
+  g.putImageData(img, 0, 0);
+  return c;
+}
+
+// Fase 3 — ampliação 4× com Real-ESRGAN, desenhando cada pedaço direto na posição final
+async function phaseUpscale(p, og, work, prog) {
+  const sw = work.width, sh = work.height;
+  if (!p.ai) { drawHQ(og, work, 0, 0, sw, sh, p.ox, p.oy, p.dw, p.dh); return; }
+  if ($('upEngine').value==='classic') {drawHQ(og,work,0,0,sw,sh,p.ox,p.oy,p.dw,p.dh);prog(1);return;}
+  const sess = await getSession(chosenModel());
+  const pad = padded(work, TILE, OV);
+  const cols = Math.ceil(sw / TILE), rows = Math.ceil(sh / TILE), total = cols * rows;
+  const t0 = performance.now(); let done = 0;
+  for (let r = 0; r < rows; r++) for (let c = 0; c < cols; c++) {
+    if (abort?.signal.aborted) throw new DOMException("Cancelado", "AbortError");
+    const x = c * TILE, y = r * TILE, w = Math.min(TILE, sw - x), h = Math.min(TILE, sh - y);
+    const tileC = await runImg(sess, pad.getImageData(x, y, S, S).data, S);
+    const f = tileC.width / S;
+    const dx0 = p.ox + Math.round(x * p.sx), dx1 = p.ox + Math.round((x + w) * p.sx);
+    const dy0 = p.oy + Math.round(y * p.sy), dy1 = p.oy + Math.round((y + h) * p.sy);
+    const srcX = ((dx0 - p.ox) / p.sx - (x - OV)) * f, srcY = ((dy0 - p.oy) / p.sy - (y - OV)) * f;
+    drawHQ(og, tileC, srcX, srcY, ((dx1 - dx0) / p.sx) * f, ((dy1 - dy0) / p.sy) * f, dx0, dy0, dx1 - dx0, dy1 - dy0);
+    done++;
+    prog(done / total);
+    const eta = (performance.now() - t0) / 1000 / done * (total - done);
+    setStatus(`Ampliando… ${Math.round(done / total * 100)}% (${done}/${total})` + (done > 2 ? ` · falta ~${fmtTime(eta)}` : ""));
+    await sleep0();
+  }
+}
+
+/* ================= fase 3: rostos (GFPGAN) ================= */
+// Pontos de referência do GFPGAN para um rosto 512×512 (olho esq., olho dir., nariz, boca esq., boca dir.)
+const FACE_TEMPLATE = [[192.98138, 239.94708], [318.90277, 240.1936], [256.63416, 314.01935], [201.26117, 371.41043], [313.08905, 371.15118]];
+function orderPts(pts) {   // ordena por posição na imagem, independente de convenção esquerda/direita
+  const eyes = [pts[0], pts[1]].sort((a, b) => a[0] - b[0]);
+  const mouth = [pts[3], pts[4]].sort((a, b) => a[0] - b[0]);
+  return [eyes[0], eyes[1], pts[2], mouth[0], mouth[1]];
+}
+// Transformação de semelhança (escala + rotação + deslocamento) por mínimos quadrados: src → dst
+function similarity(src, dst) {
+  const n = src.length;
+  let mxs = 0, mys = 0, mxd = 0, myd = 0;
+  for (let i = 0; i < n; i++) { mxs += src[i][0]; mys += src[i][1]; mxd += dst[i][0]; myd += dst[i][1]; }
+  mxs /= n; mys /= n; mxd /= n; myd /= n;
+  let num1 = 0, num2 = 0, den = 0;
+  for (let i = 0; i < n; i++) {
+    const xs = src[i][0] - mxs, ys = src[i][1] - mys, xd = dst[i][0] - mxd, yd = dst[i][1] - myd;
+    num1 += xs * xd + ys * yd; num2 += xs * yd - ys * xd; den += xs * xs + ys * ys;
+  }
+  const a = num1 / den, b = num2 / den;
+  return { a, b, tx: mxd - (a * mxs - b * mys), ty: myd - (b * mxs + a * mys) };
+}
+let faceMask = null;
+function getFaceMask() {
+  if (faceMask) return faceMask;
+  const [c, g] = newCanvas(512, 512);
+  g.filter = "blur(18px)"; g.fillStyle = "#fff";
+  g.beginPath(); g.ellipse(256, 276, 190, 225, 0, 0, Math.PI * 2); g.fill();
+  return faceMask = c;
+}
+async function phaseFaces(p, out, og, strength, prog) {
+  const list = (faces || []).map(f => ({ ...f, pts: orderPts(f.pts).map(([x, y]) => [p.ox + x * p.sx, p.oy + y * p.sy]) }))
+    .filter(f => Math.hypot(f.pts[1][0] - f.pts[0][0], f.pts[1][1] - f.pts[0][1]) >= 8);
+  if (!list.length) return 0;
+  const sess = await getSession("face");
+  let i = 0;
+  for (const f of list) {
+    if (abort?.signal.aborted) throw new DOMException("Cancelado", "AbortError");
+    setStatus(`Reconstruindo rosto ${i + 1} de ${list.length}…`);
+    const T = similarity(f.pts, FACE_TEMPLATE);
+    // recorta o rosto alinhado em 512×512
+    const [fc, fg] = newCanvas(512, 512);
+    fg.setTransform(T.a, T.b, -T.b, T.a, T.tx, T.ty);
+    fg.drawImage(out, 0, 0);
+    fg.setTransform(1, 0, 0, 1, 0, 0);
+    const d = fg.getImageData(0, 0, 512, 512).data, n = 512 * 512;
+    const data = new Float32Array(3 * n);
+    for (let k = 0, j = 0; k < n; k++, j += 4) { data[k] = d[j] / 127.5 - 1; data[k + n] = d[j + 1] / 127.5 - 1; data[k + 2 * n] = d[j + 2] / 127.5 - 1; }
+    const res = await sess.run({ [sess.inputNames[0]]: new ort.Tensor("float32", data, [1, 3, 512, 512]) });
+    const od = res[sess.outputNames[0]].data;
+    const [rc, rg] = newCanvas(512, 512);
+    const id = rg.createImageData(512, 512), px = id.data;
+    for (let k = 0, j = 0; k < n; k++, j += 4) {
+      px[j] = (od[k] + 1) * 127.5; px[j + 1] = (od[k + n] + 1) * 127.5; px[j + 2] = (od[k + 2 * n] + 1) * 127.5; px[j + 3] = 255;
+    }
+    rg.putImageData(id, 0, 0);
+    rg.globalCompositeOperation = "destination-in";   // bordas suaves
+    rg.drawImage(getFaceMask(), 0, 0);
+    // cola de volta na posição original
+    const det = T.a * T.a + T.b * T.b;
+    og.save();
+    og.globalAlpha = strength;
+    og.setTransform(T.a / det, -T.b / det, T.b / det, T.a / det, -(T.a * T.tx + T.b * T.ty) / det, (T.b * T.tx - T.a * T.ty) / det);
+    og.drawImage(rc, 0, 0);
+    og.restore();
+    i++; prog(i / list.length);
+    await sleep0();
+  }
+  return list.length;
+}
+
+/* ================= fases 4 e 5: nitidez e cor (em faixas, pouca memória) ================= */
+/* ====== ajustes finais em pixels (puros, testáveis fora do navegador) ====== */
+// Redução de ruído de cor: desfoca só a cor (Cb/Cr), o brilho fica intacto
+function chromaDenoise(d, w, h, sigma) {
+  const n = w * h, cb = new Float32Array(n), cr = new Float32Array(n), tmp = new Float32Array(n), o1 = new Float32Array(n), o2 = new Float32Array(n);
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    const r = d[j], g = d[j + 1], b = d[j + 2], y = 0.299 * r + 0.587 * g + 0.114 * b;
+    cb[i] = b - y; cr[i] = r - y;
+  }
+  const k = gaussKernel(sigma);
+  blurSep(cb, w, h, k, tmp, o1); blurSep(cr, w, h, k, tmp, o2);
+  for (let i = 0, j = 0; i < n; i++, j += 4) {
+    const r = d[j], g = d[j + 1], b = d[j + 2], y = 0.299 * r + 0.587 * g + 0.114 * b;
+    const R = y + o2[i], B = y + o1[i], G = (y - 0.299 * R - 0.114 * B) / 0.587;
+    d[j] = R; d[j + 1] = G; d[j + 2] = B;
+  }
+}
+// Balanço de branco: usa só os pixels quase neutros (cinzas/brancos) para medir o tom dominante
+function whiteBalanceGains(d, n) {
+  let sr = 0, sg = 0, sb = 0, c = 0;
+  for (let j = 0; j < n * 4; j += 4) {
+    const r = d[j], g = d[j + 1], b = d[j + 2], M = Math.max(r, g, b), m = Math.min(r, g, b), l = 0.299 * r + 0.587 * g + 0.114 * b;
+    if (l > 40 && l < 235 && (M - m) < 0.12 * M) { sr += r; sg += g; sb += b; c++; }
+  }
+  if (c < n * 0.02) return [1, 1, 1];          // poucos neutros: não arrisca
+  const avg = (sr + sg + sb) / 3, cl = v => Math.min(1.12, Math.max(0.89, v));
+  return [cl(avg / sr), cl(avg / sg), cl(avg / sb)];
+}
+/* Aplica nitidez, clareza e cor numa faixa de linhas.
+   o: pixels RGBA da faixa (modificados), bl: mesma faixa desfocada (nitidez) ou null,
+   base: mapa de brilho bem desfocado em baixa resolução (clareza) ou null */
+function finishPixels(o, bl, W, j0, j1, rowY0, P) {
+  const { amount, thr, clarity, base, bw, bh, bscale, lut, gains, vib, colorK } = P;
+  for (let j = j0; j < j1; j += 4) {
+    let r = o[j], g = o[j + 1], b = o[j + 2];
+    if (bl && bl[j + 3] > 250) {
+      const dr = r - bl[j], dg = g - bl[j + 1], db = b - bl[j + 2];
+      if (Math.abs(dr) + Math.abs(dg) + Math.abs(db) > thr * 3) { r += dr * amount; g += dg * amount; b += db * amount; }
+    }
+    if (clarity > 0 && base) {
+      const p = j >> 2, x = p % W, y = rowY0 + ((p - x) / W);
+      const fx = Math.min(bw - 1.001, Math.max(0, x / bscale - 0.5)), fy = Math.min(bh - 1.001, Math.max(0, y / bscale - 0.5));
+      const x0 = fx | 0, y0 = fy | 0, ax = fx - x0, ay = fy - y0, i0 = y0 * bw + x0;
+      const Lb = (base[i0] * (1 - ax) + base[i0 + 1] * ax) * (1 - ay) + (base[i0 + bw] * (1 - ax) + base[i0 + bw + 1] * ax) * ay;
+      const L = 0.299 * r + 0.587 * g + 0.114 * b, t = L / 255;
+      const dl = (L - Lb) * clarity * 4 * t * (1 - t);           // menos efeito perto do preto e do branco
+      r += dl; g += dl; b += dl;
+    }
+    if (colorK > 0) {
+      r *= gains[0]; g *= gains[1]; b *= gains[2];
+      r = lut[r < 0 ? 0 : r > 255 ? 255 : r | 0]; g = lut[g < 0 ? 0 : g > 255 ? 255 : g | 0]; b = lut[b < 0 ? 0 : b > 255 ? 255 : b | 0];
+      if (vib > 0) {                                              // vibração: aviva mais o que está apagado
+        const M = Math.max(r, g, b), m = Math.min(r, g, b), s = M > 0 ? (M - m) / M : 0;
+        const f = 1 + vib * (1 - s) * (1 - s), l = 0.299 * r + 0.587 * g + 0.114 * b;
+        r = l + (r - l) * f; g = l + (g - l) * f; b = l + (b - l) * f;
+      }
+    }
+    o[j] = r; o[j + 1] = g; o[j + 2] = b;
+  }
+}
+function finishParams(sharpK, clarityK, colorK, a, gains) {
+  const lo = a ? a.lo : 0, hi = a ? Math.max(a.hi, lo + 32) : 255, lut = new Uint8ClampedArray(256);
+  for (let v = 0; v < 256; v++) { const s = (v - lo) * 255 / (hi - lo); lut[v] = v + (s - v) * colorK; }
+  const g = gains.map(x => 1 + (x - 1) * colorK);
+  return { amount: sharpK / 100 * 1.2, thr: 3, clarity: clarityK / 100 * 0.6, lut, gains: g, vib: 0.5 * colorK, colorK };
+}
+
+// Fases 5–7 em faixas horizontais (pouca memória mesmo em imagens de 30+ MP)
+async function phaseFinish(out, og, sharpK, clarityK, colorK, scale, prog) {
+  const radius = Math.min(4, Math.max(1, 0.45 * scale));   // raio da nitidez acompanha a ampliação
+  const W = out.width, H = out.height, STRIP = 384, M = Math.ceil(radius * 3) + 2;
+  const gains = analysis && !analysis.anime ? analysis.gains : [1, 1, 1];   // balanço de branco só em fotos
+  const P = finishParams(sharpK, clarityK, colorK, analysis, gains);
+  if (clarityK > 0) {      // mapa de brilho bem desfocado, em 1/16 da resolução
+    const bs = 16, bw = Math.max(2, Math.round(W / bs)), bh = Math.max(2, Math.round(H / bs));
+    const [bc, bg] = newCanvas(bw, bh);
+    drawHQ(bg, out, 0, 0, W, H, 0, 0, bw, bh);
+    const [bc2, bg2] = newCanvas(bw, bh);
+    bg2.filter = "blur(2px)"; bg2.drawImage(bc, 0, 0); bg2.filter = "none";
+    bg2.globalCompositeOperation = "destination-over"; bg2.drawImage(bc, 0, 0);   // bordas sem transparência
+    const bd = bg2.getImageData(0, 0, bw, bh).data, base = new Float32Array(bw * bh);
+    for (let i = 0; i < base.length; i++) base[i] = 0.299 * bd[i * 4] + 0.587 * bd[i * 4 + 1] + 0.114 * bd[i * 4 + 2];
+    Object.assign(P, { base, bw, bh, bscale: W / bw });
+  }
+  const [tc, tg] = newCanvas(W, STRIP + 2 * M);
+  for (let y0 = 0; y0 < H; y0 += STRIP) {
+    if (abort?.signal.aborted) throw new DOMException("Cancelado", "AbortError");
+    const y1 = Math.min(H, y0 + STRIP), my0 = Math.max(0, y0 - M), my1 = Math.min(H, y1 + M), h = my1 - my0;
+    const img = og.getImageData(0, my0, W, h);
+    let bl = null;
+    if (P.amount > 0) {
+      tg.clearRect(0, 0, W, tc.height);
+      tg.filter = `blur(${radius}px)`;
+      tg.drawImage(out, 0, my0, W, h, 0, 0, W, h);
+      tg.filter = "none";
+      bl = tg.getImageData(0, 0, W, h).data;
+    }
+    finishPixels(img.data, bl, W, (y0 - my0) * W * 4, (y1 - my0) * W * 4, my0, P);
+    og.putImageData(img, 0, my0, 0, y0 - my0, W, y1 - y0);
+    prog(y1 / H);
+    await sleep0();
+  }
+}
+
+/* ================= executar ================= */
+const fmtTime = s => s < 60 ? `${Math.round(s)}s` : `${Math.floor(s / 60)}min ${Math.round(s % 60)}s`;
+
+async function pipeline(p) {
+  const cleanK = $("onClean").checked ? +$("kClean").value : 0;
+  const blurK = $("onBlur").checked ? +$("kBlur").value / 100 : 0;
+  const blurMode = val("blurMode");
+  const doFace = $("onFace").checked && faces && faces.length;
+  const sharpK = $("onSharp").checked ? +$("kSharp").value : 0;
+  const clarityK = $("onClar").checked ? +$("kClar").value : 0;
+  const colorK = $("onColor").checked ? +$("kColor").value / 100 : 0;
+  const twoPass = $('upEngine').value==='ia' && p.ai && p.needed > 4 && $("twoPass").checked;
+  // pesos de progresso por fase
+  const W = { blur: blurK ? 0.2 : 0, up: twoPass ? 0.25 : 0.5, up2: twoPass ? 0.3 : 0, face: doFace ? 0.25 : 0, fin: (sharpK || clarityK || colorK) ? 0.1 : 0 };
+  const tot = W.blur + W.up + W.up2 + W.face + W.fin;
+  let base = 0;
+  const step = w => v => setProg((base + v * w) / tot * 0.95);
+
+  for (const k of ["Clean", "Blur", "Up", "Face", "Sharp", "Clar", "Color"]) setPhase(k, "aguardando");
+  if (!cleanK) setPhase("Clean", "desligada");
+  if (!blurK) setPhase("Blur", "desligada");
+  if (!doFace) setPhase("Face", "desligada");
+  if (!sharpK) setPhase("Sharp", "desligada");
+  if (!clarityK) setPhase("Clar", "desligada");
+  if (!colorK) setPhase("Color", "desligada");
+
+  // imagem de trabalho na resolução original
+  let [work] = newCanvas(srcImage.naturalWidth, srcImage.naturalHeight);
+  work.getContext("2d").drawImage(srcImage, 0, 0);
+
+  if (cleanK) { setPhase("Clean", "rodando", "run"); setStatus("Limpando…"); await sleep0(); work = phaseClean(work, cleanK); setPhase("Clean", "feita ✓", "done"); }
+
+  if (blurK) {
+    setPhase("Blur", "rodando", "run");
+    let used = blurMode;
+    if (blurMode === 'ai' && $('upEngine').value==='classic') used='fast';
+    if (used === "ai") {
+      try { work = await phaseDeblurAI(work, blurK, step(W.blur)); }
+      catch (e) {
+        if (e.name === "AbortError" || (!e.badModel && !forceWasm && navigator.gpu)) throw e;
+        console.warn("Desembaçar com IA falhou, usando o modo rápido", e);
+        used = "fast";
+      }
+    }
+    if (used === "fast") work = await phaseDeblurFast(work, blurK, step(W.blur));
+    setPhase("Blur", used === "ai" ? "feita ✓ IA" : blurMode === "ai" ? "IA falhou · feita no rápido" : "feita ✓ rápido", "done");
+    base += W.blur;
+  }
+
+  setPhase("Up", "rodando", "run");
+  if (twoPass) {
+    // 1ª passada: IA 4× até 1/4 do tamanho final; 2ª passada: IA 4× de novo até o tamanho final
+    const iw = Math.max(1, Math.round(p.dw / 4)), ih = Math.max(1, Math.round(p.dh / 4));
+    const [mid, mg] = newCanvas(iw, ih);
+    const p1 = { W: iw, H: ih, sx: iw / work.width, sy: ih / work.height, ox: 0, oy: 0, dw: iw, dh: ih, ai: true };
+    await phaseUpscale(p1, mg, work, step(W.up));
+    base += W.up;
+    work = mid;
+  }
+  const [out, og] = newCanvas(p.W, p.H);
+  if (p.kind === "fill") paintBlurBackground(og, p.W, p.H);
+  const p2 = { ...p, sx: p.dw / work.width, sy: p.dh / work.height };
+  await phaseUpscale(p2, og, work, step(twoPass ? W.up2 : W.up));
+  setPhase("Up", p.ai && $("upEngine").value==='ia' ? `feita ✓ ${twoPass ? "2 passadas" : MODELS[chosenModel()].name.replace("Real-ESRGAN ", "")}` : "só redimensionou", "done");
+  base += twoPass ? W.up2 : W.up;
+  work = null;
+
+  let nFaces = 0;
+  if (doFace) {
+    setPhase("Face", "rodando", "run");
+    nFaces = await phaseFaces(p, out, og, +$("kFace").value / 100, step(W.face));
+    setPhase("Face", nFaces ? `feita ✓ ${nFaces}` : "rostos pequenos demais", "done");
+    base += W.face;
+  }
+  if (sharpK || clarityK || colorK) {
+    if (sharpK) setPhase("Sharp", "rodando", "run");
+    if (clarityK) setPhase("Clar", "rodando", "run");
+    if (colorK) setPhase("Color", "rodando", "run");
+    setStatus("Ajustando nitidez, clareza e cor…");
+    await phaseFinish(out, og, sharpK, clarityK, colorK, p.needed, step(W.fin));
+    if (sharpK) setPhase("Sharp", "feita ✓", "done");
+    if (clarityK) setPhase("Clar", "feita ✓", "done");
+    if (colorK) setPhase("Color", "feita ✓", "done");
+  }
+  // Preserva o alfa original em PNGs; a rede neural fornece apenas RGB.
+  if(p.kind!=='fill'&&p.ai&&$('upEngine').value==='ia'){og.save();og.globalCompositeOperation='destination-in';og.drawImage(srcImage,0,0,p.W,p.H);og.restore();}
+  return out;
+}
+
+$("go").onclick = async () => {
+  const p = makePlan();
+  if (!p) { refreshPlan(); return; }
+  if (p.W * p.H / 1e6 > MAX_MP || Math.max(p.W,p.H)>32000) { refreshPlan(); setStatus("Tamanho final grande demais. Diminua o multiplicador.", "err"); return; }
+  parent.postMessage({type:'prisma-upscale:invalid'},'*');
+  $('applyEditor').disabled=true;$('upSettings').disabled=true;
+  $("go").disabled = true; $("dl").disabled = true; $("cancel").hidden = false;
+  setProg(0); hideAfter(); finalBlob = null;
+  const t0 = performance.now();
+  abort = new AbortController();
+  try {
+    let result;
+    try { result = await pipeline(p); }
+    catch (e) {
+      if (e.name === 'AbortError' || forceWasm || /Carregue o modelo|não consegui baixar|Arquivos locais/.test(e.message)) throw e;
+      console.warn("GPU falhou, tentando pela CPU", e);
+      forceWasm = true; await dropGpuSessions();
+      setStatus("A placa de vídeo recusou. Recomeçando pela CPU…"); setProg(0);
+      result = await pipeline(p);
+    }
+    finalCanvas = result;
+    finalDPI = val("mode") === "exact" ? (+$("dpi").value || 300) : 0;
+    setStatus("Gerando arquivo…");
+    await showAfter(finalCanvas);
+    finalBlob = await encode(val("fmt")); finalFmt = val("fmt");
+    $("meta").textContent = `Original: ${srcImage.naturalWidth}×${srcImage.naturalHeight}px  →  Final: ${p.W}×${p.H}px` +
+      (finalDPI ? ` @ ${finalDPI} DPI` : "") + `  ·  ${fmtTime((performance.now() - t0) / 1000)}`;
+    setProg(1); setStatus(`Pronto! ${(finalBlob.size / 1e6).toFixed(1)} MB`, "ok");
+    $('applyEditor').disabled=false;$("dl").disabled = false;
+  } catch (e) {
+    if (e.name === "AbortError") setStatus("Cancelado.");
+    else { console.error(e); setStatus("Erro: " + (e.message || e), "err"); }
+    for (const k of ["Clean", "Blur", "Up", "Face", "Sharp", "Clar", "Color"]) if ($("st" + k).classList.contains("run")) setPhase(k, e.name === "AbortError" ? "cancelada" : "erro", "err");
+    setProg(0);
+  } finally {
+    $('upSettings').disabled=false;$("go").disabled = false; $("cancel").hidden = true; abort = null;
+  }
+};
+$("cancel").onclick = () => abort && abort.abort();
+
+/* ================= arquivo final com DPI ================= */
+const CRC = (() => { const t = new Uint32Array(256);
+  for (let n = 0; n < 256; n++) { let c = n; for (let k = 0; k < 8; k++) c = c & 1 ? 0xEDB88320 ^ (c >>> 1) : c >>> 1; t[n] = c >>> 0; }
+  return t; })();
+function crc32(bytes) { let c = 0xFFFFFFFF; for (const b of bytes) c = CRC[(c ^ b) & 255] ^ (c >>> 8); return (c ^ 0xFFFFFFFF) >>> 0; }
+function pngWithDPI(buf, dpi) {
+  const src = new Uint8Array(buf), ppm = Math.round(dpi / 0.0254);
+  const chunk = new Uint8Array(21), dv = new DataView(chunk.buffer);
+  dv.setUint32(0, 9); chunk.set([112, 72, 89, 115], 4);
+  dv.setUint32(8, ppm); dv.setUint32(12, ppm); chunk[16] = 1;
+  dv.setUint32(17, crc32(chunk.subarray(4, 17)));
+  const out = new Uint8Array(src.length + 21);
+  out.set(src.subarray(0, 33)); out.set(chunk, 33); out.set(src.subarray(33), 54);
+  return out;
+}
+function jpgWithDPI(buf, dpi) {
+  const b = new Uint8Array(buf);
+  if (b[6] === 74 && b[7] === 70 && b[8] === 73 && b[9] === 70) { b[13] = 1; b[14] = dpi >> 8; b[15] = dpi & 255; b[16] = dpi >> 8; b[17] = dpi & 255; }
+  return b;
+}
+async function encode(fmt) {
+  const type = fmt === "png" ? "image/png" : "image/jpeg";
+  const blob = await new Promise(r => finalCanvas.toBlob(r, type, 0.95));
+  if (!blob) throw new Error("o navegador não conseguiu gerar o arquivo (imagem grande demais?)");
+  let data = await blob.arrayBuffer();
+  if (finalDPI) data = fmt === "png" ? pngWithDPI(data, finalDPI) : jpgWithDPI(data, finalDPI);
+  return new Blob([data], { type });
+}
+$("dl").onclick = async () => {
+  if (!finalCanvas) return;
+  const fmt = val("fmt");
+  try {
+    if (!finalBlob || finalFmt !== fmt) { setStatus("Gerando arquivo…"); finalBlob = await encode(fmt); finalFmt = fmt; }
+    const url = URL.createObjectURL(finalBlob);
+    const a = document.createElement("a");
+    a.href = url; a.download = `${srcName}_${finalCanvas.width}x${finalCanvas.height}.${fmt}`;
+    if(parent!==self)parent.postMessage({type:'prisma-upscale:download',blob:finalBlob,name:a.download},'*');else{document.body.appendChild(a);a.click();a.remove();}
+    setTimeout(() => URL.revokeObjectURL(url), 20000);
+    setStatus(`Baixado (${(finalBlob.size / 1e6).toFixed(1)} MB).`, "ok");
+  } catch (e) { setStatus("Erro: " + e.message, "err"); }
+};
+
+/* ================= slider antes/depois ================= */
+const cmp = $("compare");
+function slide(clientX) {
+  const r = cmp.getBoundingClientRect();
+  const p = Math.min(1, Math.max(0, (clientX - r.left) / r.width)) * 100;
+  $("imAfter").style.clipPath = `inset(0 0 0 ${p}%)`;
+  $("handle").style.left = p + "%";
+}
+let dragging = false;
+cmp.addEventListener("pointerdown", e => { dragging = true; cmp.setPointerCapture(e.pointerId); slide(e.clientX); });
+cmp.addEventListener("pointermove", e => dragging && slide(e.clientX));
+cmp.addEventListener("pointerup", () => dragging = false);
+
+syncPhases(); refreshPlan();
+setEngine(navigator.gpu ? "webgpu" : "wasm", true);
+setStatus("Pronto.");
+</script>
+<script src="bridge.js"></script></body>
+</html>

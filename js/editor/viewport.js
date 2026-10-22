@@ -39,10 +39,11 @@
 
   view.fit = () => {
     if (!doc.has) return;
-    const pad = 40, z = Math.min((view.cssW - pad * 2) / doc.w, (view.cssH - pad * 2 - 70) / doc.h);
+    const mobile=matchMedia('(max-width:860px)').matches,pad=mobile?14:40,footer=mobile?48:70;
+    const z = Math.min((view.cssW - pad * 2) / doc.w, (view.cssH - pad * 2 - footer) / doc.h);
     view.zoom = PS.clamp(z, 0.01, 64);
     view.panX = (view.cssW - doc.w * view.zoom) / 2;
-    view.panY = (view.cssH - 50 - doc.h * view.zoom) / 2 + 6;
+    view.panY = mobile ? (view.cssH - footer - doc.h * view.zoom) / 2 : (view.cssH - 50 - doc.h * view.zoom) / 2 + 6;
     view.isFit = true;
     view.render(); updateZoomUI();
   };

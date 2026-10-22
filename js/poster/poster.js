@@ -201,6 +201,7 @@
 
   $('#pOrientTip').addEventListener('click', () => { const o = cfg.orient === 'portrait' ? 'landscape' : 'portrait'; setSeg('pOrient', 'o', o); change('orient', o, { resetPan: true }); });
   $('#pUpscaleHint').addEventListener('click', async e => {
+    if(PS.openUpscaler){await PS.openUpscaler();return;}
     const f = +e.currentTarget.dataset.f;
     const ok = await PS.upscaleTo(f);
     if (ok) await P.refreshSource();

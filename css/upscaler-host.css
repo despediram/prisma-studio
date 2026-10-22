@@ -1,0 +1,6 @@
+/* Prisma Studio — janela de ampliação com o mesmo tema do editor. */
+.upscaler-dialog{width:min(1400px,96vw);height:94dvh;max-width:96vw;max-height:96dvh;padding:0;border:1px solid var(--line);border-radius:14px;background:var(--chrome);color:var(--text);overflow:hidden;box-shadow:var(--shadow)}.upscaler-dialog[open]{display:flex;flex-direction:column}.upscaler-dialog::backdrop{background:#000a;backdrop-filter:blur(5px)}.upscaler-dialog>header{display:flex;align-items:center;justify-content:space-between;padding:12px 20px;gap:15px;border-bottom:1px solid var(--line)}.upscaler-dialog h2{font-size:19px;margin:2px 0}.upscaler-dialog small{color:var(--cyan);font-size:10px;letter-spacing:2px}.upscaler-dialog iframe{border:0;width:100%;flex:1;min-height:0;background:var(--stage)}.upscaler-note{font-size:12px;line-height:1.5;color:var(--text-2);padding:8px 20px;margin:0;border-bottom:1px solid var(--line)}
+@media(max-width:860px){.upscaler-dialog{width:100vw;max-width:100vw;height:100dvh;max-height:100dvh;border:0;border-radius:0;margin:0}.upscaler-dialog>header{padding:10px 14px}.upscaler-dialog>header .btn{width:44px;height:44px}.upscaler-note{font-size:11px;padding:7px 14px}.upscaler-dialog h2{font-size:17px}}
+
+/* O Design possui envio explícito ao Editor, onde a ampliação é desfeita pelo histórico. */
+body[data-mode=design] #btnUpscaler{display:none}
