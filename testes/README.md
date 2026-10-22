@@ -43,3 +43,6 @@ Os testes usam documentos temporários e contextos de navegador isolados. Não e
 
 - `image-size.cjs`: valida dimensões acima dos antigos tetos, Auto sem redução, falha real de Canvas simulada e painel móvel com saídas de 192 MP/8×. Execute com `node testes/image-size.cjs`. As superfícies enormes são simuladas, não medem a memória do aparelho.
 - `image-size.html`: teste manual de abertura real em 24 MP, seleção móvel de 96 MP, processamento clássico, aplicação e desfazer/refazer. Abra em um navegador e execute os dois botões.
+
+- `../desktop/testes.cjs`: gravação atômica, falhas, gerações concorrentes de recuperação, nomes e configuração isolada. `npm run test:desktop`.
+- `../desktop/smoke.cjs`: integração no Electron real, executada pelo CI Windows antes de compilar; serialização com máscara/ajustes, salvamento, recuperação, Design, undo/redo e carregamento isolado do ampliador. `npm run test:desktop:smoke`.

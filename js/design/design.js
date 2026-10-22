@@ -5,10 +5,10 @@
 (function(){
  'use strict';
  const PS=window.PS,F=window.fabric,$=PS.$;
- let canvas=null,pages=[],active=0,format='a5',busy=false,history=[],index=-1,timer=0;
+ let canvas=null,pages=[],active=0,format='a5',busy=false,history=[],index=-1,timer=0,generation=0;
  F.FabricObject.customProperties=['prismaName','prismaLocked'];
  const MAX_BYTES=32*1024*1024;
- const D=PS.design={get canvas(){return canvas;},get pages(){return pages;},get active(){return active;},get format(){return format;},get busy(){return busy;}};
+ const D=PS.design={get canvas(){return canvas;},get pages(){return pages;},get active(){return active;},get format(){return format;},get busy(){return busy;},get revision(){return history[index]||'';},get generation(){return generation;}};
  const safe=fn=>(...args)=>Promise.resolve().then(()=>fn(...args)).catch(e=>{console.error(e);PS.toast('Não foi possível concluir: '+e.message,'error');});
  const on=(id,ev,fn)=>$('#'+id).addEventListener(ev,safe(fn));
  const fmt=()=>PS.designFormats[format];
@@ -35,7 +35,7 @@
   data.pages.forEach(p=>{if(p.scene?.backgroundImage||p.scene?.overlayImage||p.scene?.clipPath||p.scene?.overlay)throw Error('Recurso de página não suportado.');if(!p.scene||!Array.isArray(p.scene.objects))throw Error('Página inválida.');p.scene.objects.forEach(o=>check(o));if(typeof p.scene.background!=='string'||!/^#[a-f0-9]{6}$/i.test(p.scene.background))throw Error('Fundo inválido.');});
   busy=true;try{pages=data.pages;format=data.format;active=Math.max(0,Math.min(data.active||0,pages.length-1));$('#dsName').value=String(data.name||'Meu design');$('#dsFormat').value=format;await canvas.loadFromJSON(pages[active].scene);resize();sync();}finally{busy=false;}
  }
- D.load=async data=>{init();await D.ready;await load(data);history=[];index=-1;commit();};
+ D.load=async data=>{init();await D.ready;await load(data);generation++;history=[];index=-1;commit();};
  async function goto(i){if(timer){const direction=i-index;clearTimeout(timer);timer=0;commit();i=index+direction;}if(i<0||i>=history.length||busy)return;await load(JSON.parse(history[i]));index=i;sync();}
  D.undo=()=>goto(index-1);D.redo=()=>goto(index+1);
  async function switchPage(i){if(busy||i===active)return;savePage();busy=true;try{active=i;await canvas.loadFromJSON(pages[i].scene);resize();sync();}finally{busy=false;}}
@@ -68,7 +68,7 @@
  };
  D.duplicate=async()=>{const o=selected();if(!o)return;const c=await o.clone(['prismaName','prismaLocked']);c.set({left:o.left+25,top:o.top+25});if(c instanceof F.ActiveSelection){c.canvas=canvas;c.forEachObject(obj=>canvas.add(obj));}else canvas.add(c);canvas.setActiveObject(c);commit();canvas.requestRenderAll();};
  D.remove=()=>{const objects=canvas.getActiveObjects().filter(o=>!o.prismaLocked);canvas.discardActiveObject();objects.forEach(o=>canvas.remove(o));commit();canvas.requestRenderAll();};
- D.save=()=>{init();commit();PS.download(new Blob([state()],{type:'application/json'}),($('#dsName').value||'design')+'.prismadesign');PS.toast('Design salvo com páginas e objetos editáveis.','success');};
+ D.save=async()=>{init();commit();const blob=new Blob([state()],{type:'application/json'});if(PS.desktop)return PS.desktop.saveDesign(blob);PS.download(blob,($('#dsName').value||'design')+'.prismadesign');PS.toast('Design salvo com páginas e objetos editáveis.','success');return true;};
  D.toCanvas=()=>{init();canvas.discardActiveObject();const f=fmt(),v=[...canvas.viewportTransform];try{canvas.setViewportTransform([1,0,0,1,0,0]);return canvas.toCanvasElement(1,{left:0,top:0,width:f.w,height:f.h,enableRetinaScaling:false});}finally{canvas.setViewportTransform(v);canvas.requestRenderAll();}};
  D.exportPng=async()=>PS.download(await PS.canvasToBlob(D.toCanvas(),'image/png'),($('#dsName').value||'design')+'.png');
  D.exportPdf=async()=>{savePage();const all=JSON.parse(JSON.stringify(pages)),f={...fmt()};await PS.withBusy('Exportando design','Preparando as páginas em alta resolução…',async progress=>{

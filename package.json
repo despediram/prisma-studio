@@ -1,0 +1,79 @@
+{
+  "name": "prisma-studio-desktop",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Editor de imagens, design e pôsteres offline para Windows",
+  "author": "Prisma Studio",
+  "license": "UNLICENSED",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "start": "electron .",
+    "test:desktop": "node --test desktop/testes.cjs",
+    "test:desktop:smoke": "electron . --smoke-test",
+    "prepare:desktop": "node desktop/icon.cjs",
+    "dist:win": "npm run prepare:desktop && electron-builder --win nsis --x64 --publish never"
+  },
+  "devDependencies": {
+    "electron": "45.0.0",
+    "electron-builder": "26.15.3"
+  },
+  "build": {
+    "appId": "br.prismastudio.desktop",
+    "productName": "Prisma Studio",
+    "asar": true,
+    "directories": {
+      "output": "dist-desktop",
+      "buildResources": "desktop"
+    },
+    "files": [
+      "index.html",
+      "js/**/*",
+      "css/**/*",
+      "assets/**/*",
+      "vendor/**/*",
+      "licencas/**/*",
+      "upscaler/**/*",
+      "desktop/*.cjs",
+      "desktop/icon.ico",
+      "!desktop/testes.cjs",
+      "!desktop/smoke.cjs"
+    ],
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "icon": "desktop/icon.ico",
+      "artifactName": "Prisma-Studio-${version}-Windows-x64-Setup.exe"
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Prisma Studio",
+      "installerLanguages": [
+        "pt_BR"
+      ],
+      "language": "1046",
+      "deleteAppDataOnUninstall": false
+    },
+    "fileAssociations": [
+      {
+        "ext": "prisma",
+        "name": "Projeto Prisma Studio",
+        "role": "Editor"
+      },
+      {
+        "ext": "prismadesign",
+        "name": "Projeto Prisma Design",
+        "role": "Editor"
+      }
+    ]
+  }
+}

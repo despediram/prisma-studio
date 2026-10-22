@@ -37,12 +37,12 @@
   }
 
   // Projeto .prisma (ZIP com camadas em PNG + JSON)
-  PS.saveProject = async () => {
-    if (!need()) return;
+  PS.createProjectBlob = async ({ background = false } = {}) => {
+    if (!need()) return null;
     if (!window.JSZip) { PS.toast('A biblioteca ZIP não carregou.', 'error'); return; }
     let blob;
-    await PS.withBusy('Salvando projeto', 'Guardando todas as camadas sem perda.', async prog => {
-      const zip = new window.JSZip(), meta = { app: 'Prisma Studio', version: 2, w: doc.w, h: doc.h, name: doc.name, active: doc.active, fg: doc.fg, bg: doc.bg, layers: [] };
+    const serialize = async prog => {
+      const zip = new window.JSZip(), meta = { app: 'Prisma Studio', version: 2, w: doc.w, h: doc.h, name: doc.name, active: doc.active, fg: doc.fg, bg: doc.bg, params: structuredClone(doc.params), layers: [] };
       for (let i = 0; i < doc.layers.length; i++) {
         const L = doc.layers[i];
         zip.file(`camadas/${i}.png`, await PS.canvasToBlob(L.canvas, 'image/png'));
@@ -53,9 +53,17 @@
       zip.file('projeto.json', JSON.stringify(meta, null, 1));
       zip.file('previa.jpg', await PS.canvasToBlob(doc.liveSmall(800), 'image/jpeg', 0.85));
       blob = await zip.generateAsync({ type: 'blob', compression: 'DEFLATE', compressionOptions: { level: 3 } }, m => prog(0.8 + m.percent / 500));
-    });
+    };
+    if (background) await serialize(() => {});
+    else await PS.withBusy('Salvando projeto', 'Guardando todas as camadas sem perda.', serialize);
+    return blob;
+  };
+  PS.saveProject = async () => {
+    const blob = await PS.createProjectBlob(); if (!blob) return false;
+    if (PS.desktop) return PS.desktop.saveEditor(blob);
     PS.download(blob, `${doc.name || 'projeto'}.prisma`);
     PS.toast(`Projeto salvo (${PS.bytes(blob.size)}). Abra-o depois com Arquivo › Abrir.`, 'success');
+    return true;
   };
   async function loadImageBlob(blob) { return PS.loadImageFile(new File([blob], 'x.png', { type: 'image/png' })); }
   PS.openProject = async file => {
@@ -68,7 +76,7 @@
       layers.push(Object.assign({}, m, { canvas: c, mask }));
     }
     if (meta.fg) doc.fg = meta.fg; if (meta.bg) doc.bg = meta.bg;
-    doc.loadLayers(meta.w, meta.h, layers, meta.name, meta.active);
+    doc.loadLayers(meta.w, meta.h, layers, meta.name, meta.active, meta.params);
     PS.colors && PS.colors.sync();
   };
   PS.openPsd = async file => {

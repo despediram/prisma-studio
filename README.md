@@ -49,3 +49,11 @@ Atualização de impressão sem moldura extra: [sangria, compensação e corte m
 Use o ícone de ampliar no topo do Editor ou a aba Melhorar. O painel inclui IA Real-ESRGAN, restauração e comparação antes/depois; há também um modo rápido sem IA. Os modelos podem ser baixados com autorização na interface ou carregados em ONNX do computador. O motor acompanha o projeto, sem CDN. A aplicação cria uma imagem mesclada, recuperável com Desfazer.
 
 No celular, ferramentas deslizam horizontalmente e painéis reservam espaço para a arte. Em paisagem, as opções abrem na lateral. Instruções, arquivos e validação: [docs/ampliador-e-mobile.md](docs/ampliador-e-mobile.md).
+
+## Aplicativo para Windows
+
+A versão desktop usa os arquivos deste projeto, sem substituir o site. O workflow [Compilar Prisma Studio Windows](.github/workflows/desktop.yml) valida o aplicativo no Windows e publica um instalador `.exe` em [Versões](https://github.com/despediram/prisma-studio/releases). O usuário final não precisa instalar ferramentas de desenvolvimento.
+
+Menus nativos, recentes, Salvar/Salvar como, diálogos de exportação e recuperação em disco complementam o Editor, o Design e os Pôsteres. Cada área mantém duas gerações de recuperação; a gravação ocorre a cada minuto de alterações quando a edição está ociosa. Arquivos `.prisma` também preservam os ajustes não destrutivos. O instalador inclui o motor do ampliador, mas os modelos ONNX continuam sendo carregados ou baixados com autorização na interface.
+
+Para desenvolver: `npm ci`, `npm run prepare:desktop`, `npm start`. Validação: `npm run test:desktop` e, no Windows, `npm run test:desktop:smoke`. Compilação: `npm run dist:win`. Consulte [desktop/RELEASE.md](desktop/RELEASE.md) para os recursos e limites desta primeira versão. O motor de pixels continua compartilhado com o navegador; não há ganho automático de precisão, memória ilimitada ou um backend de GPU nativo novo.

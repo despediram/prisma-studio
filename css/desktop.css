@@ -1,0 +1,20 @@
+/* Prisma Studio Desktop — acabamento exclusivo da janela Windows.
+ * Todos os seletores dependem da ponte desktop; o site mantém o layout atual.
+ */
+body.ps-desktop {--topbar-h:64px;--rail-w:66px;--insp-w:336px;padding-bottom:30px;box-sizing:border-box;}
+.ps-desktop .topbar {border-bottom:1px solid var(--line);box-shadow:0 4px 20px #0002;padding-inline:18px;gap:14px;}
+.ps-desktop .brand-text strong {font-size:15px;letter-spacing:-.3px;}
+.ps-desktop .desktop-edition {display:block;color:var(--text-2);font-size:10px;letter-spacing:1.8px;font-weight:500;}
+.ps-desktop .modes {background:var(--stage);padding:4px;border-radius:11px;border:1px solid var(--line-soft);}
+.ps-desktop .mode {border-radius:7px;min-height:32px;}
+.ps-desktop .inspector {border-left:1px solid var(--line);}
+.ps-desktop .tool {border-radius:9px;}
+.ps-desktop .tool.active {box-shadow:inset 0 0 0 1px var(--cyan);}
+.ps-desktop .desktop-status {position:fixed;inset:auto 0 0;min-height:30px;box-sizing:border-box;display:flex;align-items:center;gap:16px;padding:3px 16px;background:var(--chrome);border-top:1px solid var(--line);font-size:11px;color:var(--text-2);z-index:10;}
+.ps-desktop .desktop-status .desktop-local {color:var(--cyan);font-weight:700;white-space:nowrap;}
+.ps-desktop .desktop-status .desktop-recovery {margin-left:auto;}
+.ps-desktop .desktop-status button {padding:2px 10px;min-height:22px;font-size:11px;}
+.ps-desktop .desktop-recovery-list {display:grid;gap:10px;margin:14px 0;}
+.ps-desktop .desktop-recovery-row {display:flex;align-items:center;gap:12px;padding:12px;border:1px solid var(--line);border-radius:10px;background:var(--chrome-2);}
+.ps-desktop .desktop-recovery-row strong,.ps-desktop .desktop-recovery-row small {display:block;overflow-wrap:anywhere;}
+.ps-desktop .desktop-recovery-row small {color:var(--text-2);margin-top:4px;}

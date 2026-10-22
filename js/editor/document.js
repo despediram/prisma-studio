@@ -204,8 +204,12 @@
     finishLoad();
   };
   // carrega um projeto já montado (lista de camadas)
-  doc.loadLayers = (w, h, layers, name, active) => {
+  doc.loadLayers = (w, h, layers, name, active, params) => {
     reset(w, h, name || 'projeto');
+    // Projetos antigos continuam neutros; só restaura chaves conhecidas dos ajustes.
+    if (params && typeof params === 'object') for (const k of Object.keys(doc.params)) {
+      if (Object.hasOwn(params, k)) doc.params[k] = params[k];
+    }
     doc.layers = layers.map(l => doc.makeLayer(l.canvas, l.name, l));
     doc.active = PS.clamp(active ?? doc.layers.length - 1, 0, doc.layers.length - 1);
     finishLoad();

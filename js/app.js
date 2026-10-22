@@ -42,8 +42,8 @@
         doc.load(img, file.name || 'colada');
         PS.toast(`${file.name || 'Imagem'} aberta — ${PS.fmtInt(doc.w)} × ${PS.fmtInt(doc.h)} px.`, 'success');
       }
-      PS.afterOpen();
-    } catch (e) { console.error(e); PS.toast(e.message || 'Não foi possível abrir o arquivo.', 'error', 6000); }
+      PS.afterOpen();return true;
+    } catch (e) { console.error(e); PS.toast(e.message || 'Não foi possível abrir o arquivo.', 'error', 6000); return false; }
   }
   PS.openFile = openFile;
   const pick = () => $(mode==='design'?'#dsProjectInput':'#fileInput').click();

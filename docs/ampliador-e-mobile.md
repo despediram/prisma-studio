@@ -5,7 +5,7 @@ A adaptação parte do arquivo `upscaler-local.html` fornecido pelo autor do pro
 ## Como usar
 
 1. Abra uma imagem no Editor. Use o ícone de ampliar no topo ou **Melhorar → Abrir ampliador de IA e restauração**. No Pôster, o aviso de resolução também abre este painel.
-2. O tamanho inicia em **Auto**, calculado pela resolução original e pelo limite da tela. Há também **1× restaurar**. Ao escolher uma saída maior que o limite, use o botão de tamanho recomendado junto ao botão principal. A resolução original é mostrada ao lado da saída; se for necessário reduzir, a interface avisa explicitamente.
+2. O tamanho inicia em **Auto**, com uma sugestão que preserva pelo menos a resolução original. Há também **1× restaurar** e multiplicadores manuais sem teto fixo de megapixels. O tamanho recomendado é opcional; uma redução depende de escolha explícita. A resolução original aparece ao lado da saída.
 3. Escolha **IA · Real-ESRGAN** ou **Rápido · sem IA**. O segundo funciona sem modelos e sem internet; utiliza interpolação, não reconstrução neural.
 3. Para IA, permita baixar os modelos ou carregue `.onnx` locais. Escolha o tipo de modelo quando o nome do arquivo for genérico, como `model.onnx`. O modelo de desenho é diferente do modelo de foto.
 4. Ajuste o tamanho e as etapas, clique em Melhorar imagem e compare antes/depois. É possível baixar PNG/JPG ou aplicar ao Editor.
@@ -20,7 +20,7 @@ A proporção é preservada. Quando a medida em pixels tem outra proporção, a 
 - O WASM é compactado e dividido em 53 partes JavaScript. As partes são carregadas sob demanda, quatro por vez, e reconstruídas em memória. URLs Blob evitam fetch direto de WASM e módulos `file://`.
 - Para uso offline, extraia o ZIP inteiro. Carregue modelos ONNX do computador; modelos baixados podem ser reutilizados pelo cache quando o navegador disponibilizar esse armazenamento. Arquivos locais de modelo ficam na sessão do painel; reabra-os se fechar o painel.
 - WebGPU tem tentativa de execução pela GPU e fallback para WebAssembly/CPU. Disponibilidade, velocidade e suporte aos modelos variam por navegador/dispositivo.
-- Saída limitada a 32 MP em telas móveis e 100 MP no desktop, e a 32.000 px por dimensão. Estes limites não garantem memória suficiente em todos os aparelhos. GFPGAN exige aproximadamente 340 MB só de modelo; NAFNet também é pesado. Imagens e modelos grandes podem demorar bastante.
+- Não há teto artificial de megapixels ou de lado na saída manual. A sugestão usa uma referência de 32 MP no celular e 100 MP no desktop; o modo Auto nunca reduz a resolução original. A criação real depende da capacidade de Canvas e da memória do aparelho. GFPGAN exige aproximadamente 340 MB só de modelo; NAFNet também é pesado. Imagens e modelos grandes podem demorar bastante.
 - A IA pode criar detalhes diferentes do original; confira rostos, letras e logotipos antes de imprimir.
 
 ## Organização móvel
