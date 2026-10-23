@@ -341,8 +341,8 @@
       ['Imprimir como pôster', '', () => PS.setMode('poster'), hasDoc]
     ]],
     ['Editar', [
-      ['Desfazer', K('Ctrl+Z'), () => doc.undo(), () => doc.canUndo()],
-      ['Refazer', K('Ctrl+Shift+Z'), () => doc.redo(), () => doc.canRedo()],
+      ['Desfazer', K('Ctrl+Z'), () => PS.editorHistory('undo'), () => doc.canUndo()],
+      ['Refazer', K('Ctrl+Shift+Z'), () => PS.editorHistory('redo'), () => doc.canRedo()],
       '-',
       ['Recortar', K('Ctrl+X'), PS.cut, hasDoc], ['Copiar', K('Ctrl+C'), () => PS.copy(false), hasDoc], ['Copiar mesclado', K('Ctrl+Shift+C'), () => PS.copy(true), hasDoc],
       ['Colar como camada', K('Ctrl+V'), () => { if (!PS.pasteInternal()) PS.toast('Use Ctrl+V para colar da área de transferência do sistema.', 'info'); }, hasDoc],

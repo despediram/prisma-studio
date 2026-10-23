@@ -27,7 +27,7 @@
     if (b && document.activeElement !== b) b.value = Math.round(C.xf.sy * 1000) / 10;
     if (c && document.activeElement !== c) c.value = Math.round(C.xf.ang * 1800 / Math.PI) / 10;
   };
-  C.FONTS = ['system-ui', 'Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Verdana', 'Trebuchet MS', 'Impact', 'Courier New', 'Palatino Linotype', 'Segoe UI', 'Tahoma', 'Comic Sans MS', 'Brush Script MT'];
+  C.FONTS = ['DM Sans', 'Cormorant Garamond', 'Bebas Neue', 'system-ui', 'Arial', 'Helvetica', 'Georgia', 'Times New Roman', 'Verdana', 'Trebuchet MS', 'Impact', 'Courier New', 'Palatino Linotype', 'Segoe UI', 'Tahoma', 'Comic Sans MS', 'Brush Script MT'];
   C.customFonts = [];
   PS.$('#fontInput').addEventListener('change', async e => {
     const f = e.target.files[0];
@@ -38,9 +38,10 @@
       const face = new FontFace(name, await f.arrayBuffer());
       await face.load();
       document.fonts.add(face);
-      C.customFonts.push(name);
+      if(!C.customFonts.includes(name))C.customFonts.push(name);
       C.updateText('family', name);
       C.renderOptions();
+      C.flushText();
       PS.toast(`Fonte “${name}” carregada.`, 'success');
     } catch (err) {
       PS.toast('Não foi possível carregar essa fonte. Use TTF, OTF, WOFF ou WOFF2.', 'error');

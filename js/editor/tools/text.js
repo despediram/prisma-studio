@@ -29,8 +29,9 @@
     letter: 0
   };
   C.fontStr = t => `${t.italic ? 'italic ' : ''}${t.bold ? '700 ' : '400 '}${t.size}px ${/\s/.test(t.family) && !/,/.test(t.family) ? `"${t.family}"` : t.family}`;
+  const measureContext = PS.ctx(PS.canvas(1, 1));
   C.textBox = function (t) {
-    const c = PS.ctx(PS.canvas(1, 1));
+    const c = measureContext;
     c.font = C.fontStr(t);
     if ('letterSpacing' in c) c.letterSpacing = `${t.letter || 0}px`;
     const lines = String(t.text || '').split('\n'),
@@ -72,13 +73,29 @@
     });
     ctx.restore();
   };
+  // Reutiliza a tela da camada e limpa somente os limites antigos/novos do texto.
+  // Digitação e arraste são agrupados em um desenho por quadro, sem alocar outra imagem inteira.
   T.renderTextLayer = L => {
-    const c = PS.canvas(doc.w, doc.h);
-    C.drawText(PS.ctx(c), L.text);
-    L.canvas = c;
-    L.x = 0;
-    L.y = 0;
-    L._dirty = true;
+    if (!L.canvas || L.canvas.width !== doc.w || L.canvas.height !== doc.h) L.canvas = PS.canvas(doc.w, doc.h);
+    const b = C.textBox(L.text), pad = Math.ceil(L.text.size * .45 + L.text.strokeW * 2 + 6);
+    const next = {x:Math.floor(b.x-pad), y:Math.floor(b.y-pad), w:Math.ceil(b.w+pad*2), h:Math.ceil(b.h+pad*2)};
+    const old = L._textBounds || {x:0,y:0,w:doc.w,h:doc.h};
+    const x=Math.max(0,Math.min(old.x,next.x)), y=Math.max(0,Math.min(old.y,next.y));
+    const area={x,y,w:Math.max(0,Math.min(doc.w,Math.max(old.x+old.w,next.x+next.w))-x),h:Math.max(0,Math.min(doc.h,Math.max(old.y+old.h,next.y+next.h))-y)};
+    const ctx=PS.ctx(L.canvas);ctx.save();ctx.beginPath();ctx.rect(area.x,area.y,area.w,area.h);ctx.clip();ctx.clearRect(area.x,area.y,area.w,area.h);C.drawText(ctx,L.text);ctx.restore();
+    L._textBounds=next;L.x=0;L.y=0;L._dirty=true;
+    return area;
+  };
+  let textFrame=0, pendingText=null;
+  C.flushText = () => {
+    if(textFrame)cancelAnimationFrame(textFrame);textFrame=0;
+    const L=pendingText;pendingText=null;
+    if(L && doc.layers.includes(L)){const area=T.renderTextLayer(L);PS.view.render(area);}
+  };
+  C.scheduleText = L => {pendingText=L;if(!textFrame)textFrame=requestAnimationFrame(C.flushText);};
+  C.ensureTextFont = () => {
+    const L=C.textEdit?.L;if(!L)return;
+    document.fonts.load(C.fontStr(L.text)).then(()=>{if(C.textEdit?.L===L)C.scheduleText(L);}).catch(()=>{});
   };
   C.textLayerAt = function (p) {
     for (let i = doc.layers.length - 1; i >= 0; i--) {
@@ -97,6 +114,7 @@
       doc.emit('layers');
     }
     const L = doc.layer;
+    L._textBounds = null; // O histórico pode ter restaurado outros limites nessa tela.
     C.textEdit = {
       L,
       isNew,
@@ -105,6 +123,9 @@
       }
     };
     C.renderOptions();
+    PS.mobile?.open('options');
+    window.dispatchEvent(new Event('prisma:toolchange'));
+    C.ensureTextFont();
     setTimeout(() => {
       const ta = PS.$('#txtValue');
       if (ta) {
@@ -115,6 +136,7 @@
   };
   T.commitText = () => {
     if (!C.textEdit) return;
+    C.flushText();
     const {
       L,
       isNew,
@@ -133,10 +155,12 @@
     }
     if (isNew || JSON.stringify(before) !== JSON.stringify(L.text)) doc.commit(isNew ? 'Texto' : 'Editar texto', 'fa-font');
     C.renderOptions();
+    window.dispatchEvent(new Event('prisma:toolchange'));
     PS.view.render();
   };
   T.cancelText = () => {
     if (!C.textEdit) return;
+    if(textFrame)cancelAnimationFrame(textFrame);textFrame=0;pendingText=null;
     const {
       L,
       isNew,
@@ -158,15 +182,16 @@
       doc.emit('change');
     }
     C.renderOptions();
+    window.dispatchEvent(new Event('prisma:toolchange'));
     PS.view.render();
   };
   C.updateText = function (k, v) {
     S.text[k] = v;
     if (C.textEdit) {
       C.textEdit.L.text[k] = v;
-      T.renderTextLayer(C.textEdit.L);
+      C.scheduleText(C.textEdit.L);
+      if(k==='family'||k==='bold'||k==='italic')C.ensureTextFont();
       doc.version++;
-      PS.view.render();
     }
   };
   T.registry.text = {
@@ -229,10 +254,9 @@
               const t = C.textEdit.L.text;
               t.x = C.drag.x + p.x - C.drag.start.x;
               t.y = C.drag.y + p.y - C.drag.start.y;
-              T.renderTextLayer(C.textEdit.L);
+              C.scheduleText(C.textEdit.L);
               doc.version++;
-              v.render();
-            } else if (type === 'up') C.drag = null;
+            } else if (type === 'up' || type === 'cancel') { C.drag = null; C.flushText(); }
             break;
           }
       }
@@ -263,7 +287,9 @@
             min,
             max
           });
-        return [{
+        return [...(!C.textEdit ? [O.button('txtInsert', 'Adicionar texto na imagem', () => {
+          const at={x:doc.w*.15,y:doc.h*.35}; T.registry.text.pointer('down', {pointerType:'mouse'}, at); T.registry.text.pointer('up', {}, at);
+        }, 'fa-solid fa-plus', 'primary')] : []), {
           type: 'textarea',
           id: 'txtValue',
           label: 'Texto',
@@ -271,7 +297,6 @@
           onChange: v => {
             C.updateText('text', v);
             if (C.textEdit) C.textEdit.L.name = (v || 'Texto').split('\n')[0].slice(0, 24);
-            doc.emit('layers');
           },
           onKey: e => {
             e.stopPropagation();
@@ -322,7 +347,7 @@
           label: 'Contorno',
           value: o.stroke,
           onChange: v => C.updateText('stroke', v)
-        }, field('txtStrokeW', 'Espessura do contorno', 'strokeW', 0, 200)], 'grid2'), O.group([O.button('txtFont', 'Fonte', () => PS.$('#fontInput').click(), 'fa-solid fa-upload'), ...(C.textEdit ? [O.button('txtCancel', 'Cancelar', T.cancelText), O.button('txtApply', 'Concluir', T.commitText, '', 'primary')] : [])], 'row-actions'), O.hint(C.textEdit ? 'Ctrl + Enter conclui. O texto continua editável depois: clique nele com esta ferramenta.' : 'Clique na imagem para criar um texto.')];
+        }, field('txtStrokeW', 'Espessura do contorno', 'strokeW', 0, 200)], 'grid2'), O.group([O.button('txtFont', 'Importar fonte', () => PS.$('#fontInput').click(), 'fa-solid fa-upload'), ...(C.textEdit ? [O.button('txtCancel', 'Cancelar', T.cancelText), O.button('txtApply', 'Concluir', T.commitText, '', 'primary')] : [])], 'row-actions'), O.hint(C.textEdit ? 'Ctrl + Enter conclui. O texto continua editável depois: clique nele com esta ferramenta.' : 'Clique na imagem para criar um texto.')];
       })();
     }
   };

@@ -168,7 +168,8 @@
       const v = f.type === 'checkbox' ? input.checked : f.type === 'range' || f.type === 'number' ? +input.value : input.value;
       if (out) out.textContent = input.value + (f.suffix || '');
       f.onChange?.(v);
-      PS.view.render();
+      if (PS.tools.current === 'crop') PS.view.renderOverlay();
+      else if (PS.tools.current !== 'text') PS.view.render();
     });
     return wrap;
   }

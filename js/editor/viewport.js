@@ -40,10 +40,11 @@
   view.fit = () => {
     if (!doc.has) return;
     const mobile=matchMedia('(max-width:860px)').matches,pad=mobile?14:40,footer=mobile?48:70;
-    const z = Math.min((view.cssW - pad * 2) / doc.w, (view.cssH - pad * 2 - footer) / doc.h);
+    const top = 58;
+    const z = Math.min((view.cssW - pad * 2) / doc.w, Math.max(24, view.cssH - top - pad * 2 - footer) / doc.h);
     view.zoom = PS.clamp(z, 0.01, 64);
     view.panX = (view.cssW - doc.w * view.zoom) / 2;
-    view.panY = mobile ? (view.cssH - footer - doc.h * view.zoom) / 2 : (view.cssH - 50 - doc.h * view.zoom) / 2 + 6;
+    view.panY = top + Math.max(0, (view.cssH - top - footer - doc.h * view.zoom) / 2);
     view.isFit = true;
     view.render(); updateZoomUI();
   };
@@ -93,6 +94,7 @@
   };
   function draw() {
     raf = 0;
+    if (stage.closest('main')?.hidden) return; // Não compõe o editor enquanto outra área está aberta.
     const d = view.dpr;
     ctx.setTransform(1, 0, 0, 1, 0, 0);
     ctx.clearRect(0, 0, cv.width, cv.height);
@@ -210,11 +212,12 @@
 
   /* ---------- informações do cursor ---------- */
   const infoEl = PS.$('#zCursor');
-  let infoT = 0;
+  let infoT = 0, eCursorTouch = false;
   function cursorInfo(p) {
     if (!infoEl) return;
     if (!p || p.x < 0 || p.y < 0 || p.x >= doc.w || p.y >= doc.h) { infoEl.textContent = ''; return; }
     const now = performance.now(); if (now - infoT < 60) return; infoT = now;
+    if (PS.toolContext?.drag || eCursorTouch) { infoEl.textContent = `x ${Math.floor(p.x)}, y ${Math.floor(p.y)}`; return; }
     const L = doc.layer, lx = Math.floor(p.x - L.x), ly = Math.floor(p.y - L.y);
     let rgb = '';
     if (lx >= 0 && ly >= 0 && lx < L.canvas.width && ly < L.canvas.height) {
@@ -234,6 +237,7 @@
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
       if (toolDown && PS.tools.cancelStroke) PS.tools.cancelStroke();
+      if (toolDown) PS.tools.pointer('cancel', e, view.toImage(e.clientX, e.clientY));
       toolDown = false;
       const [a, b] = [...pointers.values()];
       pinch = { d: Math.hypot(a.x - b.x, a.y - b.y), z: view.zoom, cx: (a.x + b.x) / 2, cy: (a.y + b.y) / 2, px: view.panX, py: view.panY };
@@ -266,9 +270,10 @@
     }
     if (!doc.has) return;
     const p = view.toImage(e.clientX, e.clientY);
+    eCursorTouch = e.pointerType === 'touch';
     cursorInfo(p);
     // eventos combinados (caneta/mouse rápido) deixam o traço mais fiel
-    if (toolDown && e.getCoalescedEvents) {
+    if (toolDown && ['brush','eraser','clone','heal','retouch','tone','liquify'].includes(PS.tools.current) && e.getCoalescedEvents) {
       const evs = e.getCoalescedEvents();
       if (evs.length > 1) { for (const ce of evs) PS.tools.pointer('drag', ce, view.toImage(ce.clientX, ce.clientY)); return; }
     }
@@ -279,7 +284,7 @@
     if (pointers.size < 2) pinch = null;
     splitDrag = false;
     if (view.panning) { view.panning = false; stage.classList.remove('panning'); panStart = null; return; }
-    if (toolDown) { toolDown = false; PS.tools.pointer('up', e, view.toImage(e.clientX, e.clientY)); }
+    if (toolDown) { toolDown = false; if(e.type === 'pointercancel' && PS.toolContext?.stroke) PS.tools.cancelStroke(); else PS.tools.pointer(e.type === 'pointercancel' ? 'cancel' : 'up', e, view.toImage(e.clientX, e.clientY)); }
   };
   cv.addEventListener('pointerup', end);
   cv.addEventListener('pointercancel', end);
@@ -301,8 +306,12 @@
   PS.$('#zLabel').addEventListener('click', () => view.fit());
   PS.$('#z100').addEventListener('click', () => view.setZoom(1));
 
+  let lastDocumentSize = '';
   doc.on(type => {
+    const size = doc.w + 'x' + doc.h, resized = size !== lastDocumentSize;
+    lastDocumentSize = size;
     if (type === 'load') { resize(); view.fit(); }
+    else if (resized && view.isFit) view.fit();
     else view.render();
   });
   resize();

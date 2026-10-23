@@ -80,7 +80,7 @@
    case 'save-as':saveAs=true;try{return await(design?D.save():PS.saveProject());}finally{saveAs=false;}
    case 'export':return design?D.exportPng():doc.has&&PS.exportDialog();case 'psd':return PS.exportPsd();
    case 'editor':case 'design':case 'poster':return PS.setMode(message.action);
-   case 'upscale':return PS.openUpscaler();case 'fit':return PS.view.fit();case 'undo':return design?D.undo():doc.undo();case 'redo':return design?D.redo():doc.redo();
+   case 'upscale':return PS.openUpscaler();case 'fit':return PS.view.fit();case 'undo':return design?D.undo():PS.editorHistory('undo');case 'redo':return design?D.redo():PS.editorHistory('redo');
    case 'help':return $('#btnHelp').click();case 'about':return about();case 'recovery':return showRecovery();
    case 'save-and-close':{
     let ok=true;try{if(editorChanged())ok=await PS.saveProject();if(ok&&designChanged())ok=await D.save();api.closed(ok&&!editorChanged()&&!designChanged());}catch(e){api.closed(false);throw e;}return;

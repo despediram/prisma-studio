@@ -4,6 +4,10 @@
 'use strict';
 const assert=require('node:assert/strict');
 module.exports=async function(win,store){
+ const interactionSource=require('node:fs').readFileSync(require('node:path').join(__dirname,'../testes/editor-interactions.js'),'utf8');
+ await win.webContents.executeJavaScript(interactionSource);
+ const interaction=await win.webContents.executeJavaScript('window.prismaTestInteractions(PS)');
+ console.log('Interações: '+JSON.stringify(interaction));
  const result=await win.webContents.executeJavaScript(`(async()=>{
   const errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
   const check=(v,m)=>{if(!v)throw Error(m)},P=PS,d=P.doc;

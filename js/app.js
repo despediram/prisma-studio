@@ -89,8 +89,8 @@
   }
   doc.on(type => { if (['load', 'change', 'layers'].includes(type)) syncTop(); });
   window.addEventListener('prisma:designchange',syncTop);
-  $('#btnUndo').addEventListener('click', () => mode==='design'?PS.design.undo():doc.undo());
-  $('#btnRedo').addEventListener('click', () => mode==='design'?PS.design.redo():doc.redo());
+  $('#btnUndo').addEventListener('click', () => mode==='design'?PS.design.undo():PS.editorHistory('undo'));
+  $('#btnRedo').addEventListener('click', () => mode==='design'?PS.design.redo():PS.editorHistory('redo'));
   const toggleCompare = (on) => { PS.view.compare = on == null ? !PS.view.compare : on; $('#btnCompare').setAttribute('aria-pressed', PS.view.compare); PS.view.render(); };
   $('#btnCompare').addEventListener('click', () => toggleCompare());
   $('#btnExport').addEventListener('click', () => mode==='design'?PS.design.exportPng().catch(e=>PS.toast(e.message,'error')):PS.exportDialog());
@@ -119,7 +119,7 @@
   const CTRL = {
     n: e => e.shiftKey ? (doc.has && doc.addLayer()) : PS.newDialog(), o: e => e.shiftKey ? PS.openAsLayer() : pick(),
     s: e => e.altKey ? PS.saveProject() : (doc.has && PS.exportDialog()),
-    z: e => e.shiftKey ? doc.redo() : doc.undo(), y: () => doc.redo(),
+    z: e => e.shiftKey ? PS.editorHistory('redo') : PS.editorHistory('undo'), y: () => PS.editorHistory('redo'),
     c: e => e.shiftKey ? PS.copy(true) : PS.copy(false), x: () => PS.cut(),
     j: e => PS.layerViaCopy(e.shiftKey), a: () => doc.selectAll(), d: () => doc.deselect(),
     t: () => PS.tools.set('transform'), e: e => e.shiftKey ? doc.mergeVisible() : doc.mergeDown(),

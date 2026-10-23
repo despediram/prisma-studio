@@ -16,7 +16,7 @@
   } = C;
   C.crop = null;
   S.crop = {
-    aspect: 'free'
+    aspect: 'free', selecting: true
   };
   C.ASPECTS = {
     free: null,
@@ -73,7 +73,8 @@
       w,
       h
     };
-    PS.view.render();
+    S.crop.selecting = false;
+    PS.view.renderOverlay();
     C.renderOptions();
   };
   C.cropHandles = () => {
@@ -106,6 +107,8 @@
       w: Math.max(1, Math.round(r.w)),
       h: Math.max(1, Math.round(r.h))
     };
+    r.x = PS.clamp(r.x, 0, doc.w - 1); r.y = PS.clamp(r.y, 0, doc.h - 1);
+    r.w = Math.min(r.w, doc.w - r.x); r.h = Math.min(r.h, doc.h - r.y);
     doc.transformAll(r.w, r.h, L => {
       const c = PS.canvas(r.w, r.h);
       PS.ctx(c).drawImage(L.canvas, L.x - r.x, L.y - r.y);
@@ -114,7 +117,12 @@
         m = PS.canvas(r.w, r.h);
         PS.ctx(m).drawImage(L.mask, L.x - r.x, L.y - r.y);
       }
+      if (L.type === 'text') {
+        L.text = {...L.text, x:L.text.x + L.x - r.x, y:L.text.y + L.y - r.y};
+        L._textBounds = null;
+      }
       return {
+        rasterize: false,
         canvas: c,
         x: 0,
         y: 0,
@@ -123,20 +131,29 @@
     }, label || `Recortar ${r.w} × ${r.h}`, 'fa-crop-simple');
     PS.view.fit();
   };
+  T.cancelCrop = () => {
+    C.drag = null; C.crop = null; S.crop.selecting = true;
+    T.set('move');
+  };
+  T.newCrop = () => {
+    C.drag = null; C.crop = null; S.crop.selecting = true;
+    PS.view.renderOverlay(); C.renderOptions();
+  };
   T.applyCrop = async () => {
-    if (!C.crop) return;
-    if (Math.round(C.crop.w) === doc.w && Math.round(C.crop.h) === doc.h) {
-      PS.toast('O recorte ocupa a imagem inteira — nada para recortar.', 'info');
-      return;
+    if (!C.crop || C.cropApplying) return;
+    const area = {...C.crop};
+    if (Math.round(area.w) < 1 || Math.round(area.h) < 1) return;
+    if (Math.round(area.w) === doc.w && Math.round(area.h) === doc.h) {
+      PS.toast('Selecione uma área menor ou arraste as alças antes de aplicar.', 'info'); return;
     }
-    await T.cropTo(C.crop);
-    C.crop = {
-      x: 0,
-      y: 0,
-      w: doc.w,
-      h: doc.h
-    };
-    C.renderOptions();
+    C.cropApplying = true;
+    window.dispatchEvent(new Event('prisma:toolchange'));
+    try {
+      await PS.withBusy('Aplicando recorte', 'Preservando as camadas e o histórico.', () => T.cropTo(area));
+      C.crop = null; C.drag = null;
+      await T.set('move'); PS.mobile?.close(); PS.view.fit();
+    } catch (err) { PS.toast('Não foi possível recortar: ' + err.message, 'error'); }
+    finally { C.cropApplying = false; window.dispatchEvent(new Event('prisma:toolchange')); }
   };
 
   /* ---------- perspectiva ---------- */
@@ -145,13 +162,13 @@
     pointer(type, e, p) {
       const tool = 'crop',
         v = PS.view,
-        tol = 9 / v.zoom;
+        tol = (e.pointerType === 'touch' ? 24 : 10) / v.zoom;
       switch (tool) {
         case 'crop':
           {
-            if (!C.crop) return;
+            if (C.cropApplying || !doc.has) return;
             if (type === 'down') {
-              const h = C.hitHandle(p, C.cropHandles(), tol);
+              const h = C.crop && C.hitHandle(p, C.cropHandles(), tol);
               if (h) C.drag = {
                 kind: 'handle',
                 h,
@@ -159,7 +176,7 @@
                 r: {
                   ...C.crop
                 }
-              };else if (p.x >= C.crop.x && p.x <= C.crop.x + C.crop.w && p.y >= C.crop.y && p.y <= C.crop.y + C.crop.h) C.drag = {
+              };else if (C.crop && !S.crop.selecting && p.x >= C.crop.x && p.x <= C.crop.x + C.crop.w && p.y >= C.crop.y && p.y <= C.crop.y + C.crop.h) C.drag = {
                 kind: 'move',
                 start: p,
                 r: {
@@ -167,6 +184,8 @@
                 }
               };else C.drag = {
                 kind: 'new',
+                r: C.crop ? {...C.crop} : null,
+                selecting: S.crop.selecting,
                 start: p
               };
             } else if (type === 'drag' && C.drag) {
@@ -176,47 +195,13 @@
                 C.crop.x = PS.clamp(C.drag.r.x + dx, 0, doc.w - C.crop.w);
                 C.crop.y = PS.clamp(C.drag.r.y + dy, 0, doc.h - C.crop.h);
               } else if (C.drag.kind === 'new') {
-                const x0 = PS.clamp(Math.min(C.drag.start.x, p.x), 0, doc.w),
-                  y0 = PS.clamp(Math.min(C.drag.start.y, p.y), 0, doc.h);
-                const x1 = PS.clamp(Math.max(C.drag.start.x, p.x), 0, doc.w),
-                  y1 = PS.clamp(Math.max(C.drag.start.y, p.y), 0, doc.h);
-                C.crop = C.constrainCrop({
-                  x: x0,
-                  y: y0,
-                  w: x1 - x0,
-                  h: y1 - y0
-                });
+                C.crop = PS.cropGeometry.select(C.drag.start, p, C.aspectValue(), doc.w, doc.h);
               } else {
-                const r = {
-                    ...C.drag.r
-                  },
-                  h = C.drag.h;
-                if (h.includes('w')) {
-                  const nx = PS.clamp(r.x + dx, 0, r.x + r.w - 4);
-                  r.w += r.x - nx;
-                  r.x = nx;
-                }
-                if (h.includes('e')) r.w = PS.clamp(r.w + dx, 4, doc.w - r.x);
-                if (h.includes('n')) {
-                  const ny = PS.clamp(r.y + dy, 0, r.y + r.h - 4);
-                  r.h += r.y - ny;
-                  r.y = ny;
-                }
-                if (h.includes('s')) r.h = PS.clamp(r.h + dy, 4, doc.h - r.y);
-                const a = C.aspectValue();
-                if (a) {
-                  const right = C.drag.r.x + C.drag.r.w,
-                    bottom = C.drag.r.y + C.drag.r.h;
-                  if (h === 'n' || h === 's') r.w = r.h * a;else r.h = r.w / a;
-                  if (h.includes('w')) r.x = right - r.w;
-                  if (h.includes('n')) r.y = bottom - r.h;
-                  if (r.x < 0 || r.y < 0 || r.x + r.w > doc.w || r.y + r.h > doc.h) break;
-                }
-                C.crop = r;
+                C.crop = PS.cropGeometry.resize(C.drag.r, C.drag.h, dx, dy, C.aspectValue(), doc.w, doc.h);
               }
-              v.render();
+              v.renderOverlay();
               C.updateCropFields();
-            } else if (type === 'up') C.drag = null;else if (type === 'dblclick') T.applyCrop();
+            } else if (type === 'up') { C.drag = null; S.crop.selecting = false; window.dispatchEvent(new Event('prisma:toolchange')); } else if (type === 'cancel') { if(C.drag){C.crop=C.drag.r;S.crop.selecting=C.drag.selecting??false;} C.drag=null; C.updateCropFields(); v.renderOverlay(); } else if (type === 'dblclick' && e.pointerType !== 'touch') T.applyCrop();
             break;
           }
       }
@@ -255,7 +240,8 @@
         ctx.fillStyle = '#fff';
         Object.values(C.cropHandles()).forEach(([hx, hy]) => {
           const [sx, sy] = toS(hx, hy);
-          ctx.fillRect(sx - 5, sy - 5, 10, 10);
+          ctx.strokeStyle = '#1f2226'; ctx.lineWidth = 2;
+          ctx.fillRect(sx - 7, sy - 7, 14, 14); ctx.strokeRect(sx - 7, sy - 7, 14, 14);
         });
         const txt = `${Math.round(C.crop.w)} × ${Math.round(C.crop.h)} px`;
         ctx.font = '600 12px system-ui';
@@ -274,10 +260,7 @@
     options() {
       const s = S.crop,
         O = PS.toolOptions;
-      return [O.select(s, 'cropAspect', 'Proporção', 'aspect', [['free', 'Livre'], ['orig', 'Original'], ['1:1', 'Quadrado 1:1'], ['4:5', '4:5 (feed)'], ['4:3', '4:3'], ['3:4', '3:4'], ['3:2', '3:2'], ['2:3', '2:3'], ['16:9', '16:9'], ['9:16', '9:16 (stories)'], ['a4p', 'A4 retrato'], ['a4l', 'A4 paisagem'], ['poster', 'Igual ao pôster configurado']], C.resetCropToAspect), O.hint(C.crop ? `${Math.round(C.crop.w)} × ${Math.round(C.crop.h)} px` : '', 'cropDims'), O.group([O.button('cropReset', 'Redefinir', () => {
-        s.aspect = 'free';
-        C.resetCropToAspect();
-      }), O.button('cropApply', 'Recortar', T.applyCrop, '', 'primary')], 'row-actions')];
+      return [O.select(s, 'cropAspect', 'Proporção', 'aspect', [['free', 'Livre'], ['orig', 'Original'], ['1:1', 'Quadrado 1:1'], ['4:5', '4:5 (feed)'], ['4:3', '4:3'], ['3:4', '3:4'], ['3:2', '3:2'], ['2:3', '2:3'], ['16:9', '16:9'], ['9:16', '9:16 (stories)'], ['a4p', 'A4 retrato'], ['a4l', 'A4 paisagem'], ['poster', 'Igual ao pôster configurado']], C.resetCropToAspect), O.hint(C.crop ? `${Math.round(C.crop.w)} × ${Math.round(C.crop.h)} px` : 'Arraste na imagem para selecionar a área do corte.', 'cropDims'), O.group([O.button('cropReset', 'Selecionar outra área', T.newCrop), O.button('cropCancel', 'Cancelar', T.cancelCrop), O.button('cropApply', 'Aplicar corte', T.applyCrop, '', 'primary')], 'row-actions')];
     }
   };
 })();

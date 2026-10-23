@@ -28,6 +28,7 @@ jobs:
           node testes/image-size.cjs
           node testes/android.cjs
           node testes/poster-defaults.cjs
+          node testes/crop-geometry.cjs
           gradle -p android assembleDebug assembleRelease assembleDebugAndroidTest --stacktrace
       - name: Habilitar aceleração do emulador
         run: |
@@ -56,5 +57,5 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp android/app/build/outputs/apk/release/app-release-unsigned.apk Prisma-Studio-Android-0.1.1-unsigned.apk
-          gh release create "android-build-${{ github.run_number }}" Prisma-Studio-Android-0.1.1-unsigned.apk --prerelease --latest=false --target '${{ github.sha }}' --title "Android · compilação ${{ github.run_number }} para assinatura" --notes 'Compilação intermediária sem assinatura. O APK instalável é assinado fora do CI com a chave privada do projeto. Não instale este arquivo intermediário.'
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk Prisma-Studio-Android-0.1.2-unsigned.apk
+          gh release create "android-build-${{ github.run_number }}" Prisma-Studio-Android-0.1.2-unsigned.apk --prerelease --latest=false --target '${{ github.sha }}' --title "Android · compilação ${{ github.run_number }} para assinatura" --notes 'Compilação intermediária sem assinatura. O APK instalável é assinado fora do CI com a chave privada do projeto. Não instale este arquivo intermediário.'

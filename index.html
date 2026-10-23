@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="css/app.css">
   <link rel="stylesheet" href="css/studio-upgrade.css">
   <link rel="stylesheet" href="css/design-fonts.css">
-  <link rel="stylesheet" href="css/mobile-workspace.css?v=2">
+  <link rel="stylesheet" href="css/mobile-workspace.css?v=3">
   <link rel="stylesheet" href="css/upscaler-host.css">
   <link rel="stylesheet" href="css/desktop.css">
   <link rel="stylesheet" href="css/android.css">
@@ -480,6 +480,7 @@
           <button data-v="exploded">Folhas separadas</button>
         </div>
         <span class="grow"></span>
+        <button class="btn soft sm" id="pPromptShortcut"><i class="fa-solid fa-wand-magic-sparkles"></i> Prompts para IA</button>
         <span class="pnote" id="pNote"></span>
       </div>
       <div class="poster-assembly-controls" id="pAssemblyControls" hidden>
@@ -527,8 +528,8 @@
         <h2>Folhas</h2>
         <div class="sheets" id="pSheets"></div>
       </section>
-      <details class="pblock disclosure">
-        <summary><h2>Gerar arte com IA</h2></summary>
+      <details class="pblock disclosure" id="pPromptPanel">
+        <summary><h2>Prompts para gerar arte com IA</h2></summary>
         <p class="hint">Medidas e um texto pronto para pedir a uma IA de imagens uma arte já na proporção certa deste pôster.</p>
         <label class="fld"><span>Tamanho ideal (300 DPI)</span>
           <div class="input-group"><input class="input" id="pIdealPx" readonly><button class="btn soft sm" id="pCopyPx">Copiar</button></div>
@@ -564,65 +565,67 @@
   <div class="drag-veil" id="dragVeil" hidden><div><i class="fa-regular fa-image"></i><p>Solte a imagem para abrir</p></div></div>
   <div class="toasts" id="toasts" aria-live="polite"></div>
 
-  <script src="vendor/pdf-lib.min.js"></script>
-  <script src="vendor/jszip.min.js"></script>
-  <script src="js/core/imgproc.js"></script>
-  <script src="js/core/imgproc-extra.js"></script>
-  <script src="js/core/image-size.js"></script>
-  <script src="js/core/utils.js?v=3"></script>
-  <script src="js/editor/document.js?v=4"></script>
-  <script src="js/editor/viewport.js"></script>
-  <script src="js/editor/preview-gl.js"></script>
-  <script src="js/ui/tool-options.js"></script>
-  <script src="js/editor/tools/context.js"></script>
-  <script src="js/editor/tools/paint.js"></script>
-  <script src="js/editor/tools/paint-tiles.js"></script>
-  <script src="js/editor/tools/hand.js"></script>
-  <script src="js/editor/tools/zoom.js"></script>
-  <script src="js/editor/tools/move.js"></script>
-  <script src="js/editor/tools/marquee.js"></script>
-  <script src="js/editor/tools/wand.js"></script>
-  <script src="js/editor/tools/crop.js"></script>
-  <script src="js/editor/tools/perspective.js"></script>
-  <script src="js/editor/tools/transform.js?v=3"></script>
-  <script src="js/editor/tools/brush.js"></script>
-  <script src="js/editor/tools/eraser.js"></script>
-  <script src="js/editor/tools/bucket.js"></script>
-  <script src="js/editor/tools/gradient.js"></script>
-  <script src="js/editor/tools/clone.js"></script>
-  <script src="js/editor/tools/heal.js"></script>
-  <script src="js/editor/tools/retouch.js"></script>
-  <script src="js/editor/tools/tone.js"></script>
-  <script src="js/editor/tools/liquify.js"></script>
-  <script src="js/editor/tools/text.js"></script>
-  <script src="js/editor/tools/shape.js"></script>
-  <script src="js/editor/tools/picker.js"></script>
-  <script src="js/ui/tool-fields.js"></script>
-  <script src="js/editor/tools.js"></script>
-  <script src="js/ui/floating-toolbar.js"></script>
-  <script src="js/editor/fx.js"></script>
-  <script src="js/editor/layers.js"></script>
-  <script src="js/editor/psd.js"></script>
-  <script src="js/editor/productivity.js"></script>
-  <script src="js/editor/commands.js?v=5"></script>
-  <script src="js/editor/panels.js?v=4"></script>
-  <script src="js/poster/poster-geometry.js?v=6"></script>
-  <script src="js/poster/poster-raster.js?v=6"></script>
-  <script src="js/poster/poster-marks.js?v=6"></script>
-  <script src="js/poster/poster-page.js?v=8"></script>
-  <script src="js/poster/poster.js?v=9"></script>
-  <script src="js/poster/poster-assembly.js?v=8"></script>
-  <script src="js/poster/poster-calibration.js"></script>
-  <script src="vendor/fabric-6.9.0.min.js"></script>
-  <script src="js/design/templates.js"></script>
-  <script src="js/design/template-scenes.js"></script>
-  <script src="js/design/design.js?v=5"></script>
-  <script src="js/design/design-controls.js"></script>
-  <script src="js/app.js?v=4"></script>
-  <script src="js/ui/mobile.js"></script>
-  <script src="js/ui/upscaler.js?v=4"></script>
-  <script src="js/ui/desktop.js"></script>
-  <script src="js/core/android-transfer.js"></script>
-  <script src="js/ui/android.js"></script>
+  <script defer src="vendor/pdf-lib.min.js"></script>
+  <script defer src="vendor/jszip.min.js"></script>
+  <script defer src="js/core/imgproc.js"></script>
+  <script defer src="js/core/imgproc-extra.js"></script>
+  <script defer src="js/core/image-size.js"></script>
+  <script defer src="js/core/utils.js?v=3"></script>
+  <script defer src="js/editor/document.js?v=4"></script>
+  <script defer src="js/editor/viewport.js?v=2"></script>
+  <script defer src="js/editor/preview-gl.js"></script>
+  <script defer src="js/ui/tool-options.js?v=2"></script>
+  <script defer src="js/editor/tools/context.js"></script>
+  <script defer src="js/editor/tools/paint.js"></script>
+  <script defer src="js/editor/tools/paint-tiles.js"></script>
+  <script defer src="js/editor/tools/hand.js"></script>
+  <script defer src="js/editor/tools/zoom.js"></script>
+  <script defer src="js/editor/tools/move.js"></script>
+  <script defer src="js/editor/tools/marquee.js"></script>
+  <script defer src="js/editor/tools/wand.js"></script>
+  <script defer src="js/editor/tools/crop-geometry.js"></script>
+  <script defer src="js/editor/tools/crop.js?v=2"></script>
+  <script defer src="js/editor/tools/perspective.js"></script>
+  <script defer src="js/editor/tools/transform.js?v=3"></script>
+  <script defer src="js/editor/tools/brush.js"></script>
+  <script defer src="js/editor/tools/eraser.js"></script>
+  <script defer src="js/editor/tools/bucket.js"></script>
+  <script defer src="js/editor/tools/gradient.js"></script>
+  <script defer src="js/editor/tools/clone.js"></script>
+  <script defer src="js/editor/tools/heal.js"></script>
+  <script defer src="js/editor/tools/retouch.js"></script>
+  <script defer src="js/editor/tools/tone.js"></script>
+  <script defer src="js/editor/tools/liquify.js"></script>
+  <script defer src="js/editor/tools/text.js?v=2"></script>
+  <script defer src="js/editor/tools/shape.js"></script>
+  <script defer src="js/editor/tools/picker.js"></script>
+  <script defer src="js/ui/tool-fields.js?v=2"></script>
+  <script defer src="js/editor/tools.js?v=2"></script>
+  <script defer src="js/ui/floating-toolbar.js"></script>
+  <script defer src="js/editor/fx.js"></script>
+  <script defer src="js/editor/layers.js"></script>
+  <script defer src="js/editor/psd.js"></script>
+  <script defer src="js/editor/productivity.js"></script>
+  <script defer src="js/editor/commands.js?v=6"></script>
+  <script defer src="js/editor/panels.js?v=4"></script>
+  <script defer src="js/poster/poster-geometry.js?v=6"></script>
+  <script defer src="js/poster/poster-raster.js?v=6"></script>
+  <script defer src="js/poster/poster-marks.js?v=6"></script>
+  <script defer src="js/poster/poster-page.js?v=8"></script>
+  <script defer src="js/poster/poster.js?v=9"></script>
+  <script defer src="js/poster/poster-assembly.js?v=8"></script>
+  <script defer src="js/poster/poster-calibration.js"></script>
+  <script defer src="vendor/fabric-6.9.0.min.js"></script>
+  <script defer src="js/design/templates.js"></script>
+  <script defer src="js/design/template-scenes.js"></script>
+  <script defer src="js/design/design.js?v=5"></script>
+  <script defer src="js/design/design-controls.js"></script>
+  <script defer src="js/app.js?v=5"></script>
+  <script defer src="js/ui/mobile.js?v=2"></script>
+  <script defer src="js/ui/editor-actions.js"></script>
+  <script defer src="js/ui/upscaler.js?v=4"></script>
+  <script defer src="js/ui/desktop.js?v=2"></script>
+  <script defer src="js/core/android-transfer.js"></script>
+  <script defer src="js/ui/android.js"></script>
 </body>
 </html>

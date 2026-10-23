@@ -37,7 +37,7 @@
     },
     crop: {
       cls: 'tool-crosshair',
-      hint: 'Arraste as alças para recortar. Enter aplica, Esc cancela.'
+      hint: 'Selecione uma área ou arraste as alças. Aplicar corte confirma; Cancelar descarta.'
     },
     perspective: {
       cls: 'tool-crosshair',
@@ -128,6 +128,7 @@
       PS.toast('Os ajustes em prévia foram aplicados para usar esta ferramenta.', 'info');
       await doc.ensureFlat();
     }
+    if (name === 'crop') S.crop.selecting = true;
     if (name === 'crop' && doc.has) C.crop = {
       x: 0,
       y: 0,
@@ -137,7 +138,8 @@
     if (name === 'perspective' && doc.has) C.resetQuad();
     if (name === 'transform' && doc.has) T.beginTransform();
     C.renderOptions();
-    PS.view.render();
+    PS.view.renderOverlay();
+    window.dispatchEvent(new Event('prisma:toolchange'));
   };
 
   /* ---------- pincéis ---------- */
@@ -148,7 +150,7 @@
       v = PS.view;
     if (type === 'leave') {
       C.hover = null;
-      v.render();
+      v.renderOverlay();
       return;
     }
     if (p) C.hover = p;
@@ -212,16 +214,7 @@
         PS.view.render();
         return true;
       }
-      if (tool === 'crop') {
-        C.crop = {
-          x: 0,
-          y: 0,
-          w: doc.w,
-          h: doc.h
-        };
-        PS.view.render();
-        return true;
-      }
+      if (tool === 'crop') { T.cancelCrop(); return true; }
       if (C.stroke) {
         T.cancelStroke();
         return true;

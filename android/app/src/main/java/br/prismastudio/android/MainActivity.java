@@ -77,7 +77,7 @@ public final class MainActivity extends Activity {
  }
  private void handle(JSONObject message,JavaScriptReplyProxy reply)throws Exception{
   String op=message.getString("op");int id=message.getInt("id");
-  if(op.equals("ready")){ready=true;respond(reply,id,new JSONObject().put("version","0.1.1").put("incoming",incoming!=null),null);return;}
+  if(op.equals("ready")){ready=true;respond(reply,id,new JSONObject().put("version","0.1.2").put("incoming",incoming!=null),null);return;}
   if(op.equals("close-app")){respond(reply,id,new JSONObject(),null);finish();return;}
   if(op.equals("save-start")){
    if(pendingSave!=null){respond(reply,id,null,"Termine o salvamento anterior.");return;}

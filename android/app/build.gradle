@@ -7,13 +7,13 @@ android {
   applicationId 'br.prismastudio.android'
   minSdk 26
   targetSdk 35
-  versionCode 2
-  versionName '0.1.1'
+  versionCode 3
+  versionName '0.1.2'
   testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
  }
  buildTypes { release { minifyEnabled false } }
  compileOptions { sourceCompatibility JavaVersion.VERSION_17; targetCompatibility JavaVersion.VERSION_17 }
- sourceSets { main.assets.srcDir layout.buildDirectory.dir('generated/prismaAssets') }
+ sourceSets { main.assets.srcDir layout.buildDirectory.dir('generated/prismaAssets'); androidTest.assets.srcDir rootProject.file('../testes') }
 }
 dependencies {
  implementation 'androidx.webkit:webkit:1.14.0'
