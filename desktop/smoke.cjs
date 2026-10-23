@@ -5,7 +5,7 @@
 const assert=require('node:assert/strict');
 module.exports=async function(win,store){
  const interactionSource=require('node:fs').readFileSync(require('node:path').join(__dirname,'../testes/editor-interactions.js'),'utf8');
- await win.webContents.executeJavaScript(interactionSource);
+ await win.webContents.executeJavaScript(interactionSource+'\n;void 0;');
  const interaction=await win.webContents.executeJavaScript('window.prismaTestInteractions(PS)');
  console.log('Interações: '+JSON.stringify(interaction));
  const result=await win.webContents.executeJavaScript(`(async()=>{
