@@ -26,6 +26,7 @@ window.prismaTestInteractions=async function(P){
  }
  d.undo();await T.set('crop');T.pointer('down',{pointerType:'touch'},{x:60,y:40});T.pointer('drag',{pointerType:'touch'},{x:200,y:160});T.pointer('up',{},{});T.cancelCrop();check(d.w===320&&d.h===240&&!C.crop,'Cancelar alterou pixels');
  await T.set('text');T.S.text.size=24;T.registry.text.pointer('down',{pointerType:'touch'},{x:30,y:80});T.registry.text.pointer('up',{},{});
+ await frame();const apply=document.querySelector('#editApply'),rect=apply.getBoundingClientRect(),hit=document.elementFromPoint(rect.x+rect.width/2,rect.y+rect.height/2);check(hit&&(hit===apply||apply.contains(hit)),'Painel móvel bloqueou o botão Concluir texto');
  C.updateText('family','DM Sans');await document.fonts.load(C.fontStr(C.textEdit.L.text));C.flushText();
  const L=C.textEdit.L,canvas=L.canvas,render=T.renderTextLayer;let draws=0;T.renderTextLayer=function(layer){draws++;return render(layer);};
  try{for(let i=0;i<50;i++)C.updateText('text','Texto '+i);C.flushText();check(draws===1,'Digitação não foi agrupada por quadro');check(L.canvas===canvas,'Digitação realocou a imagem inteira');}finally{T.renderTextLayer=render;}

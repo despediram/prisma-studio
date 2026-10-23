@@ -11,7 +11,7 @@
  const redo=button('editRedo','Refazer','fa-rotate-right',()=>history('redo'));
  const caption=document.createElement('span');caption.className='editor-action-caption';bar.append(caption);
  const options=button('editOptions','Opções','fa-sliders',()=>PS.mobile?.open('options'));
- const cancel=button('editCancel','Cancelar','fa-xmark',()=>{if(C.textEdit)PS.tools.cancelText();else PS.tools.cancelCrop();sync();});
+ const cancel=button('editCancel','Cancelar','fa-xmark',()=>{if(C.textEdit)PS.tools.cancelText();else PS.tools.cancelCrop();PS.mobile?.close();sync();});
  const apply=button('editApply','Aplicar corte','fa-check',()=>{if(C.textEdit){PS.tools.commitText();PS.mobile?.close();}else PS.tools.applyCrop();sync();},true);
  PS.$('#stage').append(bar);
  function sync(){
@@ -19,7 +19,7 @@
   const crop=PS.tools.current==='crop',text=!!C.textEdit;
   caption.textContent=crop?'Recortar':text?'Editar texto':'';
   options.hidden=!crop&&!text;cancel.hidden=apply.hidden=!crop&&!text;
-  apply.querySelector('span').textContent=text?'Concluir texto':'Aplicar corte';apply.setAttribute('aria-label',text?'Concluir texto':'Aplicar corte');
+  apply.querySelector('span').textContent=text?'Concluir texto':'Aplicar corte';apply.setAttribute('aria-label',text?'Concluir texto':'Aplicar corte');apply.title=text?'Concluir texto':'Aplicar corte';
   apply.disabled=!!C.cropApplying||(crop&&(!C.crop||C.crop.w<1||C.crop.h<1));
   undo.disabled||=!!C.cropApplying;redo.disabled||=!!C.cropApplying;
  }
