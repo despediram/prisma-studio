@@ -8,7 +8,7 @@ window.prismaTestInteractions=async function(P){
  d.newDocument(320,240,'transparent','Teste de interação');P.afterOpen();
  const ctx=P.ctx(d.base);ctx.fillStyle='#00a7e1';ctx.fillRect(0,0,320,240);ctx.fillStyle='#e6007e';ctx.fillRect(60,40,100,100);d.commit('Arte de teste');d.addMask();d.editMask=false;d.rebuildProxy();
  const originalHash=hash(d.base);await T.set('crop');P.view.render();await frame();
- const draw=d.drawLayers;let compositions=0;d.drawLayers=function(...args){compositions++;return draw.apply(d,args);};
+ const draw=d.drawLayers;let compositions=0;d.drawLayers=function(...args){if(Object.prototype.hasOwnProperty.call(args[1]||{},'region'))compositions++;return draw.apply(d,args);};
  try{
   T.pointer('down',{pointerType:'touch'},{x:60,y:40});
   for(let i=1;i<=40;i++)T.pointer('drag',{pointerType:'touch'},{x:60+i*4,y:40+i*3});

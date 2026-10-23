@@ -301,6 +301,8 @@
       const hc = PS.$('#histogram'), x = hc.getContext('2d'), W = hc.width, H = hc.height;
       x.clearRect(0, 0, W, H);
       if (!doc.has) { lastHist = null; drawCurve(); return; }
+      // Não compõe imagens grandes para um histograma que o usuário não está vendo.
+      if (!hc.getClientRects().length || PS.$('#view-editor').hidden) return;
       const small = doc.liveSmall(360);
       lastHist = IP.histogram(PS.getImg(small));
       const dark = document.documentElement.dataset.theme !== 'light';

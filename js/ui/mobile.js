@@ -24,6 +24,7 @@
   shade.hidden=false;dock.querySelector('[data-mobile-action="'+key+'"]')?.setAttribute('aria-expanded','true');
   if(key==='layers')$('#layersDock').classList.remove('collapsed');
   if(key==='prompt')$('#pPromptPanel').open=true;
+  panel.querySelector('.mobile-sheet-title span').textContent=key==='prompt'?'Prompts para IA':panel===targets[2]?'Imprimir e montar':panel===targets[1]?'Configurar pôster':'Painel do editor';
   scheduleReserve();return true;
  }
  PS.mobile={close,open};

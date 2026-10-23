@@ -25,7 +25,7 @@
     $('#view-design').hidden = m !== 'design';
     if(m==='design'){PS.fx.close();await PS.design.activate();}
     if (m === 'poster') { PS.fx.close(); await PS.poster.refreshSource(); }
-    else PS.view.render();
+    else { PS.view.render(); if(m==='editor')PS.panels.updateHistogram(); }
     syncTop();
   }
   PS.$$('.mode').forEach(b => b.addEventListener('click', () => setMode(b.dataset.mode)));
