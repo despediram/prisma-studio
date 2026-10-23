@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - 'desktop/**'
+      - 'testes/editor-interactions.js'
+      - 'testes/crop-geometry.cjs'
       - 'package.json'
       - 'package-lock.json'
       - 'js/**'

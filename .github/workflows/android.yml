@@ -3,7 +3,7 @@ name: Compilar Prisma Studio Android
 on:
   push:
     branches: [main]
-    paths: ['android/**', 'js/**', 'css/**', 'index.html', 'upscaler/**', 'vendor/**', '.github/workflows/android.yml']
+    paths: ['android/**', 'testes/editor-interactions.js', 'testes/crop-geometry.cjs', 'js/**', 'css/**', 'index.html', 'upscaler/**', 'vendor/**', '.github/workflows/android.yml']
   workflow_dispatch:
 permissions:
   contents: write

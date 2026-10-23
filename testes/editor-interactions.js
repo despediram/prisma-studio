@@ -23,6 +23,7 @@ window.prismaTestInteractions=async function(P){
  for(let i=0;i<100;i++){
   d.undo();check(d.w===320&&d.h===240&&hash(d.base)===originalHash,'Desfazer divergiu');
   d.redo();check(d.w===160&&d.h===120&&hash(d.base)===croppedHash,'Refazer divergiu');
+  if(i%5===4)await frame(); // Mantém a ponte e a tela responsivas durante a sequência sintética.
  }
  d.undo();await T.set('crop');T.pointer('down',{pointerType:'touch'},{x:60,y:40});T.pointer('drag',{pointerType:'touch'},{x:200,y:160});T.pointer('up',{},{});T.cancelCrop();check(d.w===320&&d.h===240&&!C.crop,'Cancelar alterou pixels');
  await T.set('text');T.S.text.size=24;T.registry.text.pointer('down',{pointerType:'touch'},{x:30,y:80});T.registry.text.pointer('up',{},{});
