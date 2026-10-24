@@ -53,6 +53,7 @@
     circle(.95,.98,.4,'#125b57');txt('“',.08,.08,.3,.28,t.accent,{fontFamily:'Cormorant Garamond'});txt('Pequenos\npassos.\nGrandes\ncomeços.',.12,.30,.76,wide?.075:.105,t.dark,{fontFamily:'Cormorant Garamond'});rect(.12,.82,.12,.004,t.accent);label('UMA IDEIA PARA HOJE',.12,.88,.76);break;
    case 'botanical':
     rect(.12,.12,.76,.76,'#eceddb');leaves(.02,.05);leaves(.94,.60,-1);label('UM RESPIRO NA ROTINA',.20,.23,.60);txt('Cultive\nbons\nmomentos.',.20,.36,.60,wide?.07:.105,t.dark,{fontFamily:'Cormorant Garamond'});txt('Data • Horário • Local',.20,.76,.60,.028,t.accent);break;
+   default:if(t.layout&&PS.designExtraScene)return PS.designExtraScene(t,w,h);
   }
   // Formatos horizontais redistribuem os layouts altos em uma composição
   // proporcional. Nenhum texto é esticado e todas as caixas permanecem editáveis.

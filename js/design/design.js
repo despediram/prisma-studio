@@ -6,15 +6,16 @@
  'use strict';
  const PS=window.PS,F=window.fabric,$=PS.$;
  let canvas=null,pages=[],active=0,format='a5',busy=false,history=[],index=-1,timer=0,generation=0;
- F.FabricObject.customProperties=['prismaName','prismaLocked'];
- const MAX_BYTES=32*1024*1024;
- const D=PS.design={get canvas(){return canvas;},get pages(){return pages;},get active(){return active;},get format(){return format;},get busy(){return busy;},get revision(){return history[index]||'';},get generation(){return generation;}};
+ F.FabricObject.customProperties=['prismaName','prismaLocked','prismaSlot'];
+ const MAX_BYTES=32*1024*1024,historyAssets=new PS.DesignHistoryAssets();
+ const D=PS.design={get canvas(){return canvas;},get pages(){return pages;},get active(){return active;},get format(){return format;},get busy(){return busy;},get revision(){return history[index]||'';},get generation(){return generation;},get historyBytes(){return historyAssets.bytes(history);},get historyAssets(){return historyAssets.sources.size;}};
  const safe=fn=>(...args)=>Promise.resolve().then(()=>fn(...args)).catch(e=>{console.error(e);PS.toast('Não foi possível concluir: '+e.message,'error');});
  const on=(id,ev,fn)=>$('#'+id).addEventListener(ev,safe(fn));
  const fmt=()=>PS.designFormats[format];
- const state=()=>{savePage();return JSON.stringify({app:'Prisma Design',version:1,name:$('#dsName').value,format,customFormat:format==='custom'?{...fmt()}:undefined,active,pages});};
- function savePage(){if(canvas&&pages[active]){const o=canvas.getActiveObject(),objects=o instanceof F.ActiveSelection?[...o.getObjects()]:null;if(objects)canvas.discardActiveObject();pages[active].scene=canvas.toJSON(['prismaName','prismaLocked']);if(objects){canvas.setActiveObject(new F.ActiveSelection(objects,{canvas}));canvas.requestRenderAll();}}}
- function commit(){if(busy||!canvas)return;const value=state();if(history[index]===value)return;history.splice(index+1);history.push(value);index=history.length-1;let bytes=history.reduce((n,s)=>n+s.length*2,0);while(bytes>MAX_BYTES&&history.length>1){bytes-=history.shift().length*2;index--; }sync();}
+ const stateObject=()=>{savePage();return {app:'Prisma Design',version:1,name:$('#dsName').value,format,customFormat:format==='custom'?{...fmt()}:undefined,active,pages};};
+ const state=()=>JSON.stringify(stateObject());
+ function savePage(){if(canvas&&pages[active]){const o=canvas.getActiveObject(),objects=o instanceof F.ActiveSelection?[...o.getObjects()]:null;if(objects)canvas.discardActiveObject();pages[active].scene=canvas.toJSON(['prismaName','prismaLocked','prismaSlot']);if(objects){canvas.setActiveObject(new F.ActiveSelection(objects,{canvas}));canvas.requestRenderAll();}}}
+ function commit(){if(busy||!canvas)return;const value=historyAssets.capture(stateObject());if(history[index]===value)return;history.splice(index+1);history.push(value);index=history.length-1;while(history.length>1&&historyAssets.bytes(history)>MAX_BYTES){history.shift();index--;}historyAssets.collect(history);sync();}
  const later=()=>{clearTimeout(timer);timer=setTimeout(()=>{timer=0;commit();},250);};
  function init(){
   if(canvas)return;
@@ -24,20 +25,21 @@
   pages=[{name:'Página 1',scene:{objects:[],background:'#fff5e8'}}];resize();D.ready=D.applyTemplate('birthday');
  }
  let viewZoom=1;
- function resize(){if(!canvas)return;const r=$('#dsStage').getBoundingClientRect(),f=fmt(),z=Math.max(.02,Math.min((r.width-40)/f.w,(r.height-40)/f.h)*viewZoom);canvas.setDimensions({width:Math.max(1,Math.round(f.w*z)),height:Math.max(1,Math.round(f.h*z))});canvas.setViewportTransform([z,0,0,z,0,0]);canvas.requestRenderAll();}
- D.activate=async()=>{init();await D.ready;await D.localFontsReady;if(!catalogActivated){catalogActivated=true;catalog();}requestAnimationFrame(resize);};new ResizeObserver(resize).observe($('#dsStage'));
+ let lastViewport='';
+ function resize(){if(!canvas)return;const r=$('#dsStage').getBoundingClientRect(),f=fmt(),z=Math.max(.02,Math.min((r.width-40)/f.w,(r.height-40)/f.h)*viewZoom);const width=Math.max(1,Math.round(f.w*z)),height=Math.max(1,Math.round(f.h*z)),key=width+'|'+height+'|'+z;if(key===lastViewport)return;lastViewport=key;canvas.setDimensions({width,height});canvas.setViewportTransform([z,0,0,z,0,0]);canvas.requestRenderAll();}
+ D.activate=async()=>{init();await D.ready;await D.localFontsReady;if(!catalogActivated){catalogActivated=true;catalog();}requestAnimationFrame(resize);};let resizeFrame=0;new ResizeObserver(()=>{if(!resizeFrame)resizeFrame=requestAnimationFrame(()=>{resizeFrame=0;resize();});}).observe($('#dsStage'));
  async function load(data){
   if(data?.format==='custom'){const f=data.customFormat;if(!f||!Number.isInteger(f.w)||!Number.isInteger(f.h)||!PS.imageSize.valid(f.w,f.h))throw Error('Tamanho personalizado inválido.');PS.designFormats.custom={name:'Tamanho personalizado',w:f.w,h:f.h,...(Number.isFinite(f.mmW)&&f.mmW>0&&Number.isFinite(f.mmH)&&f.mmH>0?{mmW:f.mmW,mmH:f.mmH}:{})};if(!$('#dsFormat option[value=custom]')){const option=document.createElement('option');option.value='custom';option.textContent='Tamanho personalizado';$('#dsFormat').append(option);}}
   if(data?.app!=='Prisma Design'||data.version!==1||!PS.designFormats[data.format]||!Array.isArray(data.pages)||!data.pages.length||data.pages.length>40)throw Error('Arquivo de design inválido ou com mais de 40 páginas.');
   // Só aceita o subconjunto de objetos emitido por este editor. Imagens externas
   // não são carregadas: a abertura do arquivo continua local, sem requisições.
   const allowed=new Set(['Rect','Circle','Ellipse','Triangle','Polygon','Path','Textbox','Group','Image']);let objects=0;
-  function check(o,depth=0){if(depth>12||++objects>5000||!allowed.has(o.type))throw Error('Objeto não suportado no design.');if(o.type==='Image'&&!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(o.src||''))throw Error('A imagem precisa estar incorporada ao design.');if(o.filters&&(!Array.isArray(o.filters)||o.filters.some(f=>!['Grayscale','Sepia','Brightness','Contrast','Saturation'].includes(f.type))))throw Error('Efeito de foto não suportado.');if(o.objects){if(!Array.isArray(o.objects))throw Error('Grupo inválido.');o.objects.forEach(v=>check(v,depth+1));}for(const k of ['clipPath','fill','stroke'])if(o[k]&&typeof o[k]==='object')throw Error('Recurso externo não suportado neste arquivo.');}
+  function check(o,depth=0){if(depth>12||++objects>5000||!allowed.has(o.type))throw Error('Objeto não suportado no design.');if(o.type==='Image'&&!/^data:image\/(png|jpeg|webp|gif);base64,/i.test(o.src||''))throw Error('A imagem precisa estar incorporada ao design.');if(o.prismaSlot&&(!Number.isFinite(o.prismaSlot.w)||!Number.isFinite(o.prismaSlot.h)||o.prismaSlot.w<=0||o.prismaSlot.h<=0))throw Error('Célula de foto inválida.');if(o.filters&&(!Array.isArray(o.filters)||o.filters.some(f=>!['Grayscale','Sepia','Brightness','Contrast','Saturation'].includes(f.type))))throw Error('Efeito de foto não suportado.');if(o.objects){if(!Array.isArray(o.objects))throw Error('Grupo inválido.');o.objects.forEach(v=>check(v,depth+1));}for(const k of ['clipPath','fill','stroke'])if(o[k]&&typeof o[k]==='object')throw Error('Recurso externo não suportado neste arquivo.');}
   data.pages.forEach(p=>{if(p.scene?.backgroundImage||p.scene?.overlayImage||p.scene?.clipPath||p.scene?.overlay)throw Error('Recurso de página não suportado.');if(!p.scene||!Array.isArray(p.scene.objects))throw Error('Página inválida.');p.scene.objects.forEach(o=>check(o));if(typeof p.scene.background!=='string'||!/^#[a-f0-9]{6}$/i.test(p.scene.background))throw Error('Fundo inválido.');});
   busy=true;try{pages=data.pages;format=data.format;active=Math.max(0,Math.min(data.active||0,pages.length-1));$('#dsName').value=String(data.name||'Meu design');$('#dsFormat').value=format;await canvas.loadFromJSON(pages[active].scene);resize();sync();}finally{busy=false;}
  }
- D.load=async data=>{init();await D.ready;await D.localFontsReady;await load(data);generation++;history=[];index=-1;commit();};
- async function goto(i){if(timer){const direction=i-index;clearTimeout(timer);timer=0;commit();i=index+direction;}if(i<0||i>=history.length||busy)return;await load(JSON.parse(history[i]));index=i;sync();}
+ D.load=async data=>{init();await D.ready;await D.localFontsReady;await load(data);generation++;history=[];historyAssets.clear();index=-1;commit();};
+ async function goto(i){if(timer){const direction=i-index;clearTimeout(timer);timer=0;commit();i=index+direction;}if(i<0||i>=history.length||busy)return;await load(historyAssets.restore(history[i]));index=i;sync();}
  D.undo=()=>goto(index-1);D.redo=()=>goto(index+1);
  async function switchPage(i){if(busy||i===active)return;savePage();busy=true;try{active=i;await canvas.loadFromJSON(pages[i].scene);resize();sync();}finally{busy=false;}}
  function add(o,name){o.set({prismaName:name||o.type,cornerColor:'#00a7e1',borderColor:'#00a7e1',transparentCorners:false,touchCornerSize:32});canvas.add(o);return o;}
@@ -67,9 +69,9 @@
   if(kind==='circle')o=new F.Circle({...base,radius:size/2});else if(kind==='triangle')o=new F.Triangle({...base,width:size,height:size});else if(kind==='star'){const pts=[];for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,r=i%2?size*.22:size*.5;pts.push({x:size/2+Math.cos(a)*r,y:size/2+Math.sin(a)*r});}o=new F.Polygon(pts,base);}else if(kind==='heart')o=new F.Path('M 50 90 C 20 65 0 50 8 25 C 16 0 42 4 50 25 C 58 4 84 0 92 25 C 100 50 80 65 50 90 Z',{...base,scaleX:size/100,scaleY:size/100});else o=new F.Rect({...base,width:size,height:kind==='line'?u*.007:size,rx:kind==='rect'?u*.015:0});
   add(o,kind==='heart'?'Coração':kind==='star'?'Estrela':'Forma');canvas.setActiveObject(o);commit();canvas.requestRenderAll();
  };
- D.duplicate=async()=>{const o=selected();if(!o)return;const c=await o.clone(['prismaName','prismaLocked']);c.set({left:o.left+25,top:o.top+25});if(c instanceof F.ActiveSelection){c.canvas=canvas;c.forEachObject(obj=>canvas.add(obj));}else canvas.add(c);canvas.setActiveObject(c);commit();canvas.requestRenderAll();};
+ D.duplicate=async()=>{const o=selected();if(!o)return;const c=await o.clone(['prismaName','prismaLocked','prismaSlot']);c.set({left:o.left+25,top:o.top+25});if(c instanceof F.ActiveSelection){c.canvas=canvas;c.forEachObject(obj=>canvas.add(obj));}else canvas.add(c);canvas.setActiveObject(c);commit();canvas.requestRenderAll();};
  D.remove=()=>{const objects=canvas.getActiveObjects().filter(o=>!o.prismaLocked);canvas.discardActiveObject();objects.forEach(o=>canvas.remove(o));commit();canvas.requestRenderAll();};
- D.save=async()=>{init();commit();const blob=new Blob([state()],{type:'application/json'});if(PS.fileHost)return PS.fileHost.saveProject(blob,($('#dsName').value||'design')+'.prismadesign');if(PS.desktop)return PS.desktop.saveDesign(blob);PS.download(blob,($('#dsName').value||'design')+'.prismadesign');PS.toast('Design salvo com páginas e objetos editáveis.','success');return true;};
+ D.save=async()=>{init();commit();const before=D.revision,name=$('#dsName').value||'design',blob=new Blob([state()],{type:'application/json'});let ok=true;if(PS.fileHost)ok=await PS.fileHost.saveProject(blob,name+'.prismadesign');else if(PS.desktop)ok=await PS.desktop.saveDesign(blob);else{await PS.download(blob,name+'.prismadesign');PS.toast('Design salvo com páginas e objetos editáveis.','success');}if(ok!==false&&before===D.revision&&name===($('#dsName').value||'design'))await PS.recent?.remember(blob,{kind:'design',name});return ok!==false;};
  D.toCanvas=()=>{init();canvas.discardActiveObject();const f=fmt(),v=[...canvas.viewportTransform];try{canvas.setViewportTransform([1,0,0,1,0,0]);return canvas.toCanvasElement(1,{left:0,top:0,width:f.w,height:f.h,enableRetinaScaling:false});}finally{canvas.setViewportTransform(v);canvas.requestRenderAll();}};
  D.exportPng=async()=>PS.download(await PS.canvasToBlob(D.toCanvas(),'image/png'),($('#dsName').value||'design')+'.png');
  D.exportPdf=async()=>{savePage();const all=JSON.parse(JSON.stringify(pages)),f={...fmt()};await PS.withBusy('Exportando design','Preparando as páginas em alta resolução…',async progress=>{
@@ -91,7 +93,7 @@
  on('dsUngroup','click',()=>{const o=selected();if(!(o instanceof F.Group)||o instanceof F.ActiveSelection||o.prismaLocked)return;const items=o.removeAll();canvas.remove(o);items.forEach(v=>canvas.add(v));canvas.discardActiveObject();commit();canvas.requestRenderAll();});
  on('dsLock','click',()=>{const o=selected();if(!o)return;const v=!o.prismaLocked;o.set({prismaLocked:v,lockMovementX:v,lockMovementY:v,lockScalingX:v,lockScalingY:v,lockRotation:v,editable:!v});commit();canvas.requestRenderAll();});
  D.addPhoto=async file=>{
-  init();if(file.size>25*1024*1024)throw Error('Use uma foto com até 25 MB.');
+  init();
   const img=await PS.loadImageFile(file);const w=img.naturalWidth||img.width,h=img.naturalHeight||img.height;
   // Incorpora o arquivo já comprimido; evita converter cada JPEG inteiro para PNG.
   let url;if(/^image\/(png|jpeg|webp|gif)$/.test(file.type))url=await new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(r.result);r.onerror=()=>reject(Error('Não foi possível ler a foto.'));r.readAsDataURL(file);});
@@ -100,7 +102,7 @@
   object.set({scaleX:k,scaleY:k,left:(fmt().w-object.width*k)/2,top:(fmt().h-object.height*k)/2});add(object,'Foto');canvas.setActiveObject(object);commit();canvas.requestRenderAll();window.dispatchEvent(new CustomEvent('prisma:photoadded',{detail:{file}}));return object;
  };
  on('dsImageInput','change',async e=>{const files=[...e.target.files];e.target.value='';for(const file of files)await D.addPhoto(file);D.closePanel?.();});
- on('dsProjectInput','change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;if(f.size>40*1024*1024)throw Error('O design excede 40 MB.');await D.load(JSON.parse(await f.text()));});
+ on('dsProjectInput','change',async e=>{const f=e.target.files[0];e.target.value='';if(!f)return;await D.load(JSON.parse(await f.text()));});
  D.addPage=async()=>{if(busy)throw Error('Aguarde a operação atual.');if(pages.length>=40)throw Error('Limite de 40 páginas.');savePage();pages.push({name:'Página '+(pages.length+1),scene:{objects:[],background:'#ffffff'}});await switchPage(pages.length-1);commit();return pages[active];};
  on('dsAddPage','click',D.addPage);
  on('dsDuplicatePage','click',async()=>{if(pages.length>=40)throw Error('Limite de 40 páginas.');savePage();pages.push({...JSON.parse(JSON.stringify(pages[active])),name:'Página '+(pages.length+1)});await switchPage(pages.length-1);commit();});
@@ -115,12 +117,13 @@
   catalog();commit();
  };
  on('dsFormat','change',e=>D.resizePage(e.target.value));
+ D.thumbnail=()=>{if(!canvas)return null;const f=fmt(),v=[...canvas.viewportTransform];try{canvas.setViewportTransform([1,0,0,1,0,0]);return canvas.toCanvasElement(Math.min(1,240/Math.max(f.w,f.h)),{left:0,top:0,width:f.w,height:f.h,enableRetinaScaling:false});}finally{canvas.setViewportTransform(v);canvas.requestRenderAll();}};
  on('dsToEditor','click',async()=>{if(PS.doc.has&&!await PS.dialog({title:'Enviar página ao editor',body:'<p>A página do design substituirá o documento aberto no Editor. Salve o projeto atual antes de continuar.</p>',okText:'Substituir documento'}))return;const c=D.toCanvas();PS.doc.load(c,$('#dsName').value||'Design');PS.afterOpen();await PS.setMode('editor');PS.toast('Página enviada ao editor. O design continua editável na aba Design.','success');});
  window.addEventListener('beforeunload',e=>{if(history.length>1){e.preventDefault();e.returnValue='';}});
  let catalogActivated=false,thumbQueue=Promise.resolve();
  const thumbs=new Map();
  function catalog(){
-  const f=fmt(),thumbW=240,thumbH=Math.round(240*f.h/f.w),q=$('#dsSearch').value.toLocaleLowerCase('pt-BR'),category=$('#dsCategory').value,el=$('#dsTemplates');el.replaceChildren();
+  const f=fmt(),thumbW=Math.max(1,Math.round(Math.min(240,360*f.w/f.h))),thumbH=Math.max(1,Math.round(thumbW*f.h/f.w)),q=$('#dsSearch').value.toLocaleLowerCase('pt-BR'),category=$('#dsCategory').value,el=$('#dsTemplates');el.replaceChildren();
   const items=PS.designTemplates.filter(t=>(!category||t.category===category)&&(t.name+' '+t.category).toLocaleLowerCase('pt-BR').includes(q));
   $('#dsCatalogStatus').textContent=items.length?`${items.length} composições editáveis`:'Nenhum modelo encontrado. Tente outra categoria.';
   items.forEach(t=>{const b=document.createElement('button');b.className='design-template';b.setAttribute('aria-label','Usar modelo '+t.name);const img=document.createElement('img');img.alt='Prévia de '+t.name;img.width=thumbW;img.height=thumbH;img.style.aspectRatio=f.w+'/'+f.h;const title=document.createElement('strong');title.textContent=t.name;const small=document.createElement('small');small.textContent=t.category;b.append(img,title,small);b.addEventListener('click',safe(async()=>{await D.applyTemplate(t.id);D.closePanel?.();}));el.append(b);

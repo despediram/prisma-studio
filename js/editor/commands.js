@@ -59,12 +59,14 @@
     return blob;
   };
   PS.saveProject = async () => {
+    const before=doc.version+'|'+JSON.stringify(doc.params)+'|'+doc.name;
     const blob = await PS.createProjectBlob(); if (!blob) return false;
-    if (PS.fileHost) return PS.fileHost.saveProject(blob, `${doc.name || 'projeto'}.prisma`);
-    if (PS.desktop) return PS.desktop.saveEditor(blob);
-    PS.download(blob, `${doc.name || 'projeto'}.prisma`);
-    PS.toast(`Projeto salvo (${PS.bytes(blob.size)}). Abra-o depois com Arquivo › Abrir.`, 'success');
-    return true;
+    let ok=true;
+    if (PS.fileHost) ok=await PS.fileHost.saveProject(blob, `${doc.name || 'projeto'}.prisma`);
+    else if (PS.desktop) ok=await PS.desktop.saveEditor(blob);
+    else {await PS.download(blob, `${doc.name || 'projeto'}.prisma`);PS.toast(`Projeto salvo (${PS.bytes(blob.size)}). Abra-o depois com Arquivo › Abrir.`, 'success');}
+    if(ok!==false&&before===doc.version+'|'+JSON.stringify(doc.params)+'|'+doc.name)await PS.recent?.remember(blob,{kind:'editor',name:doc.name});
+    return ok!==false;
   };
   async function loadImageBlob(blob) { return PS.loadImageFile(new File([blob], 'x.png', { type: 'image/png' })); }
   PS.openProject = async file => {

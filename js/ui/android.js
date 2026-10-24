@@ -27,10 +27,10 @@
   running=true;
   try{
    const before=signature();
-   if(doc.has&&before!==backupEditor){const blob=await PS.createProjectBlob({background:true});if(blob&&before===signature()){await T.write(blob,{op:'recovery-start',kind:'editor',name:(doc.name||'projeto')+'.prisma'},request);backupEditor=before;}}
+   if(doc.has&&before!==backupEditor){const blob=await PS.createProjectBlob({background:true});if(blob&&before===signature()){await T.write(blob,{op:'recovery-start',kind:'editor',name:(doc.name||'projeto')+'.prisma'},request);backupEditor=before;PS.recent?.nativeSaved('editor');}}
    if(D.canvas&&(D.revision!==backupDesign||$('#dsName').value!==backupName)){
     const revision=D.revision,name=$('#dsName').value,blob=new Blob([D.edit.serialize()],{type:'application/json'});
-    if(revision===D.revision){await T.write(blob,{op:'recovery-start',kind:'design',name:(name||'design')+'.prismadesign'},request);backupDesign=revision;backupName=name;}
+    if(revision===D.revision){await T.write(blob,{op:'recovery-start',kind:'design',name:(name||'design')+'.prismadesign'},request);backupDesign=revision;backupName=name;PS.recent?.nativeSaved('design');}
    }
    return true;
   }finally{running=false;}

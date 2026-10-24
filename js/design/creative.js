@@ -20,7 +20,7 @@
   const o=E.selected();if(!(o instanceof F.FabricImage)||o.prismaLocked)throw Error('Selecione uma foto desbloqueada na página.');
   const src=o.getSrc();if(!/^data:image\//.test(src))throw Error('Adicione uma foto do aparelho primeiro.');
   const image=new Image();await new Promise((resolve,reject)=>{image.onload=resolve;image.onerror=()=>reject(Error('Não foi possível ler essa foto.'));image.src=src;});
-  const revision=D.revision;
+  E.commit();const revision=D.revision;
   PS.openBackgroundAI({source:image,name:o.prismaName||'Foto',apply:async mask=>{
    if(!D.canvas.getObjects().includes(o)||D.revision!==revision)throw Error('A página mudou. Reabra o recorte da foto.');
    const c=PS.canvas(image.naturalWidth,image.naturalHeight),x=PS.ctx(c);x.drawImage(image,0,0);x.globalCompositeOperation='destination-in';x.drawImage(mask,0,0);
@@ -46,7 +46,7 @@
   const style=styles.find(s=>s.id===id);if(!style)return;await PS.designFontsReady;
   const f=E.fmt(),u=Math.min(f.w,f.h),title=E.add(new F.Textbox(style.title,{left:f.w*.12,top:f.h*.32,width:f.w*.76,fontFamily:style.font,fontSize:u*.085,fill:style.color,fontWeight:style.font==='DM Sans'?'bold':'normal',textAlign:'center',lineHeight:1.05}),'Título');
   const sub=E.add(new F.Textbox(style.sub,{left:f.w*.12,top:f.h*.32+title.height+u*.035,width:f.w*.76,fontFamily:'DM Sans',fontSize:u*.021,fill:style.color,charSpacing:100,textAlign:'center'}),'Subtítulo');
-  D.canvas.discardActiveObject();D.canvas.setActiveObject(new F.ActiveSelection([title,sub],{canvas:D.canvas}));finish();D.openPanel('properties');
+  D.canvas.discardActiveObject();D.canvas.setActiveObject(title);finish();D.openPanel(matchMedia('(max-width:860px)').matches?'':'properties');
  };
  const fontGrid=node('div','creative-font-grid');typePanel.append(node('h4','','Fontes com prévia'),fontGrid);
  const fontInput=node('input');fontInput.type='file';fontInput.accept='.ttf,.otf,.woff,.woff2';fontInput.hidden=true;fontInput.id='dsLocalFontInput';typePanel.append(button('Importar fonte do aparelho',()=>fontInput.click()),fontInput,node('p','hint','As fontes importadas ficam guardadas neste aparelho quando o armazenamento local está disponível. Leve o arquivo da fonte ao abrir o design em outro dispositivo.'));
@@ -55,7 +55,7 @@
  async function installFont(name,bytes){const face=new FontFace(name,bytes);await face.load();if(installed.has(name))document.fonts.delete(installed.get(name));document.fonts.add(face);installed.set(name,face);if(!PS.toolContext.customFonts.includes(name))PS.toolContext.customFonts.push(name);if(![...$('#dsFont').options].some(o=>o.value===name)){const option=node('option','',name);option.value=name;$('#dsFont').append(option);}renderType();}
  fontInput.onchange=safe(async()=>{const file=fontInput.files[0];fontInput.value='';if(!file)return;if(file.size>10*1024*1024)throw Error('Escolha uma fonte com até 10 MB.');const name='Prisma '+file.name.replace(/\.[^.]+$/,'').replace(/[^\w -]/g,'').slice(0,60),bytes=await file.arrayBuffer();await installFont(name,bytes);try{const store=(await db()).transaction('fonts','readwrite').objectStore('fonts');store.put({name,bytes});}catch{}const o=E.selected();if(o instanceof F.Textbox){E.update('fontFamily',name);finish();}PS.toast('Fonte carregada: '+name,'success');});
  D.localFontsReady=(async()=>{try{const request=(await db()).transaction('fonts').objectStore('fonts').getAll();const all=await new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);});for(const item of all.slice(0,30))try{await installFont(item.name,item.bytes);}catch{}}catch{}})();
- function renderType(){const q=search.value.trim().toLocaleLowerCase('pt-BR');styleGrid.replaceChildren();fontGrid.replaceChildren();for(const s of styles.filter(s=>(s.label+' '+s.font).toLocaleLowerCase('pt-BR').includes(q))){const b=button(s.label,()=>D.addTextStyle(s.id),'creative-type-card');b.style.background=s.bg;b.style.color=s.color;const sample=node('strong','',s.title);sample.style.fontFamily=s.font;b.prepend(sample);styleGrid.append(b);}for(const name of [...new Set(['DM Sans','Cormorant Garamond','Bebas Neue','Arial','Georgia','Courier New',...installed.keys()])].filter(n=>n.toLowerCase().includes(q))){const b=button(name,async()=>{let o=E.selected();if(!(o instanceof F.Textbox)){D.addText('heading');o=E.selected();}await document.fonts.load('32px "'+name+'"');E.update('fontFamily',name);finish();D.openPanel('properties');},'creative-font');b.style.fontFamily=name;b.prepend(node('strong','','Sua ideia'));fontGrid.append(b);}}
+ function renderType(){const q=search.value.trim().toLocaleLowerCase('pt-BR');styleGrid.replaceChildren();fontGrid.replaceChildren();for(const s of styles.filter(s=>(s.label+' '+s.font).toLocaleLowerCase('pt-BR').includes(q))){const b=button(s.label,()=>D.addTextStyle(s.id),'creative-type-card');b.style.background=s.bg;b.style.color=s.color;const sample=node('strong','',s.title);sample.style.fontFamily=s.font;b.prepend(sample);styleGrid.append(b);}for(const name of [...new Set(['DM Sans','Cormorant Garamond','Bebas Neue','Arial','Georgia','Courier New',...installed.keys()])].filter(n=>n.toLowerCase().includes(q))){const b=button(name,async()=>{let o=E.selected();if(!(o instanceof F.Textbox)){D.addText('heading');o=E.selected();}await document.fonts.load('32px "'+name+'"');E.update('fontFamily',name);finish();D.openPanel(matchMedia('(max-width:860px)').matches?'':'properties');},'creative-font');b.style.fontFamily=name;b.prepend(node('strong','','Sua ideia'));fontGrid.append(b);}}
  search.oninput=renderType;renderType();
 
  // Formas e adesivos vetoriais próprios, sem dependência de uma biblioteca remota.
@@ -75,10 +75,10 @@
  D.addSymbol=id=>{const spec=symbols.find(s=>s[0]===id);if(!spec)return;const f=E.fmt(),s=Math.min(f.w,f.h)*.22,o=E.add(new F.Path(spec[2],{fill:$('#dsFill').value,left:f.w*.4,top:f.h*.4}),spec[1]);o.scaleToWidth(s);select(o);};
  function renderElements(){const q=elementSearch.value.toLocaleLowerCase('pt-BR');elementGrid.replaceChildren();for(const [id,label,path]of symbols.filter(s=>s[1].toLocaleLowerCase('pt-BR').includes(q))){const b=button(label,()=>D.addSymbol(id),'creative-element');const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');svg.setAttribute('viewBox','-12 -12 124 124');svg.setAttribute('aria-hidden','true');const p=document.createElementNS(svg.namespaceURI,'path');p.setAttribute('d',path);p.setAttribute('fill','currentColor');svg.append(p);b.prepend(svg);elementGrid.append(b);}}elementSearch.oninput=renderElements;renderElements();
 
- // Colagens usam fotos separadas, recortadas ao centro e na resolução das células.
+ // Colagens usam fotos separadas, preservadas no arquivo e enquadradas em células editáveis.
  const layouts={twoV:[[0,0,.5,1],[.5,0,.5,1]],twoH:[[0,0,1,.5],[0,.5,1,.5]],three:[[0,0,.6,1],[.6,0,.4,.5],[.6,.5,.4,.5]],four:[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]],six:Array.from({length:6},(_,i)=>[i%2/2,Math.floor(i/2)/3,.5,1/3]),nine:Array.from({length:9},(_,i)=>[i%3/3,Math.floor(i/3)/3,1/3,1/3])};
  D.collageLayouts=layouts;
- const collage=$('#dsCollagesLibrary');heading(collage,'FOTOS EM HARMONIA','Monte uma colagem','Escolha uma divisão e adicione as fotos. Elas serão recortadas ao centro no tamanho das células, como objetos independentes. A página atual é preservada.');
+ const collage=$('#dsCollagesLibrary');heading(collage,'FOTOS EM HARMONIA','Monte uma colagem','Escolha uma divisão e adicione as fotos. Depois, toque em Ajustar foto para mover e ampliar a imagem dentro de cada célula. A página atual é preservada.');
  let layout='four',files=[];const layoutGrid=node('div','creative-layout-grid');collage.append(layoutGrid);
  for(const [key,cells]of Object.entries(layouts)){const b=button(cells.length+' fotos',()=>{layout=key;layoutGrid.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));},'creative-layout');b.dataset.collage=key;b.setAttribute('aria-pressed',String(key===layout));const preview=node('div','creative-layout-preview');for(const [x,y,w,h]of cells){const cell=node('i');Object.assign(cell.style,{left:x*100+'%',top:y*100+'%',width:w*100+'%',height:h*100+'%'});preview.append(cell);}b.prepend(preview);layoutGrid.append(b);}
  const collageInput=node('input');collageInput.id='dsCollageInput';collageInput.type='file';collageInput.multiple=true;collageInput.accept='image/png,image/jpeg,image/webp';collageInput.hidden=true;
@@ -91,8 +91,7 @@
   await PS.withBusy('Montando a colagem','Ajustando cada foto à sua célula…',async progress=>{for(let i=0;i<cells.length;i++){
    const [nx,ny,nw,nh]=cells[i],x=spacing+nx*(f.w-spacing),y=spacing+ny*(f.h-spacing),w=Math.round(nw*(f.w-spacing)-spacing),h=Math.round(nh*(f.h-spacing)-spacing);
    if(w<1||h<1)throw Error('Diminua o espaçamento para esse tamanho de página.');
-   const img=images[i] instanceof Blob?await PS.loadImageFile(images[i]):images[i],iw=img.naturalWidth||img.width,ih=img.naturalHeight||img.height,k=Math.max(w/iw,h/ih),c=PS.canvas(w,h),ctx=PS.ctx(c);ctx.imageSmoothingQuality='high';ctx.drawImage(img,(w-iw*k)/2,(h-ih*k)/2,iw*k,ih*k);
-   const o=await F.FabricImage.fromURL(c.toDataURL('image/png'));o.set({left:x,top:y});prepared.push(o);c.width=c.height=1;progress((i+1)/cells.length);await PS.nextFrame();
+   const o=await D.photoFrom(images[i]);D.fitPhoto(o,w,h);o.set({left:x,top:y,strokeWidth:0,prismaSlot:{w,h}});prepared.push(o);progress((i+1)/cells.length);await PS.nextFrame();
   }});
   await D.addPage();
   prepared.forEach((o,i)=>E.add(o,'Foto '+(i+1)));D.canvas.discardActiveObject();finish();D.closePanel();

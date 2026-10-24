@@ -4,12 +4,12 @@ const{chromium}=require('playwright'),path=require('path'),assert=require('node:
  const b=await chromium.launch({headless:true,executablePath:process.env.PRISMA_CHROMIUM||undefined,args:['--no-sandbox']});
  const p=await b.newPage({viewport:{width:1500,height:1000},hasTouch:true}),errors=[],network=[];
  p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')errors.push(m.text());});p.on('request',r=>{if(/^https?:/.test(r.url()))network.push(r.url());});
- await p.goto('file://'+path.resolve(__dirname,'../index.html'));await p.evaluate(()=>PS.setMode('design'));await p.waitForFunction(()=>document.querySelectorAll('#dsTemplates img[src]').length===12);
+ await p.goto('file://'+path.resolve(__dirname,'../index.html'));await p.evaluate(()=>PS.setMode('design'));await p.waitForFunction(()=>document.querySelectorAll('#dsTemplates img[src]').length===PS.designTemplates.length);
  const models=await p.evaluate(()=>{
-  const src=[...document.querySelectorAll('#dsTemplates img')].map(e=>e.src);if(new Set(src).size!==12)throw Error('Miniaturas repetidas');
+  const src=[...document.querySelectorAll('#dsTemplates img')].map(e=>e.src);if(new Set(src).size!==PS.designTemplates.length)throw Error('Miniaturas repetidas');
   let scenes=0;for(const t of PS.designTemplates)for(const f of Object.values(PS.designFormats)){const scene=PS.designTemplateScene(t,f.w,f.h);for(const o of scene.objects)if(o instanceof fabric.Textbox&&(o.left<0||o.top<0||o.left+o.width>f.w+1||o.top+o.height>f.h+1))throw Error('Texto fora da página '+t.id+' '+f.name);scenes++;}return{uniqueTemplates:new Set(src).size,scenes};
  });
- await p.locator('#dsCategory').selectOption('Casamento');assert.equal(await p.locator('#dsTemplates button').count(),1);await p.locator('#dsCategory').selectOption('');
+ await p.locator('#dsCategory').selectOption('Casamento');assert.equal(await p.locator('#dsTemplates button').count(),await p.evaluate(()=>PS.designTemplates.filter(t=>t.category==='Casamento').length));await p.locator('#dsCategory').selectOption('');
  await p.locator('[data-ds-library=text]').click();await p.locator('[data-ds-text=heading]').click();
  await p.locator('#dsText').fill('Título com acentuação');await p.locator('#dsText').dispatchEvent('input');await p.locator('#dsLineHeight').fill('1.8');await p.locator('#dsLineHeight').dispatchEvent('input');await p.locator('#dsCharSpacing').fill('150');await p.locator('#dsCharSpacing').dispatchEvent('input');
  await p.locator('#dsFontSize').focus();await p.locator('#dsFontSize').press('ControlOrMeta+A');await p.locator('#dsFontSize').pressSequentially('128');assert.equal(await p.locator('#dsFontSize').inputValue(),'128');

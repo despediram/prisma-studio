@@ -1,0 +1,17 @@
+/* Prisma Studio — barra contextual de texto para toque e mouse.
+ * Reutiliza alterações e histórico do Design; controles avançados ficam expansíveis.
+ */
+(function(){
+ 'use strict';const P=PS,D=P.design,E=D.edit,F=fabric,$=P.$;
+ const bar=document.createElement('section');bar.id='dsQuickText';bar.className='design-quick-text';bar.hidden=true;bar.setAttribute('aria-label','Edição rápida de texto');bar.innerHTML='<div class="quick-text-main"><button id="dsQuickWrite" class="btn soft sm">Escrever</button><select id="dsQuickFont" class="input" aria-label="Fonte do texto"></select><input id="dsQuickSize" class="input" type="number" min="6" max="1000" aria-label="Tamanho do texto"><input id="dsQuickColor" type="color" aria-label="Cor do texto"><button id="dsQuickBold" class="btn soft sm" aria-label="Negrito">B</button><button id="dsQuickMore" class="btn soft sm" aria-expanded="false">Aparência</button></div><div id="dsQuickDetails" class="quick-text-details" hidden><label>Contorno <input id="dsQuickStroke" type="color" value="#000000"></label><label>Espessura <input id="dsQuickOutline" type="range" min="0" max="30" value="0"></label><label>Sombra <input id="dsQuickShadow" type="range" min="0" max="60" value="0"></label><button class="btn ghost sm" id="dsQuickAdvanced">Mais opções</button></div>';
+ $('#dsStage').before(bar);let fontSignature='';
+ const selected=()=>{const o=E.selected();return o instanceof F.Textbox&&!o.prismaLocked?o:null;};
+ function sync(){const o=selected();bar.hidden=!o;$('.design-center').classList.toggle('has-quick-text',!!o);if(!o)return;const signature=[...$('#dsFont').options].map(x=>x.value).join('|');if(signature!==fontSignature){fontSignature=signature;$('#dsQuickFont').replaceChildren(...[...$('#dsFont').options].map(x=>new Option(x.textContent,x.value)));}for(const [id,value]of [['dsQuickFont',o.fontFamily],['dsQuickSize',o.fontSize],['dsQuickColor',o.fill],['dsQuickStroke',o.stroke||'#000000'],['dsQuickOutline',o.strokeWidth||0],['dsQuickShadow',o.shadow?.blur||0]])if(document.activeElement!==$('#'+id)&&typeof value!=='object')$('#'+id).value=value;$('#dsQuickBold').setAttribute('aria-pressed',String(o.fontWeight==='bold'));}
+ const input=(id,property,convert)=>$('#'+id).oninput=e=>{if(selected())E.update(property,convert(e.target.value));};
+ input('dsQuickSize','fontSize',v=>P.clamp(+v||6,6,1000));input('dsQuickColor','fill',v=>v);input('dsQuickStroke','stroke',v=>v);input('dsQuickOutline','strokeWidth',v=>+v);input('dsQuickShadow','shadow',v=>+v?new F.Shadow({color:'#00000055',blur:+v,offsetX:0,offsetY:+v/2}):null);
+ $('#dsQuickFont').onchange=async e=>{const o=selected(),name=e.target.value;if(!o)return;try{await document.fonts.load('20px "'+name+'"');if(selected()===o)E.update('fontFamily',name);}catch{P.toast('Não foi possível carregar essa fonte.','error');}};
+ $('#dsQuickBold').onclick=()=>{const o=selected();if(o)E.update('fontWeight',o.fontWeight==='bold'?'normal':'bold');};
+ $('#dsQuickWrite').onclick=()=>{const o=selected();if(!o)return;D.closePanel();o.enterEditing();o.selectAll();o.hiddenTextarea?.focus();};
+ $('#dsQuickMore').onclick=()=>{const box=$('#dsQuickDetails');box.hidden=!box.hidden;$('#dsQuickMore').setAttribute('aria-expanded',String(!box.hidden));};$('#dsQuickAdvanced').onclick=()=>D.openPanel('properties');
+ window.addEventListener('prisma:designchange',sync);new MutationObserver(sync).observe($('#dsFont'),{childList:true});
+})();

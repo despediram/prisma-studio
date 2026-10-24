@@ -41,6 +41,7 @@ jobs:
           node testes/poster-defaults.cjs
           node testes/crop-geometry.cjs
           node testes/background-ai.cjs
+          node testes/design-assets.cjs
           npm run prepare:desktop
       - name: Testar o aplicativo real no Windows
         run: npm run test:desktop:smoke

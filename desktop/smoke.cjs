@@ -12,6 +12,8 @@ module.exports=async function(win,store){
  await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'../testes/creative-interactions.js'),'utf8')+'\n;void 0;');
  const sample='data:image/jpeg;base64,'+fs.readFileSync(path.join(__dirname,'../testes/fixtures/car.jpg')).toString('base64');
  console.log('Criação e IA: '+JSON.stringify(await win.webContents.executeJavaScript('window.prismaTestCreative(PS,'+JSON.stringify(sample)+')')));
+ await win.webContents.executeJavaScript(fs.readFileSync(path.join(__dirname,'../testes/refinements-interactions.js'),'utf8')+'\n;void 0;');
+ console.log('Aprimoramentos: '+JSON.stringify(await win.webContents.executeJavaScript('window.prismaTestRefinements(PS,'+JSON.stringify(sample)+')')));
  const result=await win.webContents.executeJavaScript(`(async()=>{
   const errors=[];addEventListener('error',e=>errors.push(e.message));addEventListener('unhandledrejection',e=>errors.push(String(e.reason)));
   const check=(v,m)=>{if(!v)throw Error(m)},P=PS,d=P.doc;

@@ -43,12 +43,12 @@
     const blob=await PS.createProjectBlob({background:true});
     // Se o usuário continuou editando, descarta a cópia e tenta de novo no próximo ciclo.
     if(blob&&signature===editorSignature()){
-     await api.autosave({kind:'editor',name:(doc.name||'projeto')+'.prisma',bytes:new Uint8Array(await blob.arrayBuffer())});backupEditor=signature;written=true;
+     await api.autosave({kind:'editor',name:(doc.name||'projeto')+'.prisma',bytes:new Uint8Array(await blob.arrayBuffer())});backupEditor=signature;written=true;PS.recent?.nativeSaved('editor');
     }
    }
    if(D.canvas&&(D.revision!==backupDesign||designName()!==backupDesignName)){
     const name=designName(),revision=D.revision,bytes=new TextEncoder().encode(D.edit.serialize());
-    if(!D.busy&&revision===D.revision&&name===designName()){await api.autosave({kind:'design',name:name+'.prismadesign',bytes});backupDesign=revision;backupDesignName=name;written=true;}
+    if(!D.busy&&revision===D.revision&&name===designName()){await api.autosave({kind:'design',name:name+'.prismadesign',bytes});backupDesign=revision;backupDesignName=name;written=true;PS.recent?.nativeSaved('design');}
    }
    if(written)$('#desktopRecovery').textContent='Recuperação em disco às '+new Date().toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
    return written;
@@ -73,7 +73,7 @@
   const result=await PS.dialog({title:'Recuperar trabalho',body,okText:'Recuperar',cancelText:'Depois'});
   if(result){const item=await api.recover($('input:checked',result).value);if(await openData(item,true))PS.toast('Projeto recuperado. Salve para escolher o arquivo definitivo.','success');}
  }
- async function about(){const info=await api.info();await PS.dialog({title:'Prisma Studio para Windows',okText:'Fechar',cancelText:'',body:'<p><strong>Versão '+PS.escape(info.version)+'</strong> · Windows de 64 bits</p><p>Editor, Design e Pôsteres funcionam localmente. A IA usa os modelos ONNX que você carregar ou autorizar baixar no ampliador.</p><p>Recuperação em disco, a cada minuto de alterações, quando não há traço ou edição em andamento:</p><p class="hint">'+PS.escape(info.recoveryDirectory)+'</p><p>O motor de pixels e os cálculos de impressão são compartilhados com o site. Memória, aceleração e escala física continuam dependendo do computador e da impressora.</p>'});}
+ async function about(){const info=await api.info();await PS.dialog({title:'Prisma Studio para Windows',okText:'Fechar',cancelText:'',body:'<p><strong>Versão '+PS.escape(info.version)+'</strong> · Windows de 64 bits</p><p>Editor, Design e Pôsteres funcionam localmente. A remoção de fundo inclui IA offline. O ampliador também aceita modelos ONNX carregados pelo usuário.</p><p>Recuperação em disco, a cada minuto de alterações, quando não há traço ou edição em andamento:</p><p class="hint">'+PS.escape(info.recoveryDirectory)+'</p><p>O motor de pixels e os cálculos de impressão são compartilhados com o site. Memória, aceleração e escala física continuam dependendo do computador e da impressora.</p>'});}
  async function execute(message){
   const mode=document.body.dataset.mode,design=mode==='design';
   switch(message.action){

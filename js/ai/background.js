@@ -51,7 +51,7 @@
   const small=PS.canvas(320,320);PS.ctx(small).putImageData(new ImageData(PrismaSubjectMath.refine(alpha,edge,invert),320,320),0,0);
   const out=PS.canvas(w,h),ctx=PS.ctx(out);ctx.imageSmoothingQuality='high';ctx.drawImage(small,0,0,w,h);return out;
  },applyEditor(mask,L,version){
-  const d=PS.doc;if(d.version!==version||d.layer!==L)throw Error('A camada mudou. Abra o recorte novamente.');
+  const d=PS.doc;if(L.locked)throw Error('Desbloqueie a camada para alterar a máscara.');if(d.version!==version||d.layer!==L)throw Error('A camada mudou. Abra o recorte novamente.');
   if(L.mask&&L.maskEnabled){const x=PS.ctx(mask);x.globalCompositeOperation='destination-in';x.drawImage(L.mask,0,0);x.globalCompositeOperation='source-over';}
   if(d.sel){let before=L.mask&&L.maskEnabled?L.mask:null;if(!before){before=PS.canvas(L.canvas.width,L.canvas.height);const x=PS.ctx(before);x.fillStyle='#fff';x.fillRect(0,0,before.width,before.height);}mask=d.throughSelection(L,before,mask);}
   L.mask=mask;L.maskEnabled=true;d.editMask=false;d.commit('Remover fundo com IA','fa-mask');

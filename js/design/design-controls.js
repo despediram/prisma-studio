@@ -27,7 +27,7 @@
   else c.setActiveObject(obj);
  };
  on('dsMultiSelect','click',()=>{multiple=!multiple;$('#dsMultiSelect').setAttribute('aria-pressed',multiple);PS.toast(multiple?'Toque nos nomes dos objetos para selecionar vários.':'Seleção individual.','info');});
- PS.$$('[data-ds-text]').forEach(b=>b.addEventListener('click',()=>{D.addText(b.dataset.dsText);panel('properties');}));
+ PS.$$('[data-ds-text]').forEach(b=>b.addEventListener('click',()=>{D.addText(b.dataset.dsText);panel(mobile()?'':'properties');}));
  on('dsZoomIn','click',()=>E.zoom(1.2));on('dsZoomOut','click',()=>E.zoom(1/1.2));
  on('dsLineHeight','input',e=>E.update('lineHeight',PS.clamp(+e.target.value||1,.5,3)));
  on('dsCharSpacing','input',e=>E.update('charSpacing',PS.clamp(+e.target.value||0,-100,1000)));
@@ -42,7 +42,7 @@
  }));
  function distribute(axis){const c=D.canvas,items=c.getActiveObjects();if(items.length<3||items.some(o=>o.prismaLocked))return;const pos=axis==='x'?'left':'top',extent=axis==='x'?'width':'height';c.discardActiveObject();const sorted=items.map(o=>({o,b:o.getBoundingRect()})).sort((a,b)=>a.b[pos]-b.b[pos]),first=sorted[0].b,last=sorted.at(-1).b,gap=(last[pos]+last[extent]-first[pos]-sorted.reduce((v,p)=>v+p.b[extent],0))/(sorted.length-1);let cursor=first[pos];for(const item of sorted){item.o.set(pos,item.o[pos]+cursor-item.b[pos]);item.o.setCoords();cursor+=item.b[extent]+gap;}c.setActiveObject(new F.ActiveSelection(items,{canvas:c}));finish();}
  on('dsDistributeX','click',()=>distribute('x'));on('dsDistributeY','click',()=>distribute('y'));
- function crop(ratio){const o=editable();if(!(o instanceof F.FabricImage))return;const size=o.getOriginalSize(),center=o.getCenterPoint();let w=size.width,h=size.height;if(ratio){if(w/h>ratio)w=h*ratio;else h=w/ratio;}const scale=o.getScaledWidth()/w;o.set({cropX:(size.width-w)/2,cropY:(size.height-h)/2,width:w,height:h,scaleX:scale,scaleY:scale});o.setPositionByOrigin(center,'center','center');o.setCoords();finish();}
+ function crop(ratio){const o=editable();if(!(o instanceof F.FabricImage))return;if(o.prismaSlot){D.openPhotoFit(o);return;}const size=o.getOriginalSize(),center=o.getCenterPoint();let w=size.width,h=size.height;if(ratio){if(w/h>ratio)w=h*ratio;else h=w/ratio;}const scale=o.getScaledWidth()/w;o.set({cropX:(size.width-w)/2,cropY:(size.height-h)/2,width:w,height:h,scaleX:scale,scaleY:scale});o.setPositionByOrigin(center,'center','center');o.setCoords();finish();}
  PS.$$('[data-ds-crop]').forEach(b=>b.addEventListener('click',()=>crop({square:1,portrait:.8,wide:16/9}[b.dataset.dsCrop])));on('dsCropReset','click',()=>crop(null));
  PS.$$('[data-ds-photo-effect]').forEach(b=>b.addEventListener('click',()=>{const o=editable();if(!(o instanceof F.FabricImage))return;const k=b.dataset.dsPhotoEffect;o.filters=k==='mono'?[new F.filters.Grayscale()]:k==='warm'?[new F.filters.Sepia()]:k==='bright'?[new F.filters.Brightness({brightness:.12})]:[];o.applyFilters();finish();}));
  on('dsExportSvg','click',()=>{const c=D.canvas,f=E.fmt(),saved=c.svgViewportTransformation;c.discardActiveObject();try{c.svgViewportTransformation=false;const svg=c.toSVG({width:f.w,height:f.h,viewBox:{x:0,y:0,width:f.w,height:f.h}});PS.download(new Blob([svg],{type:'image/svg+xml'}),($('#dsName').value||'design')+'.svg');}finally{c.svgViewportTransformation=saved;c.requestRenderAll();}});
