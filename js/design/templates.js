@@ -4,6 +4,7 @@
 (function(){
  'use strict';const PS=window.PS;
  PS.designFormats={a5:{name:'Convite A5 — 148 × 210 mm',w:1748,h:2480,mmW:148,mmH:210},square:{name:'Post quadrado — 1080 × 1080',w:1080,h:1080},story:{name:'Story — 1080 × 1920',w:1080,h:1920},a4:{name:'Folha A4 — 210 × 297 mm',w:2480,h:3508,mmW:210,mmH:297},card:{name:'Cartão — 90 × 50 mm',w:1063,h:591,mmW:90,mmH:50}};
+ Object.assign(PS.designFormats,{landscape:{name:'Post horizontal — 1200 × 628',w:1200,h:628},thumb:{name:'Capa de vídeo — 1280 × 720',w:1280,h:720},portrait:{name:'Post retrato — 1080 × 1350',w:1080,h:1350},cover:{name:'Capa larga — 1640 × 624',w:1640,h:624},banner:{name:'Banner — 1920 × 640',w:1920,h:640}});
  PS.designTemplates=[
   {id:'birthday',name:'Aniversário festivo',category:'Festas',bg:'#f7f1ff',accent:'#7651bd',dark:'#302047',title:'É dia de celebrar!',subtitle:'Você está convidado para o aniversário de',hero:'SEU NOME',details:'SÁBADO · 24 DE OUTUBRO\nÀS 16H · LOCAL DA FESTA\nConfirme sua presença: (00) 00000-0000',motif:'confetti'},
   {id:'wedding',name:'Casamento delicado',category:'Casamento',bg:'#f5f2e9',accent:'#879474',dark:'#354238',title:'JUNTOS PARA SEMPRE',subtitle:'Com alegria, convidamos você para celebrar',hero:'Ana & Lucas',details:'24 DE OUTUBRO · ÀS 17H\nJARDIM DAS FLORES\nUma história de amor, um dia inesquecível.',motif:'botanical'},

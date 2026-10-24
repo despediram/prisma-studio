@@ -1,0 +1,8 @@
+U²-Net / U²-NetP — Xuebin Qin et al.
+Projeto e pesos: https://github.com/xuebinqin/U-2-Net
+Modelo ONNX distribuído por rembg: https://github.com/danielgatis/rembg
+Pesos u2netp.onnx originais, sem modificações; apenas codificados em gzip/base64 para carregar em file://.
+SHA-256: 309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8
+Licença Apache-2.0: U2Net-Apache-2.0.txt.
+Runtime ONNX Web 1.20.1, Microsoft: licença MIT em onnxruntime-web-MIT.txt.
+A aplicação usa código próprio de pré/pós-processamento; não incorpora código Python do rembg.

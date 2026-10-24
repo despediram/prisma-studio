@@ -10,14 +10,14 @@
  const on=(id,event,fn)=>$('#'+id).addEventListener(event,run(fn));
  const editable=()=>{const o=E.selected();return o&&!o.prismaLocked?o:null;};
  const finish=()=>{D.canvas.requestRenderAll();E.commit();};
- function library(tab){PS.$$('[data-ds-library]').forEach(b=>{const active=b.dataset.dsLibrary===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',active);});PS.$$('[data-ds-section]').forEach(p=>p.hidden=p.dataset.dsSection!==tab);}
+ function library(tab){$('.design-library').dataset.tab=tab;PS.$$('[data-ds-library]').forEach(b=>{const active=b.dataset.dsLibrary===tab;b.classList.toggle('active',active);b.setAttribute('aria-selected',active);});PS.$$('[data-ds-section]').forEach(p=>p.hidden=p.dataset.dsSection!==tab);}
  function panel(name){
   const root=$('#view-design');root.dataset.mobilePanel=name||'';$('#dsPanelBackdrop').hidden=!name||!mobile();
   for(const [id,section]of [['dsPropertiesPanel','properties'],['dsLayersPanel','layers'],['dsExportPanel','export']])$('#'+id).hidden=mobile()&&!!name&&name!==section;
-  if(name==='models'||name==='elements'||name==='text')library(name);
+  if(['models','elements','text','photos','collages','backgrounds','sizes'].includes(name))library(name);
   PS.$$('[data-ds-mobile]').forEach(b=>b.setAttribute('aria-expanded',b.dataset.dsMobile===name));
  }
- D.closePanel=()=>panel('');
+ D.closePanel=()=>panel('');D.openPanel=panel;D.openLibrary=library;
  PS.$$('[data-ds-library]').forEach(b=>b.addEventListener('click',()=>library(b.dataset.dsLibrary)));
  PS.$$('[data-ds-mobile]').forEach(b=>b.addEventListener('click',()=>panel($('#view-design').dataset.mobilePanel===b.dataset.dsMobile?'':b.dataset.dsMobile)));
  on('dsPanelBackdrop','click',D.closePanel);on('dsClosePanel','click',D.closePanel);on('dsEditSelection','click',()=>panel('properties'));

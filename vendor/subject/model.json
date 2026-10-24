@@ -1,0 +1,14 @@
+{
+  "name": "U²-NetP",
+  "parts": 89,
+  "bytes": 4574861,
+  "sha256": "309c8469258dda742793dce0ebea8e6dd393174f89934733ecc8b14c76f4ddd8",
+  "source": "https://github.com/danielgatis/rembg/releases/download/v0.0.0/u2netp.onnx",
+  "license": "Apache-2.0",
+  "input": [
+    1,
+    3,
+    320,
+    320
+  ]
+}

@@ -15,6 +15,7 @@
   <link rel="stylesheet" href="css/upscaler-host.css">
   <link rel="stylesheet" href="css/desktop.css">
   <link rel="stylesheet" href="css/android.css">
+  <link rel="stylesheet" href="css/creative.css">
 </head>
 <body>
   <a class="skip" href="#stage">Pular para a área de edição</a>
@@ -305,13 +306,13 @@
     <aside class="design-library" aria-label="Modelos e elementos">
       <div class="design-heading"><span class="design-kicker">SEU ESTÚDIO CRIATIVO</span><h2>Uma ideia, muitas formas.</h2><p class="hint">Comece com uma composição. Deixe com a sua cara.</p></div>
       <label class="fld"><span>Formato da página</span><select class="input" id="dsFormat"></select></label>
-      <div class="design-library-tabs" role="tablist" aria-label="Biblioteca"><button data-ds-library="models" class="active" role="tab" aria-selected="true">Modelos</button><button data-ds-library="elements" role="tab" aria-selected="false">Elementos</button><button data-ds-library="text" role="tab" aria-selected="false">Texto</button></div>
+      <div class="design-library-tabs" role="tablist" aria-label="Biblioteca"><button data-ds-library="models" class="active" role="tab" aria-selected="true">Modelos</button><button data-ds-library="elements" role="tab" aria-selected="false">Elementos</button><button data-ds-library="text" role="tab" aria-selected="false">Texto</button><button data-ds-library="photos" role="tab" aria-selected="false">Fotos</button><button data-ds-library="collages" role="tab" aria-selected="false">Colagens</button><button data-ds-library="backgrounds" role="tab" aria-selected="false">Fundos</button><button data-ds-library="sizes" role="tab" aria-selected="false">Tamanhos</button></div>
       <div class="design-add" data-ds-section="elements" hidden><button class="btn soft sm" id="dsAddText">+ Texto</button><button class="btn soft sm" id="dsAddImage">+ Foto</button><button class="btn soft sm" data-ds-shape="rect">Retângulo</button><button class="btn soft sm" data-ds-shape="circle">Círculo</button><button class="btn soft sm" data-ds-shape="star">Estrela</button><button class="btn soft sm" data-ds-shape="heart">Coração</button><button class="btn soft sm" data-ds-shape="line">Linha</button><button class="btn soft sm" data-ds-shape="triangle">Triângulo</button></div>
       <section data-ds-section="text" hidden class="design-type-presets"><button data-ds-text="heading">Adicionar título</button><button data-ds-text="subheading">Adicionar subtítulo</button><button data-ds-text="body">Um pouco de texto</button><p class="hint">Textos são editáveis por toque e no painel Editar.</p></section>
       <section data-ds-section="models"><label class="fld"><span>Buscar modelos</span><input class="input" id="dsSearch" type="search" placeholder="Casamento, festa, bebê…"></label>
       <select id="dsCategory" class="input" aria-label="Categoria de modelos"><option value="">Todos os estilos</option></select><p id="dsCatalogStatus" class="hint" role="status"></p><div id="dsTemplates" class="design-templates"></div></section>
-      <p class="hint design-library-foot">Modelos autorais do Prisma. Clique em um texto para selecionar; dê dois cliques para escrever.</p>
-      <input id="dsImageInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+      <section data-ds-section="photos" hidden id="dsPhotosLibrary"></section><section data-ds-section="collages" hidden id="dsCollagesLibrary"></section><section data-ds-section="backgrounds" hidden id="dsBackgroundsLibrary"></section><section data-ds-section="sizes" hidden id="dsSizesLibrary"></section><p class="hint design-library-foot">Modelos autorais do Prisma. Clique em um texto para selecionar; dê dois cliques para escrever.</p>
+      <input id="dsImageInput" multiple type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
       <input id="dsProjectInput" type="file" accept=".prismadesign,application/json" hidden>
     </aside>
     <section class="design-center" aria-label="Área de criação">
@@ -337,7 +338,7 @@
       </section><section id="dsExportPanel"><h3>Salvar e exportar</h3>
       <div class="design-export"><button class="btn primary sm" id="dsSave">Salvar design editável</button><button class="btn soft sm" id="dsOpen">Abrir design</button><button class="btn soft sm" id="dsExportPng">Baixar PNG</button><button class="btn soft sm" id="dsExportSvg">Baixar SVG</button><button class="btn soft sm" id="dsExportPdf">PDF de todas as páginas</button><button class="btn soft sm" id="dsToEditor">Usar no editor / pôster</button></div>
       <p class="hint">Salve em .prismadesign para conservar textos, objetos e páginas editáveis. Ao enviar ao editor de pixels, a página vira uma imagem.</p>
-    </section></aside><div id="dsPanelBackdrop" class="mobile-panel-backdrop" hidden></div><nav class="design-mobile-dock" aria-label="Ações de criação"><button data-ds-mobile="models">Modelos</button><button data-ds-mobile="elements">Adicionar</button><button data-ds-mobile="properties">Editar</button><button data-ds-mobile="layers">Objetos</button><button data-ds-mobile="export">Salvar</button></nav>
+    </section></aside><div id="dsPanelBackdrop" class="mobile-panel-backdrop" hidden></div><nav class="design-mobile-dock" aria-label="Ações de criação"><button data-ds-mobile="models">Modelos</button><button data-ds-mobile="photos">Fotos</button><button data-ds-mobile="text">Texto</button><button data-ds-mobile="elements">Elementos</button><button data-ds-mobile="collages">Colagens</button><button data-ds-mobile="backgrounds">Fundos</button><button data-ds-mobile="properties">Editar</button><button data-ds-mobile="layers">Objetos</button><button data-ds-mobile="export">Salvar</button></nav>
   </main>
 
   <!-- ============ PÔSTER ============ -->
@@ -606,6 +607,10 @@
   <script defer src="js/editor/layers.js"></script>
   <script defer src="js/editor/psd.js"></script>
   <script defer src="js/editor/productivity.js"></script>
+  <script defer src="js/ai/subject-math.js"></script>
+  <script defer src="js/ai/subject-worker.js"></script>
+  <script defer src="js/ai/background.js"></script>
+  <script defer src="js/ui/background-ai.js"></script>
   <script defer src="js/editor/commands.js?v=6"></script>
   <script defer src="js/editor/panels.js?v=5"></script>
   <script defer src="js/poster/poster-geometry.js?v=6"></script>
@@ -616,13 +621,15 @@
   <script defer src="js/poster/poster-assembly.js?v=8"></script>
   <script defer src="js/poster/poster-calibration.js"></script>
   <script defer src="vendor/fabric-6.9.0.min.js"></script>
-  <script defer src="js/design/templates.js"></script>
+  <script defer src="js/design/templates.js?v=2"></script>
   <script defer src="js/design/template-scenes.js"></script>
-  <script defer src="js/design/design.js?v=5"></script>
-  <script defer src="js/design/design-controls.js"></script>
+  <script defer src="js/design/design.js?v=6"></script>
+  <script defer src="js/design/design-controls.js?v=2"></script>
+  <script defer src="js/design/creative.js"></script>
   <script defer src="js/app.js?v=6"></script>
-  <script defer src="js/ui/mobile.js?v=3"></script>
+  <script defer src="js/ui/mobile.js?v=4"></script>
   <script defer src="js/ui/editor-actions.js?v=2"></script>
+  <script defer src="js/ui/toolbox.js"></script>
   <script defer src="js/ui/upscaler.js?v=4"></script>
   <script defer src="js/ui/desktop.js?v=2"></script>
   <script defer src="js/core/android-transfer.js"></script>
