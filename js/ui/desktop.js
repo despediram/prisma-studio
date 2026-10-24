@@ -32,6 +32,8 @@
   checkpoint,open:openNative,recovery:showRecovery
  };
  async function checkpoint(force=false){
+  // Uma gravação forçada espera a cópia em curso e captura também a edição mais recente.
+  if(force)while(running)await new Promise(resolve=>setTimeout(resolve,25));
   if(running||D.busy||PS.tools.isBusy()||!$('#busy').hidden||(!force&&Date.now()-lastInput<2000))return false;
   running=true;let written=false;
   try{

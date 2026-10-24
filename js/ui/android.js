@@ -21,6 +21,8 @@
  PS.download=(blob,name)=>{const task=save(blob,name);task.catch(e=>PS.toast(e.message,'error',7000));return task;};
  const signature=()=>doc.has?doc.version+'|'+JSON.stringify(doc.params):null;
  async function checkpoint(force=false){
+  // Uma gravação forçada espera a cópia em curso e captura também a edição mais recente.
+  if(force)while(running)await new Promise(resolve=>setTimeout(resolve,25));
   if(running||D.busy||PS.tools.isBusy()||!$('#busy').hidden||(!force&&Date.now()-lastInput<2000))return false;
   running=true;
   try{
