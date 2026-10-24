@@ -29,7 +29,7 @@ module.exports=async function(win,store){
   const blob=await P.createProjectBlob({background:true}),zip=await JSZip.loadAsync(blob),meta=JSON.parse(await zip.file('projeto.json').async('string'));
   check(meta.params.exposure===.35,'Ajustes não foram serializados');check(!!zip.file('camadas/0_mascara.png'),'Máscara não foi serializada');
   check(await P.desktop.saveEditor(blob),'Salvamento nativo cancelado');
-  await P.desktop.checkpoint(true);const copies=await PrismaDesktop.recoveries();check(copies.length===1,'Recuperação não foi gravada');const restored=await PrismaDesktop.recover(copies[0].id);
+  await P.desktop.checkpoint(true);const copies=await PrismaDesktop.recoveries();const editorCopy=copies.find(x=>x.kind==='editor'&&x.name.includes('Teste Windows'));check(!!editorCopy,'Recuperação do Editor não foi gravada');check(copies.some(x=>x.kind==='design'),'Recuperação do Design não foi gravada');const restored=await PrismaDesktop.recover(editorCopy.id);
   await P.openProject(new File([restored.bytes],'recuperada.prisma'));P.afterOpen();check(d.w===800&&d.h===600&&!!d.layer.mask&&d.params.exposure===.35,'Recuperação perdeu camadas/ajustes');
   d.setLayerProp(d.layer,'name','Camada Windows','Nome');d.undo();check(d.layer.name!=='Camada Windows','Undo falhou');d.redo();check(d.layer.name==='Camada Windows','Redo falhou');
   check(await P.upscaleTo(1.5,'lanczos'),'Ampliação real não concluiu');check(d.w===1200&&d.h===900,'Saída real incorreta');d.undo();check(d.w===800&&d.h===600,'Undo da ampliação falhou');
