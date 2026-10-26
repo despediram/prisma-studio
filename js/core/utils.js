@@ -75,7 +75,7 @@
     const done = ok => { dlg.close(); cleanup(); resolve(ok ? content : null); };
     const okH = e => { e.preventDefault(); done(true); };
     const cancelH = () => done(false);
-    const closeH = () => { cleanup(); resolve(null); };
+    const closeH = () => { if (dlg.open) return; cleanup(); resolve(null); };
     function cleanup() {
       PS.$('#dialogOk').removeEventListener('click', okH);
       PS.$('#dialogCancel').removeEventListener('click', cancelH);
