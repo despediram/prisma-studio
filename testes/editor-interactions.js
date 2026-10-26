@@ -7,7 +7,9 @@ window.prismaTestInteractions=async function(P){
  const hash=c=>{let h=2166136261;for(const b of P.ctx(c).getImageData(0,0,c.width,c.height).data)h=Math.imul(h^b,16777619);return h>>>0;};
  d.newDocument(320,240,'transparent','Teste de interação');P.afterOpen();
  const ctx=P.ctx(d.base);ctx.fillStyle='#00a7e1';ctx.fillRect(0,0,320,240);ctx.fillStyle='#e6007e';ctx.fillRect(60,40,100,100);d.commit('Arte de teste');d.addMask();d.editMask=false;d.rebuildProxy();
- const originalHash=hash(d.base);await T.set('crop');P.view.render();await frame();
+ const originalHash=hash(d.base);await T.set('crop');P.view.render();
+ // Aguarda a reserva de espaço do painel e o reenquadramento antes de medir o arraste.
+ await frame();await frame();await frame();
  const draw=d.drawLayers;let compositions=0;d.drawLayers=function(...args){if(Object.prototype.hasOwnProperty.call(args[1]||{},'region'))compositions++;return draw.apply(d,args);};
  try{
   T.pointer('down',{pointerType:'touch'},{x:60,y:40});
