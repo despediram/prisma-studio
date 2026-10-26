@@ -8,7 +8,7 @@ permissions:
   contents: read
 jobs:
   navegador:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     env:
       NODE_PATH: /tmp/prisma-browser-tests/node_modules
