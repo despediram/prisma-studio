@@ -182,7 +182,9 @@
     if (target.hidden) return;
     const button = PS.$(`.tool[data-tool="${T.current}"]`),
       h = el('h3');
-    h.append(el('i', button.querySelector('i').className), document.createTextNode(button.title.replace(/ \(.+\)$/, '')));
+    const icon = button.querySelector('i, svg');
+    if (icon) h.append(icon.cloneNode(true));
+    h.append(document.createTextNode(button.title.replace(/ \(.+\)$/, '')));
     if (doc.editMask) h.append(el('span', 'pill', 'na máscara'));
     target.append(h);
     (tool?.options() || []).filter(Boolean).forEach(f => target.append(control(f)));

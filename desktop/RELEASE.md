@@ -1,7 +1,7 @@
-# Prisma Studio 0.1.5
+# Prisma Studio 0.1.6 · Prisma Atelier
 
-Ajuste de fotos dentro das colagens, troca de posições, barra contextual de texto, 12 modelos novos (24 no total), pincéis para restaurar/apagar na máscara de IA, zoom e desfazer de retoques, projetos recentes com miniaturas e histórico de Design que compartilha as fotos entre alterações.
+Nova identidade visual compartilhada com o site e o Android: marca própria, ícones vetoriais, ferramentas com nomes, painéis e diálogos consistentes e temas claro/escuro. A central Explorar encontra ferramentas, bibliotecas, IA, prompts e comandos dos menus com Ctrl+K.
 
-Mantém o processamento local, os projetos editáveis e os cálculos/padrões de pôsteres. As fotos das novas colagens permanecem incorporadas ao projeto; colagens antigas já rasterizadas permitem ajustar apenas os pixels que possuem.
+No celular, o Design usa cinco destinos fixos e reúne as bibliotecas em Adicionar. O editor desktop preserva painéis laterais e atalhos. Cálculos e padrões dos pôsteres, processamento local e projetos editáveis continuam preservados.
 
-Testes de integração no Windows e no Android, incluindo recuperação concorrente, enquadramento, texto, IA offline e reabertura de projetos.
+A compilação executa os testes anteriores de edição, projetos, IA offline e recuperação e os novos testes de busca/navegação/painéis. Consulte ATUALIZACAO-VISUAL.md para arquivos, validação e limites.

@@ -414,6 +414,18 @@
   PS.repeatFilter = () => { if (lastFilter && doc.has) PS.fx.open('fx', lastFilter); else PS.toast('Nenhum filtro usado ainda.', 'info'); };
   const origOpen = PS.fx.open; PS.fx.open = (kind, name) => { if (kind === 'fx') lastFilter = name; return origOpen(kind, name); };
 
+  // Catálogo da central de funções: reutiliza callbacks e disponibilidade do menu.
+  PS.commandCatalog = [];
+  function catalog(items, path) {
+    for (const item of items) {
+      if (item === '-') continue;
+      const [label, shortcut, run, enabled, children] = item;
+      if (children) catalog(children, path + ' › ' + label);
+      else if (run) PS.commandCatalog.push({label, path, run, enabled: enabled || (() => true)});
+    }
+  }
+  MENU.forEach(([name, items]) => catalog(items, name));
+
   const bar = $('#menubar');
   let openMenu = null;
   function buildList(items) {

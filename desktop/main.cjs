@@ -60,7 +60,7 @@ function setupIPC(){
 }
 async function createWindow(){
  const b=prefs.bounds||{},display=screen.getPrimaryDisplay().workArea;
- win=new BrowserWindow({width:Math.max(900,Math.min(b.width||1440,display.width)),height:Math.max(650,Math.min(b.height||960,display.height)),minWidth:900,minHeight:650,show:false,title:'Prisma Studio',backgroundColor:'#191c23',icon:path.join(__dirname,'icon.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,backgroundThrottling:false}});
+ win=new BrowserWindow({width:Math.max(900,Math.min(b.width||1440,display.width)),height:Math.max(650,Math.min(b.height||960,display.height)),minWidth:900,minHeight:650,show:false,title:'Prisma Studio',backgroundColor:'#18171e',icon:path.join(__dirname,'icon.ico'),webPreferences:{preload:path.join(__dirname,'preload.cjs'),nodeIntegration:false,contextIsolation:true,sandbox:true,webSecurity:true,backgroundThrottling:false}});
  if(prefs.maximized&&!SMOKE)win.maximize();
  win.webContents.setWindowOpenHandler(()=>({action:'deny'}));
  win.webContents.on('will-navigate',(e,url)=>{if(url!==APP_URL)e.preventDefault();});

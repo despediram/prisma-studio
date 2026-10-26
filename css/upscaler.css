@@ -5,3 +5,8 @@
 
 /* A escolha automática e a recuperação ficam acessíveis também junto ao botão principal. */
 .scale-presets{grid-auto-flow:row;grid-template-columns:repeat(3,minmax(0,1fr))}.scale-presets label{min-height:44px}.output-summary{font-variant-numeric:tabular-nums;line-height:1.5;color:var(--ink)}#useRecommended{white-space:normal;min-height:46px;border-color:var(--accent);color:var(--accent);text-align:center}#useRecommended[hidden]{display:none!important}
+
+/* Prisma Atelier — a mesma identidade do editor, inclusive no ampliador independente. */
+:root,:root[data-theme=dark]{--bg:#18171e;--panel:#211f29;--ink:#f1eef6;--muted:#c0b9cd;--line:#45404f;--soft:#2a2733;--accent:#a99aff;--accent-ink:#20163f;--accent-soft:#302741;--stage:#111114;--font:"Segoe UI",system-ui,sans-serif}
+:root[data-theme=light]{--bg:#f5f3f9;--panel:#fff;--ink:#241c31;--muted:#655a72;--line:#c9c1d5;--soft:#eeebf4;--accent:#6945c9;--accent-ink:#fff;--accent-soft:#eee7fa;--stage:#dcd9e1}
+.card,.phase,.stage{border-radius:16px}.phase{background:var(--panel);padding:16px}.ph-num{border-radius:9px;color:var(--accent)}.go{border-radius:12px;background:var(--accent);color:var(--accent-ink);font-weight:700}.field,.seg{border-radius:10px}#applyEditor:not(:disabled){color:var(--accent-ink)}.film-head h2{font-size:20px;letter-spacing:-.6px}.sec button{border-radius:10px;min-height:44px}.ph-name{letter-spacing:-.3px}

@@ -1,8 +1,7 @@
-<!-- Prisma Studio Android — marca do projeto em desenho vetorial. -->
+<!-- Prisma Studio Android — a mesma marca vetorial própria do site e do Windows. -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android" android:width="48dp" android:height="48dp" android:viewportWidth="48" android:viewportHeight="48">
- <path android:fillColor="#1F2226" android:pathData="M0,0h48v48h-48z"/>
- <path android:fillColor="#00A7E1" android:pathData="M18,10a10,10 0,1 0,0.01 0z"/>
- <path android:fillColor="#E6007E" android:pathData="M29,10a10,10 0,1 0,0.01 0z"/>
- <path android:fillColor="#FFD200" android:pathData="M24,20a10,10 0,1 0,0.01 0z"/>
- <path android:strokeColor="#99FFFFFF" android:strokeWidth="1" android:pathData="M24,5v38M5,24h38"/>
+ <path android:fillColor="#18171E" android:pathData="M0,0h48v48h-48z"/>
+ <path android:fillColor="#00000000" android:strokeColor="#A99AFF" android:strokeWidth="2.6" android:strokeLineJoin="round" android:strokeLineCap="round" android:pathData="M24,8L42,39H6Z"/>
+ <path android:fillColor="#00000000" android:strokeColor="#A99AFF" android:strokeWidth="1.8" android:strokeLineJoin="round" android:strokeLineCap="round" android:pathData="M24,8L27,28L42,39M6,39L27,28"/>
+ <path android:fillColor="#00000000" android:strokeColor="#FFBA85" android:strokeWidth="2.2" android:strokeLineJoin="round" android:strokeLineCap="round" android:pathData="M15,24L27,28L22,39"/>
 </vector>
