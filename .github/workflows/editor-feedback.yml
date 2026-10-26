@@ -1,0 +1,35 @@
+name: Conferir editor offline e feedback móvel
+on:
+  push:
+    branches: ['dev/remocao-objetos-offline']
+  pull_request:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  navegador:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      NODE_PATH: /tmp/prisma-browser-tests/node_modules
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+      - run: npm install --prefix /tmp/prisma-browser-tests --no-audit --no-fund playwright@1.56.1
+      - run: node /tmp/prisma-browser-tests/node_modules/playwright/cli.js install --with-deps chromium
+      - name: Validar motor e padrões
+        run: |
+          node testes/inpaint-texture.cjs
+          node testes/object-removal.cjs
+          node testes/poster-defaults.cjs
+          node testes/android.cjs
+          npm run test:desktop
+      - name: Reproduzir feedback e validar remoção offline
+        run: node testes/mobile-feedback.cjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: Conferencia-editor
+          path: test-results/

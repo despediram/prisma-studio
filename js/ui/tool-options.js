@@ -182,11 +182,15 @@
     if (target.hidden) return;
     const button = PS.$(`.tool[data-tool="${T.current}"]`),
       h = el('h3');
-    const icon = button.querySelector('i, svg');
+    const icon = button?.querySelector('i, svg');
     if (icon) h.append(icon.cloneNode(true));
-    h.append(document.createTextNode(button.title.replace(/ \(.+\)$/, '')));
+    h.append(document.createTextNode((button?.title || T.current).replace(/ \(.+\)$/, '')));
     if (doc.editMask) h.append(el('span', 'pill', 'na máscara'));
     target.append(h);
+    if (doc.sel && ['brush','eraser','clone','heal','retouch','tone','liquify','bucket','gradient'].includes(T.current)) {
+      target.append(control(O.hint('Seleção ativa: a edição atua somente dentro dela.')));
+      target.append(control(O.button('toolDeselect', 'Remover seleção', () => { doc.deselect(); T.renderOptions(); PS.view.render(); })));
+    }
     (tool?.options() || []).filter(Boolean).forEach(f => target.append(control(f)));
   };
 })();

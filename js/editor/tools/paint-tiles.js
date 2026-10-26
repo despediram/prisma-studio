@@ -33,8 +33,14 @@
           h,
           before: PS.ctx(target).getImageData(tx, ty, w, h),
           paint: PS.canvas(w, h),
+          effect: null,
           dirty: null
         };
+        if (st.kind === 'tone') {
+          const original = PS.canvas(w, h);
+          PS.ctx(original).putImageData(tile.before, 0, 0);
+          tile.effect = C.effectCanvas(original, 'tone');
+        }
         st.tiles.set(key, tile);
       }
       const px = PS.ctx(tile.paint);
@@ -71,9 +77,13 @@
       let src = tile.paint,
         sx = lx,
         sy = ly;
-      if (doc.sel || doc.editMask && st.kind === 'eraser') {
+      if (st.kind === 'tone' || doc.sel || doc.editMask && st.kind === 'eraser') {
         src = PS.canvas(w, h);
         const tx = PS.ctx(src);
+        if (st.kind === 'tone') {
+          tx.drawImage(tile.effect, lx, ly, w, h, 0, 0, w, h);
+          tx.globalCompositeOperation = 'destination-in';
+        }
         tx.drawImage(tile.paint, lx, ly, w, h, 0, 0, w, h);
         if (doc.sel) {
           tx.globalCompositeOperation = 'destination-in';
@@ -87,7 +97,7 @@
         sx = sy = 0;
       }
       bx.save();
-      bx.globalAlpha = s.opacity / 100;
+      bx.globalAlpha = (s.opacity ?? 100) / 100;
       const erase = doc.editMask ? st.kind === 'brush' && C.lum(doc.fg) < .5 : st.kind === 'eraser';
       bx.globalCompositeOperation = erase ? 'destination-out' : 'source-over';
       bx.drawImage(src, sx, sy, w, h, a.x, a.y, w, h);

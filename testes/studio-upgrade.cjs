@@ -35,8 +35,8 @@ const{chromium}=require('playwright'),path=require('path'),assert=require('node:
   await p.setViewportSize(viewport);await p.evaluate(()=>PS.setMode('design'));assert(await p.locator('#dsCanvas').isVisible());assert(await p.locator('.design-mobile-dock').isVisible());
   await p.locator('[data-ds-mobile=models]').click();assert(await p.locator('.design-library').isVisible());await p.locator('#dsPanelBackdrop').click({position:{x:5,y:5}}).catch(async()=>{await p.evaluate(()=>PS.design.closePanel())});
   await p.locator('[data-ds-mobile=properties]').click();assert(await p.locator('.design-inspector').isVisible());await p.locator('#dsClosePanel').click();
-  await p.evaluate(()=>PS.setMode('editor'));await p.locator('[data-mobile-action=layers]').click();assert(await p.locator('#layersDock').isVisible());await p.locator('#inspector .mobile-sheet-title button').click();
-  await p.evaluate(()=>PS.setMode('poster'));await p.locator('[data-mobile-action=settings]').click();assert(await p.locator('#pSafeA4').isVisible());await p.locator('.pside.left .mobile-sheet-title button').click();
+  await p.evaluate(()=>PS.setMode('editor'));await p.locator('[data-mobile-action=layers]').click();assert(await p.locator('#layersDock').isVisible());await p.locator('#inspector .mobile-sheet-title button:last-child').click();
+  await p.evaluate(()=>PS.setMode('poster'));await p.locator('[data-mobile-action=settings]').click();assert(await p.locator('#pSafeA4').isVisible());await p.locator('.pside.left .mobile-sheet-title button:last-child').click();
   assert.equal(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),true);
  }
  await p.setViewportSize({width:390,height:844});await p.evaluate(async()=>{await PS.setMode('design');PS.design.canvas.clear();PS.design.addShape('rect');PS.design.canvas.discardActiveObject();PS.design.canvas.requestRenderAll();await new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));});

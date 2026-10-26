@@ -34,9 +34,9 @@
     options() {
       const s = S.heal,
         O = PS.toolOptions;
-      return [O.segment(s, 'oMode', 'mode', [["spot", "Manchas"], ["redeye", "Olhos vermelhos"]], () => {
+      return [O.segment(s, 'oMode', 'mode', [["objects", "Remover objetos"], ["spot", "Manchas"], ["redeye", "Olhos vermelhos"]], () => {
         C.poly = null;
-      }), O.range(s, 'oSize', s.mode === 'redeye' ? 'Raio do olho' : 'Tamanho', 'size', 4, 300, 1, ' px'), ...(s.mode === 'redeye' ? [O.range(s, 'oStr', 'Intensidade', 'strength', 5, 100, 1, '%')] : [O.hint('Funciona melhor em manchas, poeira, riscos e pequenos objetos sobre fundos uniformes.')])];
+      }), O.range(s, 'oSize', s.mode === 'redeye' ? 'Raio do olho' : 'Tamanho', 'size', 4, 300, 1, ' px'), ...(s.mode === 'redeye' ? [O.range(s, 'oStr', 'Intensidade', 'strength', 5, 100, 1, '%')] : [O.hint(s.mode === 'objects' ? 'Pinte todo o objeto, incluindo sua sombra. Ao soltar, confira a prévia antes de aplicar. Reconstrução por texturas offline.' : 'Funciona melhor em manchas, poeira, riscos e pequenos objetos sobre fundos uniformes.')])];
     }
   };
 })();

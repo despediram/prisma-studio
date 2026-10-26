@@ -49,3 +49,26 @@
  #pPromptShortcut{min-height:38px;margin-left:auto}.mobile-workspace-dock button span{overflow-wrap:anywhere}
 }
 @media(max-width:370px){.editor-actions #editCancel{font-size:0;gap:0}.editor-actions #editCancel i{font-size:14px}.editor-actions #editApply{font-size:11px}}
+
+/* Editor: painel compacto com rolagem; metade da área útil permanece para a foto. */
+@media(max-width:860px){
+ #inspector.mobile-open{max-height:min(30dvh,var(--editor-sheet-limit,30dvh));padding:6px 12px 10px}
+ #inspector.mobile-open.sheet-expanded{max-height:var(--editor-sheet-limit,38dvh)!important}
+ #inspector .mobile-sheet-title{top:-6px;min-height:44px;padding:4px 0;margin-bottom:4px;flex-wrap:nowrap;font-size:13px;gap:4px}
+ #inspector .mobile-sheet-title span{max-width:none;min-width:0}
+ #inspector .mobile-sheet-title button{padding:5px 8px;font-size:11px}
+ #inspector[data-mobile-section=adjust]>.tool-options{display:none}
+ #inspector .tool-options h3{font-size:13px;margin:4px 0 8px}
+ #inspector .tool-options .seg{flex-wrap:wrap}
+ #inspector .tool-options .seg button{flex:1 0 auto;min-height:40px}
+ #inspector .itabs{min-height:40px;padding:0 0 4px}
+ #inspector .itabs .itab{min-height:40px}
+ #inspector .ipanel{padding:4px 0}
+ #inspector .pblock{padding:8px 0}
+ #inspector .sl{margin-block:6px;min-height:40px}
+ #inspector .sl input[type=range]{min-height:32px}
+ #inspector .hint{margin-block:6px}
+}
+@media(max-height:500px) and (max-width:860px){
+ #inspector.mobile-open,#inspector.mobile-open.sheet-expanded{max-height:calc(100dvh - 116px)!important}
+}
