@@ -108,12 +108,18 @@
     }
   };
   /* ---------- troca de ferramenta ---------- */
+  let activation = 0;
   T.set = async name => {
-    if (!C.META[name]) return;
+    if (!C.META[name] || C.objectRemovalBusy) return;
+    const ticket = ++activation;
     if (T.current === name && name !== 'hand') {
       C.renderOptions();
+      window.dispatchEvent(new Event('prisma:toolchange'));
       return;
     }
+    if (C.stroke) T.cancelStroke();
+    if (name !== 'marquee') C.sel = null;
+    if (C.longPress) { clearTimeout(C.longPress); C.longPress = null; }
     if (C.xf && name !== 'transform') T.cancelTransform();
     if (C.textEdit && name !== 'text') T.commitText();
     if (C.poly && name !== 'marquee') C.poly = null;
@@ -126,7 +132,12 @@
     hintEl.hidden = !C.META[name].hint || !doc.has;
     if (doc.has && C.META[name].destructive && doc.hasDevelop()) {
       PS.toast('Os ajustes em prévia foram aplicados para usar esta ferramenta.', 'info');
-      await doc.ensureFlat();
+      try { await doc.ensureFlat(); } catch (err) {
+        PS.toast('Não foi possível preparar a ferramenta: ' + err.message, 'error');
+        if (ticket === activation) { C.renderOptions(); PS.view.render(); }
+        return;
+      }
+      if (ticket !== activation || T.current !== name) return;
     }
     if (name === 'crop') S.crop.selecting = true;
     if (name === 'crop' && doc.has) C.crop = {
@@ -222,7 +233,7 @@
     }
     return false;
   };
-  T.isBusy = () => !!(C.stroke || C.xf || C.textEdit || C.poly || C.moveFloat);
+  T.isBusy = () => !!(C.objectRemovalBusy || C.stroke || C.xf || C.textEdit || C.poly || C.moveFloat);
   PS.$$('.tool').forEach(b => b.addEventListener('click', () => T.set(b.dataset.tool)));
   doc.on(type => {
     if (type === 'load') {

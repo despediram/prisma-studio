@@ -2,7 +2,7 @@
 name: Compilar Prisma Studio Windows
 on:
   push:
-    branches: [main]
+    branches: [main, 'dev/remocao-objetos-offline']
     paths:
       - 'desktop/**'
       - 'testes/editor-interactions.js'
@@ -56,6 +56,7 @@ jobs:
           path: dist-desktop/*-Setup.exe
           if-no-files-found: error
       - name: Publicar instalador na página de versões
+        if: github.ref == 'refs/heads/main'
         shell: pwsh
         env:
           GH_TOKEN: ${{ github.token }}

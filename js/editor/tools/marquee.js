@@ -54,6 +54,7 @@
   T.registry.marquee = {
     state: S.marquee,
     pointer(type, e, p) {
+      if (type === 'cancel') { C.sel = null; C.poly = null; PS.view.render(); return; }
       const tool = 'marquee',
         v = PS.view,
         tol = 9 / v.zoom;

@@ -2,7 +2,7 @@
 name: Compilar Prisma Studio Android
 on:
   push:
-    branches: [main]
+    branches: [main, 'dev/remocao-objetos-offline']
     paths: ['android/**', 'testes/editor-interactions.js', 'testes/crop-geometry.cjs', 'js/**', 'css/**', 'index.html', 'upscaler/**', 'vendor/**', '.github/workflows/android.yml']
   workflow_dispatch:
 permissions:
@@ -12,7 +12,7 @@ concurrency:
   cancel-in-progress: false
 jobs:
   android:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
       - uses: actions/checkout@v6
@@ -56,8 +56,9 @@ jobs:
             android/app/build/outputs/androidTest-results/
             android/app/build/reports/androidTests/
       - name: Disponibilizar compilação intermediária para assinatura privada
+        if: github.ref == 'refs/heads/main'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp android/app/build/outputs/apk/release/app-release-unsigned.apk Prisma-Studio-Android-0.1.5-unsigned.apk
-          gh release create "android-build-${{ github.run_number }}" Prisma-Studio-Android-0.1.5-unsigned.apk --prerelease --latest=false --target '${{ github.sha }}' --title "Android · compilação ${{ github.run_number }} para assinatura" --notes 'Compilação intermediária sem assinatura. O APK instalável é assinado fora do CI com a chave privada do projeto. Não instale este arquivo intermediário.'
+          cp android/app/build/outputs/apk/release/app-release-unsigned.apk Prisma-Studio-Android-0.1.6-unsigned.apk
+          gh release create "android-build-${{ github.run_number }}" Prisma-Studio-Android-0.1.6-unsigned.apk --prerelease --latest=false --target '${{ github.sha }}' --title "Android · compilação ${{ github.run_number }} para assinatura" --notes 'Compilação intermediária sem assinatura. O APK instalável é assinado fora do CI com a chave privada do projeto. Não instale este arquivo intermediário.'

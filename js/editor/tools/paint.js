@@ -58,7 +58,7 @@
   C.beginStroke = function (p, kind, e) {
     const s = S[kind],
       target = doc.base;
-    const tiled = kind === 'brush' || kind === 'eraser';
+    const tiled = kind === 'brush' || kind === 'eraser' || kind === 'tone';
     C.stroke = {
       kind,
       last: p,
@@ -92,7 +92,7 @@
     }
     if (kind === 'retouch' && s.mode === 'smudge') {
       C.stroke.smudge = null;
-    } else if (kind === 'retouch' || kind === 'tone') C.stroke.effect = C.effectCanvas(C.stroke.snapshot, kind);
+    } else if (!tiled && (kind === 'retouch' || kind === 'tone')) C.stroke.effect = C.effectCanvas(C.stroke.snapshot, kind);
     const q = C.toLayer(p);
     C.stamp(q.x, q.y);
     C.compositeStroke();
@@ -287,6 +287,7 @@
   };
   C.healPreview = null;
   C.healArea = async function (st) {
+    if (S.heal.mode === "objects") return C.removeObject(st);
     const target = doc.base,
       pad = Math.ceil(st.size * 1.5),
       b = st.bbox;
@@ -351,6 +352,7 @@
     doc.commit('Olhos vermelhos', 'fa-eye');
   };
   C.pointerPaint = function (tool, type, e, p) {
+    if (C.objectRemovalBusy) return;
     const v = PS.view,
       tol = 9 / v.zoom;
     switch (tool) {
